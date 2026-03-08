@@ -1,0 +1,18 @@
+[*.{kt,kts}]
+# Kotlin coding style
+indent_size = 4
+continuation_indent_size = 4
+insert_final_newline = true
+max_line_length = 120
+
+# Allow wildcard imports for Ktor DSL packages (required for context receivers)
+ij_kotlin_name_count_to_use_star_import = 999
+ij_kotlin_name_count_to_use_star_import_for_members = 999
+ij_kotlin_packages_to_use_import_on_demand = io.ktor.server.application.**,io.ktor.server.routing.**,io.ktor.server.sessions.**,io.ktor.server.plugins.statuspages.**
+
+# Ktlint configuration: Allow wildcard imports for Ktor DSL (framework idiom)
+ktlint_standard_no-wildcard-imports = disabled
+# Allow comments in import lists (for documentation)
+ktlint_standard_import-ordering = disabled
+# Allow EOL comments after KDoc (for week-by-week import documentation)
+ktlint_standard_kdoc-wrapping = disabled

@@ -1,0 +1,33 @@
+style:
+  WildcardImport:
+    active: true
+    # Allow wildcard imports for Ktor packages (DSL requires extension functions)
+    excludeImports:
+      - 'io.ktor.*'
+      - 'kotlinx.coroutines.*'
+  MagicNumber:
+    active: true
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'  # Common pagination offset
+      - '6'  # Short ID length
+      - '8'  # Request ID length
+      - '8080'  # Default port
+
+complexity:
+  LongParameterList:
+    active: true
+    functionThreshold: 9  # Allow Logger.write (8 params, deprecated, kept for teaching materials)
+  CyclomaticComplexMethod:
+    threshold: 20  # Allow moderately complex methods
+  TooManyFunctions:
+    thresholdInFiles: 19  # Allow more functions in route files
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false  # Disable - we handle specific exceptions appropriately
+  SwallowedException:
+    active: false  # Disable - we log before swallowing in CSV parsing

@@ -1,0 +1,20 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+<h1 style="text-align: center;">Sign Up</h1>
+
+<form class="login-form"
+    method="post"
+    action="/signup"
+    hx-post="/signup"
+    hx-target="#sign-up-status"
+    hx-swap="innerHTML">
+
+    <input name="firstname" placeholder="First Name">
+    <input name="lastname" placeholder="Last Name">
+    <input name="email" placeholder="Email">
+    <input name="password" type="password" placeholder="Password">
+    <button type="submit">Sign Up</button>
+    <div id="sign-up-status" role="status" aria-live="polite" aria-atomic="true"></div>
+</form>
+{% endblock %}

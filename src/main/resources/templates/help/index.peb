@@ -1,0 +1,9 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+<h1 style="text-align: center;">Help</h1>
+
+<section aria-labelledby="list-heading">
+    
+</section>
+{% endblock %}

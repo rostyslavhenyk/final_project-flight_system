@@ -1,0 +1,18 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+<h1 style="text-align: center;">Log In</h1>
+
+<form class="login-form"
+    method="post"
+    action="/login"
+    hx-post="/login"
+    hx-target="#log-in-status"
+    hx-swap="innerHTML">
+
+    <input name="email" placeholder="Email">
+    <input name="password" type="password" placeholder="Password">
+    <button type="submit">Login</button>
+    <div id="log-in-status" role="status" aria-live="polite" aria-atomic="true"></div>
+</form>
+{% endblock %}
