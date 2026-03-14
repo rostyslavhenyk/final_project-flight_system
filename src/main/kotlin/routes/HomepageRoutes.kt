@@ -18,9 +18,24 @@ private suspend fun ApplicationCall.handleLoadPage() {
     timed("T1_homepage_load", jsMode()) {
         val pebble = getEngine()
 
+        val airports =
+            listOf(
+                "Manchester (MAN)",
+                "London Heathrow (LHR)",
+                "London Gatwick (LGW)",
+                "Hong Kong (HKG)",
+                "Bangkok (BKK)",
+                "Denpasar (DPS)",
+                "Manila (MNL)",
+                "Singapore (SIN)",
+                "Dubai (DXB)",
+                "New York (JFK)",
+            )
+
         val model =
             mapOf(
                 "title" to "Homepage",
+                "airports" to airports,
             )
 
         val template = pebble.getTemplate("homepage/index.peb")

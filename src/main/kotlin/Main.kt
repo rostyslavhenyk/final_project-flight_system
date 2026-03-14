@@ -104,6 +104,7 @@ fun Application.configureRouting() {
         configureHealthCheck()
 
         homepageRoutes()
+        commitmentRoutes()
         flightsRoutes()
         membershipRoutes()
         helpRoutes()

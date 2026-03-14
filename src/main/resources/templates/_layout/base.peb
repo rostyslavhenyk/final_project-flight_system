@@ -6,7 +6,7 @@
     <title>{% block title %}Flight System{% endblock %}</title>
 
     <link rel="stylesheet" href="/static/css/custom.css">
-
+    {% block extra_head %}{% endblock %}
     <script src="/static/js/htmx-1.9.12.min.js" defer></script>
 </head>
 <body>
@@ -17,24 +17,52 @@
     <br>
 
     <header id="navbar">
-        <nav>
-            <a href="/">Homepage</a>
-            <a href="/flights">Flights</a>
-            <a href="/membership">Membership</a>
-            <a href="/help">Help</a>
+    <div class="brand">
+        <a href="/" class="brand-link">Glide Airways</a>
+    </div>
+    <nav>
+        <ul class="main-links">
+            <li><a href="/flights">Flights</a></li>
+            <li><a href="/membership">Membership</a></li>
+            <li><a href="/help">Help</a></li>
+        </ul>
+        <ul class="auth-links">
             {% if logged_in %}
-                <a href="/my-account">My Account</a>
-                <a href="/logout">Log Out</a>
+                <li><a href="/my-account">My Account</a></li>
+                <li><a href="/logout">Log Out</a></li>
             {% else %}
-                <a href="/signup">Sign Up</a>
-                <a href="/login">Log In</a>
+                <li><a href="/signup">Sign Up</a></li>
+                <li><a href="/login">Log In</a></li>
             {% endif %}
-        </nav>
-    </header>
+        </ul>
+    </nav>
+</header>
 
     <main id="main" tabindex="-1">
         {% block content %}
         {% endblock %}
     </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-links">
+                <a href="/commitment">Our commitment to you</a>
+                <a href="/">Contact us</a>
+                <p id="connect_with_us">Connect with us</p>
+                <div class="social-icons">
+                    <span class="icon-circle">
+                        <img src="/static/images/facebook_icon.svg" alt="Facebook">
+                    </span>
+                    <span class="icon-circle">
+                        <img src="/static/images/instagram_icon.svg" alt="Instagram">
+                    </span>
+                    <span class="icon-circle">
+                        <img src="/static/images/x_icon.svg" alt="X">
+                    </span>
+                </div>
+                <p id="credits">Visual design inspired by Cathay Pacific and Ryanair.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

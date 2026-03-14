@@ -1,0 +1,228 @@
+/* Page-specific styles for homepage (layout/framework in custom.css) */
+
+.plain-text {
+  margin-right: 10px;
+  margin-left: 10px;
+  font-size: 20px;
+}
+
+/* ========================================
+   Action tabs (4 square buttons)
+   ======================================== */
+.action-tabs {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  margin: 24px 0 0;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.action-tab {
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+  text-align: center;
+  text-decoration: none;
+  color: #333;
+  background-color: #fff;
+  border: 2px solid #367878;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.action-tab:hover {
+  background-color: #f0f9f9;
+  color: #367878;
+}
+
+.action-tab--active {
+  background-color: #367878;
+  color: #fff;
+  border-color: #367878;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ========================================
+   Flight search form
+   ======================================== */
+.flight-search {
+  margin: 0 20px 32px;
+  padding: 24px;
+  border: 2px solid #367878;
+  border-radius: 0 8px 8px 8px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.flight-search-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+  margin-bottom: 20px;
+}
+
+.flight-search .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flight-search .field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.flight-search .field input,
+.flight-search .field select {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Trip type: same look as text box, full area clickable dropdown */
+.flight-search .field select {
+  appearance: none;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.flight-search .field input:disabled {
+  background: #f0f0f0;
+  color: #888;
+}
+
+/* Date inputs: same width as row, larger clickable area (square-ish) */
+.flight-search .field input[type="date"] {
+  min-height: 44px;
+  padding: 12px 14px;
+  font-size: 1rem;
+}
+
+.flight-search-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-search {
+  padding: 12px 24px;
+  background: #333;
+  color: #fff;
+  border: 2px solid #333;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-search:hover {
+  background: #111;
+  border-color: #111;
+}
+
+/* ========================================
+   Our latest offers
+   ======================================== */
+.latest-offers {
+  margin: 0 20px 32px;
+  padding: 0 0 24px;
+  box-sizing: border-box;
+}
+
+.latest-offers h2 {
+  color: #367878;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.offers-origin {
+  font-size: 0.95rem;
+  color: #367878;
+  margin: 0 0 20px;
+}
+
+.offer-cards {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.offer-card {
+  border: 2px solid #367878;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.offer-card-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #e8e8e8;
+}
+
+.offer-card-dest {
+  margin: 12px 12px 4px;
+  font-size: 1.1rem;
+  color: #367878;
+}
+
+.offer-card-meta {
+  margin: 0 12px 12px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.offer-card-cta {
+  margin: 0 12px 12px;
+  padding: 8px 0 0;
+  color: #367878;
+  font-weight: 500;
+  text-decoration: none;
+  border-top: 1px solid #eee;
+}
+
+.offer-card-cta:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .offer-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .action-tabs {
+    flex-wrap: wrap;
+  }
+
+  .action-tab {
+    min-width: calc(50% - 6px);
+  }
+
+  .flight-search-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .offer-cards {
+    grid-template-columns: 1fr;
+  }
+}
