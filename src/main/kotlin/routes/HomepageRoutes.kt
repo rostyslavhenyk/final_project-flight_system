@@ -6,6 +6,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
+import utils.baseModel
 import java.io.StringWriter
 import utils.jsMode
 import utils.timed
@@ -19,8 +20,8 @@ private suspend fun ApplicationCall.handleLoadPage() {
         val pebble = getEngine()
 
         val model =
-            mapOf(
-                "title" to "Homepage",
+            baseModel(
+                mapOf("title" to "Homepage"),
             )
 
         val template = pebble.getTemplate("homepage/index.peb")

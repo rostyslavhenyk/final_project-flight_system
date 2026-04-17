@@ -3,7 +3,6 @@ package utils
 import io.ktor.http.Cookie
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.sessions.*
 import io.ktor.util.*
 import isHtmxRequest
@@ -38,14 +37,16 @@ suspend fun <T> ApplicationCall.timed(
             }
 
         Logger.write(
-            sessionId = sid,
-            requestId = requestId,
-            taskCode = taskCode,
-            step = step,
-            outcome = e::class.simpleName ?: "error",
-            durationMs = duration,
-            statusCode = response.status()?.value ?: defaultStatus,
-            jsMode = jsMode,
+            LogEntry(
+                sessionId = sid,
+                requestId = requestId,
+                taskCode = taskCode,
+                step = step,
+                outcome = e::class.simpleName ?: "error",
+                durationMs = duration,
+                statusCode = response.status()?.value ?: defaultStatus,
+                jsMode = jsMode,
+            ),
         )
         throw e
     }
@@ -64,8 +65,8 @@ fun ApplicationCall.sessionCode(): String = attributes[SidKey]
 
 fun ApplicationCall.requestId(): String = attributes[ReqIdKey]
 
-private fun ApplicationCall.ensureSession(): SessionData =
-    sessions.get<SessionData>() ?: SessionData().also {
+private fun ApplicationCall.ensureSession(): SessionUtils =
+    sessions.get<SessionUtils>() ?: SessionUtils().also {
         sessions.set(it)
     }
 
@@ -77,7 +78,7 @@ private fun ApplicationCall.ensureRequestId(): String {
     return generated
 }
 
-private fun ApplicationCall.ensureSidCookie(session: SessionData): String {
+private fun ApplicationCall.ensureSidCookie(session: SessionUtils): String {
     request.cookies["sid"]?.let { return it }
     val sid = shortSessionId(session.id)
     response.cookies.append(

@@ -6,25 +6,39 @@ import io.ktor.server.routing.*
 import io.ktor.server.http.content.*
 import io.ktor.server.plugins.callloging.*
 import io.ktor.server.request.*
-import io.ktor.server.response.*
 import io.pebbletemplates.pebble.PebbleEngine
 import routes.*
 import auth.UserSession
 import routes.configureHealthCheck
-import utils.SessionData
+import utils.SessionUtils
 import java.io.StringWriter
 import io.ktor.util.*
+
+import data.AllTables
+import utils.DatabaseFactory
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.SchemaUtils
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
     val host = "0.0.0.0"
 
     embeddedServer(Netty, port = port, host = host) {
+        configureDatabase()
         configureLogging()
         configureTemplating()
         configureSessions()
         configureRouting()
     }.start(wait = true)
+}
+
+@Suppress("SpreadOperator")
+fun Application.configureDatabase() {
+    DatabaseFactory.init()
+
+    transaction {
+        SchemaUtils.create(*AllTables.all())
+    }
 }
 
 fun Application.configureLogging() {
@@ -69,7 +83,7 @@ suspend fun ApplicationCall.renderTemplate(
     val writer = StringWriter()
     val template = engine.getTemplate(templateName)
 
-    val sessionData = sessions.get<SessionData>()
+    val sessionData = sessions.get<SessionUtils>()
     val enrichedContext =
         context +
             mapOf(
@@ -85,7 +99,7 @@ fun ApplicationCall.isHtmxRequest(): Boolean = request.headers["HX-Request"] == 
 
 fun Application.configureSessions() {
     install(Sessions) {
-        cookie<SessionData>("SESSION") {
+        cookie<SessionUtils>("SESSION") {
             cookie.path = "/"
             cookie.httpOnly = true
             cookie.extensions["SameSite"] = "Strict"
