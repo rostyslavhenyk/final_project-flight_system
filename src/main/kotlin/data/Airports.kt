@@ -14,7 +14,7 @@ object Airports : Table("airports") {
     private const val CODE_LENGTH = 10
 
     val id = integer("id").autoIncrement()
-    val countryId = integer("country_id").references(Countries.id)
+    val countryId = integer("countryID").references(Countries.id)
     val city = varchar("city", CITY_LENGTH)
     val name = varchar("name", NAME_LENGTH)
     val code = varchar("code", CODE_LENGTH)

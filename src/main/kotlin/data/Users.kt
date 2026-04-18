@@ -14,9 +14,9 @@ object Users : Table("users") {
     private const val PASSWORD_LENGTH = 128
 
     val id = integer("id").autoIncrement()
-    val firstname = varchar("firstname", NAME_LENGTH)
-    val lastname = varchar("lastname", NAME_LENGTH)
-    val roleId = integer("roleId")
+    val firstname = varchar("firstName", NAME_LENGTH)
+    val lastname = varchar("lastName", NAME_LENGTH)
+    val roleId = integer("roleID")
     val email = varchar("email", EMAIL_LENGTH).uniqueIndex()
     val password = varchar("password", PASSWORD_LENGTH)
 

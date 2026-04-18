@@ -1,15 +1,8 @@
 package data
 
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
@@ -19,17 +12,12 @@ object Seats : Table("seats") {
 
     val id = integer("id").autoIncrement()
 
-    val flightId = integer("flight_id").references(Flights.id)
-
-    val rowNumber = integer("row_number")
-
-    val seatLetter = varchar("seat_letter", SEAT_LETTER_LENGTH)
-
-    val userId = integer("user_id").references(Users.id)
+    val flightId = integer("flightID").references(Flights.id)
+    val rowNumber = integer("rowNumber")
+    val seatLetter = varchar("seatLetter", SEAT_LETTER_LENGTH)
 
     val status = varchar("status", STATUS_LENGTH)
-
-    val expiresAt = long("expires_at")
+    val expiresAt = long("expiresAt")
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -39,14 +27,14 @@ data class Seat(
     val flightId: Int,
     val rowNumber: Int,
     val seatLetter: String,
-    val userId: Int,
     val status: String,
     val expiresAt: Long,
 )
 
 object SeatRepository {
-    private const val DEFAULT_HOLD_TIME = 600000L
-    val nullSeat = Seat(-1, -1, -1, "", -1, "", 0L)
+    private const val DEFAULT_HOLD_TIME = 600_000L
+
+    val nullSeat = Seat(-1, -1, -1, "", "", 0L)
 
     private fun ResultRow.toSeat() =
         Seat(
@@ -54,7 +42,6 @@ object SeatRepository {
             flightId = this[Seats.flightId],
             rowNumber = this[Seats.rowNumber],
             seatLetter = this[Seats.seatLetter],
-            userId = this[Seats.userId],
             status = this[Seats.status],
             expiresAt = this[Seats.expiresAt],
         )
@@ -86,10 +73,9 @@ object SeatRepository {
 
     fun hold(
         flightIdValue: Int,
-        userIdValue: Int,
         row: Int,
         seat: String,
-        holdSeconds: Long = DEFAULT_HOLD_TIME,
+        holdMillis: Long = DEFAULT_HOLD_TIME,
     ): Boolean =
         transaction {
             val now = Instant.now().toEpochMilli()
@@ -116,9 +102,8 @@ object SeatRepository {
                 it[flightId] = flightIdValue
                 it[rowNumber] = row
                 it[seatLetter] = seat
-                it[userId] = userIdValue
                 it[status] = "RESERVED"
-                it[expiresAt] = now + (holdSeconds)
+                it[expiresAt] = now + holdMillis
             }
 
             true

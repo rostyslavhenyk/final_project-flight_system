@@ -9,5 +9,8 @@ object AllTables {
             Flights,
             Countries,
             Seats,
+            Bookings,
+            Passengers,
+            BoardingPasses,
         )
 }
