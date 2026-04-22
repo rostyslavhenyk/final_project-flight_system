@@ -41,7 +41,7 @@ private suspend fun ApplicationCall.handleFlightsPage() {
     }
 }
 
-/** Parses query string, loads flights, sorts, pages, renders `flights/search-results.peb`. */
+/** Parses query string, loads flights, sorts, pages, renders `flights/step-1-search-results/index.peb`. */
 private suspend fun ApplicationCall.handleSearchFlightsList() {
     timed("T0_search_flights_list", jsMode()) {
         val pebble = getEngine()
@@ -226,7 +226,7 @@ private suspend fun ApplicationCall.handleSearchFlightsList() {
                 "showPager" to pager.isNotEmpty(),
             )
 
-        val template = pebble.getTemplate("flights/search-results.peb")
+        val template = pebble.getTemplate("flights/step-1-search-results/index.peb")
         val writer = StringWriter()
         fullEvaluate(template, writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
@@ -568,7 +568,7 @@ private suspend fun ApplicationCall.handleBookSeats() {
                 "chooseFlightsHref" to backToFlightSearchHref(q),
                 "passengersHref" to bookingHref("/book/passengers", q),
             )
-        val template = pebble.getTemplate("flights/book-seats.peb")
+        val template = pebble.getTemplate("flights/step-3-seats/index.peb")
         val writer = StringWriter()
         fullEvaluate(template, writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
@@ -670,7 +670,7 @@ private suspend fun ApplicationCall.handleBookPassengers() {
                 "membershipFilled" to (logged.logged_in && session != null),
                 "continueSeatsHref" to continueSeatsHref,
             )
-        val template = pebble.getTemplate("flights/book-passengers/index.peb")
+        val template = pebble.getTemplate("flights/step-2-passengers/index.peb")
         val writer = StringWriter()
         fullEvaluate(template, writer, model)
         respondText(writer.toString(), ContentType.Text.Html)

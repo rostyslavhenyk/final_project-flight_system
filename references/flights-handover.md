@@ -16,6 +16,14 @@ This handover explains:
 - [`passenger-info.css`](../src/main/resources/static/css/passenger-info.css): Step 2 passenger stylesheet entrypoint used by `/book/passengers` (imports passenger-specific rules only).
 - [`static/css/flights/passengers.css`](../src/main/resources/static/css/flights/passengers.css): the passenger-specific rule set consumed by `passenger-info.css`.
 
+### Pebble templates (booking steps 1–3)
+
+Each step has its own folder under `templates/flights/`, parallel to how Step 1/2 styles are split under `static/css/flights/`.
+
+- [`step-1-search-results/index.peb`](../src/main/resources/templates/flights/step-1-search-results/index.peb): Choose flights / search results (`/search-flights`).
+- [`step-2-passengers/index.peb`](../src/main/resources/templates/flights/step-2-passengers/index.peb): Passenger details (`/book/passengers`).
+- [`step-3-seats/index.peb`](../src/main/resources/templates/flights/step-3-seats/index.peb): Seat and extras (`/book/seats`).
+
 ### File ownership (easy to understand cheat sheet)
 
 - **`flights-results.css`**: only a loader file. It bundles **Step 1** flight pages (`/search-flights`, `/book/review`). It is **not** where Step 2 form styles are authored.
@@ -49,7 +57,7 @@ Quick selector hint:
 - Step 1 **“Choose flights”** returns to search with preserved query (Plan B: **inbound** list if the booking was the return leg; includes `leg=inbound` when applicable).
 - Summary shows route, dates, fare, flight id.
 - Lead passenger form scaffold (demo).
-- Template file now follows folder-per-page convention: `templates/flights/book-passengers/index.peb`.
+- Step 2 template: `templates/flights/step-2-passengers/index.peb` (folder-per-step, alongside Step 1 and Step 3 under `templates/flights/`).
 
 ### 1.3 Error checks and safety rules
 - Search runs only when `from`, `to`, and `depart` can be parsed correctly.
@@ -84,7 +92,7 @@ Timezone conversion is handled by [`applyAirportLocalZoneConversion`](../src/mai
 
 ### 2.2 HTML structure (Pebble)
 
-File: [`templates/flights/search-results.peb`](../src/main/resources/templates/flights/search-results.peb).
+File: [`templates/flights/step-1-search-results/index.peb`](../src/main/resources/templates/flights/step-1-search-results/index.peb).
 
 The fare section uses cabin flags (`isEconomyCabin`, `isBusinessCabin`, `isFirstCabin`) to control which columns appear. The Flex card now also branches its bullet text with `isFirstCabin`, so **Business Flex** and **First Flex** can carry different terms without duplicating the whole card structure. Current examples in the template include different cabin-baggage allowances and different change/cancellation fee values between Business Flex and First Flex.
 
@@ -218,12 +226,12 @@ You *could* store the exact `GA###` to show in the CSV instead of re-deriving th
 2. Resolve airports to IATA codes.
 3. `FlightScheduleRepository.search(...)`.
 4. Build view model: cards (including `routeBlocks`), carousel, sort links, pager, inbound/outbound helpers.
-5. Render `templates/flights/search-results.peb`.
+5. Render `templates/flights/step-1-search-results/index.peb`.
 
 ### 4.2 `/book/passengers`
 1. Read query (including `leg`, `ob*`, prices).
 2. Build `backToChooseFlightsHref` (inbound vs outbound context) and optional `backToOutboundFlightsHref`.
-3. Render `templates/flights/book-passengers/index.peb`.
+3. Render `templates/flights/step-2-passengers/index.peb`.
 
 **Why querystrings?** Shareable, bookmarkable state; SSR stays stateless.
 
@@ -241,7 +249,7 @@ The template exposes `returnDateForFareNav` so inbound cards still have `data-se
 |------|------|---------|
 | HTTP routes, card view-model, `buildRouteBlocks`, cabin fares | [`FlightsRoutes.kt`](../src/main/kotlin/routes/FlightsRoutes.kt) | Everything the Pebble template needs as plain maps/lists. |
 | CSV load, expand templates, pricing/layover math | [`FlightScheduleRepository.kt`](../src/main/kotlin/data/FlightScheduleRepository.kt) | Single source of **schedule** truth. |
-| Markup | [`search-results.peb`](../src/main/resources/templates/flights/search-results.peb), [`book-passengers/index.peb`](../src/main/resources/templates/flights/book-passengers/index.peb), [`book-review/index.peb`](../src/main/resources/templates/flights/book-review/index.peb) | Structure and accessibility. |
+| Markup | [`step-1-search-results/index.peb`](../src/main/resources/templates/flights/step-1-search-results/index.peb), [`step-2-passengers/index.peb`](../src/main/resources/templates/flights/step-2-passengers/index.peb), [`step-3-seats/index.peb`](../src/main/resources/templates/flights/step-3-seats/index.peb), [`book-review/index.peb`](../src/main/resources/templates/flights/book-review/index.peb) | Structure and accessibility. |
 | Interactivity | [`flights-results.js`](../src/main/resources/static/js/flights-results.js) | Fare panels, selection animation, navigation to passengers / inbound search, route-details close. |
 | Layout / motion | [`flights-results.css`](../src/main/resources/static/css/flights-results.css), [`passenger-info.css`](../src/main/resources/static/css/passenger-info.css), [`static/css/flights/`](../src/main/resources/static/css/flights/) | Step 1 flights bundle (`core.css` + `review.css`) plus separate Step 2 passenger entrypoint (`passenger-info.css` -> `passengers.css`). |
 

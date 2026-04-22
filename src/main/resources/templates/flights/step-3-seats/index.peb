@@ -29,9 +29,7 @@
         </ol>
     </nav>
     <header class="flights-hero">
-        <p class="flights-hero__eyebrow">Step 3 of 4</p>
         <h1 class="flights-hero__title">Seat and extras</h1>
-        <p class="flights-hero__hint">This step is a placeholder for the coursework demo — seat maps and add-ons would appear here.</p>
     </header>
 </div>
 {% endblock %}

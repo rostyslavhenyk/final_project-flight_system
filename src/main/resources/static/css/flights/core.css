@@ -62,15 +62,16 @@
 }
 
 .booking-stepper__label--done-link {
-  color: #111;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 2px;
-  font-weight: 600;
+  color: #367878;
+  text-decoration: none;
+  font-weight: 400;
 }
 
 .booking-stepper__label--done-link:hover {
-  color: #000;
+  color: #2a5f5f;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
 }
 
 .booking-stepper__num {

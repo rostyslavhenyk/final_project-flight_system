@@ -13,7 +13,7 @@ This handover focuses on the passenger-details step only:
 ### Route and renderer
 - Route: `GET /book/passengers`
 - Kotlin handler: `handleBookPassengers` in `src/main/kotlin/routes/FlightsRoutes.kt`
-- Template (folder-per-page): `src/main/resources/templates/flights/book-passengers/index.peb`
+- Template (Step 2 folder): `src/main/resources/templates/flights/step-2-passengers/index.peb`
 
 ### Related assets
 - Styles: `src/main/resources/static/css/flights-results.css`

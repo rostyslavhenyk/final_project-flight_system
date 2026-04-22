@@ -392,6 +392,59 @@ p#credits {
     font-size: 0.65rem;
 }
 
+.info-page {
+  width: 100%;
+  max-width: none;
+  margin: 0 auto 3.5rem;
+  /* Same vertical band as below the page title (hero margin-bottom: 1.25rem) */
+  padding: 1.25rem clamp(28px, 5vw, 56px) 2rem;
+  padding-left: max(clamp(28px, 5vw, 56px), env(safe-area-inset-left));
+  padding-right: max(clamp(28px, 5vw, 56px), env(safe-area-inset-right));
+  box-sizing: border-box;
+}
+
+.info-page .flights-hero {
+  margin-bottom: 1.25rem;
+}
+
+.info-page .flights-hero__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.25;
+}
+
+.info-page__body {
+  background: #f9fbfb;
+  border: 1px solid #c8d8d8;
+  border-radius: 10px;
+  padding: clamp(1.1rem, 2.8vw, 1.75rem);
+  box-shadow: 0 8px 20px rgba(54, 120, 120, 0.08);
+}
+
+.info-page__body h2 {
+  margin: 1.25rem 0 0.45rem;
+  font-size: clamp(1.02rem, 1.7vw, 1.2rem);
+  color: #1a3a52;
+  font-weight: 600;
+}
+
+.info-page__body h2:first-of-type {
+  margin-top: 0.75rem;
+}
+
+.info-page__body p {
+  margin: 0;
+  color: #252525;
+  line-height: 1.62;
+  font-size: 1rem;
+}
+
+.info-page__body p + h2 {
+  margin-top: 1.45rem;
+}
+
 .icon-circle {
     width: 32px;
     height: 32px;
@@ -483,7 +536,8 @@ main {
   flex: 1 1 auto;
   width: 100%;
   box-sizing: border-box;
-  padding-top: 40px;
+  /* Fixed navbar is 64px; 40px left content tucked under the bar */
+  padding-top: 64px;
 }
 
 
