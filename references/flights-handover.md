@@ -10,10 +10,25 @@ This handover explains:
 
 ### CSS quick map (where to edit)
 
-- [`flights-results.css`](../src/main/resources/static/css/flights-results.css): aggregator file; keeps existing template links stable and imports the modular files below.
-- [`static/css/flights/core.css`](../src/main/resources/static/css/flights/core.css): shared flights UI (page shell, stepper, hero, date carousel, sort bar, search cards, route details, fare grid, pager, inbound/outbound recap).
-- [`static/css/flights/passengers.css`](../src/main/resources/static/css/flights/passengers.css): passenger-info page styling (`/book/passengers`) including sign-in panel, passenger/contact form, membership/validation presentation, and CTA spacing.
-- [`static/css/flights/review.css`](../src/main/resources/static/css/flights/review.css): review page styling (`/book/review`) including leg cards, package summary, “select another …” controls, and continue CTA.
+- [`flights-results.css`](../src/main/resources/static/css/flights-results.css): Step 1 flights aggregator used by search/review pages; imports `flights/core.css` and `flights/review.css`.
+- [`static/css/flights/core.css`](../src/main/resources/static/css/flights/core.css): shared Step 1 flights UI (page shell, stepper, hero, date carousel, sort bar, search cards, route details, fare grid, pager, inbound/outbound recap).
+- [`static/css/flights/review.css`](../src/main/resources/static/css/flights/review.css): Step 1 summary/review styling (`/book/review`) including leg cards, package summary, “select another …” controls, and continue CTA.
+- [`passenger-info.css`](../src/main/resources/static/css/passenger-info.css): Step 2 passenger stylesheet entrypoint used by `/book/passengers` (imports passenger-specific rules only).
+- [`static/css/flights/passengers.css`](../src/main/resources/static/css/flights/passengers.css): the passenger-specific rule set consumed by `passenger-info.css`.
+
+### File ownership (easy to understand cheat sheet)
+
+- **`flights-results.css`**: only a loader file. It bundles **Step 1** flight pages (`/search-flights`, `/book/review`). It is **not** where Step 2 form styles are authored.
+- **`flights/core.css`**: shared flight-search visuals for Step 1 (cards, route details, fares, pager, top stepper shell). If a change affects departing/returning list cards, edit here first.
+- **`flights/review.css`**: Step 1 review/summary page styling only (`/book/review`), including package panel and “select another …” controls.
+- **`passenger-info.css`**: Step 2 entrypoint for `/book/passengers`. Keeps passenger styling physically separate from the Step 1 bundle.
+- **`flights/passengers.css`**: actual Step 2 rule set (sign-in block, passenger/contact form, step-2 spacing). It is loaded through `passenger-info.css`.
+- **`flights-results.js`**: booking flow behavior shared across Step 1/2 pages (fare selection navigation, route details animation, title dropdown helpers). Not a layout file.
+
+Quick selector hint:
+- `bp-wf-*` -> Step 2 passenger UI
+- `review-wf-*` -> Step 1 review/summary UI
+- `flight-card*`, `route-*`, `fare-*` -> Step 1 flight results/review cards
 
 ---
 
@@ -88,7 +103,7 @@ The fare section uses cabin flags (`isEconomyCabin`, `isBusinessCabin`, `isFirst
 
 ### 2.3 CSS structure
 
-Files: [`static/css/flights-results.css`](../src/main/resources/static/css/flights-results.css) as an aggregator, with modular files in [`static/css/flights/`](../src/main/resources/static/css/flights/) (`core.css`, `passengers.css`, `review.css`). Route-details selectors live in `core.css` (search for `.route-itinerary`, `.flight-card__details`).
+Files: [`static/css/flights-results.css`](../src/main/resources/static/css/flights-results.css) as the Step 1 aggregator, with modular files in [`static/css/flights/`](../src/main/resources/static/css/flights/) (`core.css`, `review.css`). Passenger-page styles are loaded separately via [`passenger-info.css`](../src/main/resources/static/css/passenger-info.css). Route-details selectors live in `core.css` (search for `.route-itinerary`, `.flight-card__details`).
 
 - **Ledger layout:** Left column for flight numbers, right column for segment text.
 - **Footer bar:** Keeps the flight-number chain and the Route details toggle aligned cleanly.
@@ -228,7 +243,7 @@ The template exposes `returnDateForFareNav` so inbound cards still have `data-se
 | CSV load, expand templates, pricing/layover math | [`FlightScheduleRepository.kt`](../src/main/kotlin/data/FlightScheduleRepository.kt) | Single source of **schedule** truth. |
 | Markup | [`search-results.peb`](../src/main/resources/templates/flights/search-results.peb), [`book-passengers/index.peb`](../src/main/resources/templates/flights/book-passengers/index.peb), [`book-review/index.peb`](../src/main/resources/templates/flights/book-review/index.peb) | Structure and accessibility. |
 | Interactivity | [`flights-results.js`](../src/main/resources/static/js/flights-results.js) | Fare panels, selection animation, navigation to passengers / inbound search, route-details close. |
-| Layout / motion | [`flights-results.css`](../src/main/resources/static/css/flights-results.css) + [`static/css/flights/`](../src/main/resources/static/css/flights/) | Aggregator import file + modular styles: `core.css` (search/timeline/fares/pager), `passengers.css` (passenger step), `review.css` (review step). |
+| Layout / motion | [`flights-results.css`](../src/main/resources/static/css/flights-results.css), [`passenger-info.css`](../src/main/resources/static/css/passenger-info.css), [`static/css/flights/`](../src/main/resources/static/css/flights/) | Step 1 flights bundle (`core.css` + `review.css`) plus separate Step 2 passenger entrypoint (`passenger-info.css` -> `passengers.css`). |
 
 ### 5.1 Kotlin operations map
 

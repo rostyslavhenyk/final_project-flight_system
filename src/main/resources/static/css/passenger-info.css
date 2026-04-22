@@ -1,0 +1,4 @@
+/* Step 2 passenger page stylesheet.
+ * Kept separate from the Step 1 flights bundle. */
+
+@import url("/static/css/flights/passengers.css");

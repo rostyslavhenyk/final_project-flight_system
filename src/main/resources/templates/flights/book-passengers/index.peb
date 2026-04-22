@@ -4,6 +4,7 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="/static/css/flights-results.css">
+<link rel="stylesheet" href="/static/css/passenger-info.css">
 <script src="/static/js/flights-results.js" defer></script>
 {% endblock %}
 
