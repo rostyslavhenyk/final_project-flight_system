@@ -10,6 +10,9 @@
     hx-target="#log-in-status"
     hx-swap="innerHTML">
 
+    {% if returnUrl %}
+    <input type="hidden" name="returnUrl" value="{{ returnUrl }}">
+    {% endif %}
     <input name="email" placeholder="Email">
     <input name="password" type="password" placeholder="Password">
     <button type="submit">Login</button>

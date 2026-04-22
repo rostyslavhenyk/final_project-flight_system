@@ -38,14 +38,16 @@ suspend fun <T> ApplicationCall.timed(
             }
 
         Logger.write(
-            sessionId = sid,
-            requestId = requestId,
-            taskCode = taskCode,
-            step = step,
-            outcome = e::class.simpleName ?: "error",
-            durationMs = duration,
-            statusCode = response.status()?.value ?: defaultStatus,
-            jsMode = jsMode,
+            LogEntry(
+                sessionId = sid,
+                requestId = requestId,
+                taskCode = taskCode,
+                step = step,
+                outcome = e::class.simpleName ?: "error",
+                durationMs = duration,
+                statusCode = response.status()?.value ?: defaultStatus,
+                jsMode = jsMode,
+            ),
         )
         throw e
     }

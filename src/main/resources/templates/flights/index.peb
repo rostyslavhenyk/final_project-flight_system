@@ -1,9 +1,9 @@
 {% extends "_layout/base.peb" %}
 
 {% block content %}
-<h1 style="text-align: center;">Flights</h1>
-
-<section aria-labelledby="list-heading">
-
+<section style="max-width: 900px; margin: 2rem auto; background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 1.5rem;">
+    <h1 style="margin: 0 0 0.5rem;">Flights</h1>
+    <p style="margin: 0 0 1rem; color: #555;">This section is still under development.</p>
+    <p style="margin: 0;">Use the homepage <strong>Search flights</strong> form to view flight results.</p>
 </section>
 {% endblock %}

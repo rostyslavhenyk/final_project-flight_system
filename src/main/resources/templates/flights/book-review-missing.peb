@@ -1,0 +1,18 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Selection not found · Glide Airways{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/flights-results.css">
+{% endblock %}
+
+{% block content %}
+<div class="flights-page">
+    <header class="flights-hero">
+        <p class="flights-hero__eyebrow">Booking</p>
+        <h1 class="flights-hero__title">We couldn’t load that flight</h1>
+        <p class="flights-hero__hint">Your session may have expired or the timetable may have changed. Please choose a flight again.</p>
+        <p><a class="book-review__btn book-review__btn--primary" href="{{ backHref }}">Back to flight list</a></p>
+    </header>
+</div>
+{% endblock %}

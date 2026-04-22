@@ -1,0 +1,3 @@
+Passenger sign-in visual files
+- Active visual: booking-signin-plane-visual.svg (legacy icon, zoomed center)
+- Archived photo: booking-signin-aircraft.jpg (kept for future use)

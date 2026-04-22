@@ -1,0 +1,1406 @@
+/* Search results: extra horizontal inset so the column reads slightly narrower than the navbar edge. */
+
+.flights-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto 3.5rem;
+  padding: 0 clamp(28px, 5vw, 56px);
+  padding-left: max(clamp(28px, 5vw, 56px), env(safe-area-inset-left));
+  padding-right: max(clamp(28px, 5vw, 56px), env(safe-area-inset-right));
+  overflow-x: clip;
+  font-size: 0.97rem;
+}
+
+.flights-page *,
+.flights-page *::before,
+.flights-page *::after {
+  box-sizing: border-box;
+}
+
+/* --- Booking stepper --- */
+.booking-stepper {
+  margin: 1.25rem 0 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #d8d8d8;
+}
+
+.booking-stepper__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.75rem;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.booking-stepper__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #5a5a5a;
+}
+
+.booking-stepper__item--current {
+  color: #222;
+}
+
+.booking-stepper__item--current .booking-stepper__label {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+  text-decoration-thickness: 2px;
+  font-weight: 700;
+}
+
+.booking-stepper__item--done .booking-stepper__num {
+  border-color: #80a9a9;
+  background: #eef6f6;
+  color: #2e5f5f;
+}
+
+.booking-stepper__label--done-link {
+  color: #111;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  font-weight: 600;
+}
+
+.booking-stepper__label--done-link:hover {
+  color: #000;
+}
+
+.booking-stepper__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 50%;
+  border: 2px solid #c8c8c8;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.booking-stepper__item--current .booking-stepper__num {
+  border-color: #367878;
+  background: #367878;
+  color: #fff;
+}
+
+.booking-stepper__item--todo .booking-stepper__num {
+  background: #f4f4f4;
+}
+
+/* --- Hero --- */
+.flights-hero__eyebrow {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6a6a6a;
+  font-weight: 600;
+}
+
+.flights-hero__title {
+  margin: 0.2rem 0 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.25;
+}
+
+/* When no eyebrow line (e.g. passenger step), avoid extra gap above the title */
+.flights-hero > .flights-hero__title:first-child {
+  margin-top: 0;
+}
+
+.flights-hero__strapline {
+  margin: 1.25rem 0 0;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+
+.flights-hero__hint {
+  margin-top: 0.6rem;
+  color: #555;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.flights-hero__hint a {
+  color: #367878;
+  font-weight: 600;
+}
+
+/* --- Date carousel --- */
+.date-carousel {
+  display: flex;
+  align-items: stretch;
+  gap: 0.65rem;
+  margin: 1.75rem 0;
+}
+
+.date-carousel__arrow {
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(2.75rem, 4vw, 3.25rem);
+  height: clamp(2.75rem, 4vw, 3.25rem);
+  border-radius: 50%;
+  border: 2px solid #2a6d8f;
+  color: #2a6d8f;
+  text-decoration: none;
+  font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1;
+  background: #fff;
+}
+
+.date-carousel__arrow:hover {
+  background: #eef6f9;
+}
+
+.date-carousel__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.date-carousel__cell {
+  flex: 1 1 0;
+  min-width: 0;
+  border-right: 1px solid #c8c8c8;
+  display: flex;
+  align-items: stretch;
+}
+
+.date-carousel__cell:last-child {
+  border-right: none;
+}
+
+.date-carousel__cell--selected {
+  z-index: 1;
+}
+
+.date-carousel__chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3.35rem;
+  padding: 0.55rem 0.4rem;
+  border: none;
+  background: #fff;
+  color: #333;
+  text-decoration: none;
+  font-size: clamp(0.88rem, 1.1vw, 1rem);
+  line-height: 1.25;
+  text-align: center;
+}
+
+.date-carousel__chip:hover {
+  background: #f4fafb;
+  color: #1a5c5c;
+}
+
+.date-carousel__chip--selected:hover {
+  background: #1a3a52;
+  color: #fff;
+}
+
+.date-carousel__chip--past {
+  cursor: not-allowed;
+  pointer-events: none;
+  color: #9a9a9a;
+  background: #f5f5f5;
+}
+
+.date-carousel__cell--past:not(.date-carousel__cell--selected) {
+  background: #fafafa;
+}
+
+.date-carousel__chip--selected {
+  min-height: 3.65rem;
+  padding: 0.7rem 0.4rem;
+  background: #1a3a52;
+  color: #fff;
+  font-weight: 700;
+  font-size: clamp(0.95rem, 1.2vw, 1.08rem);
+  transform: scale(1.06);
+  box-shadow: 0 4px 14px rgba(26, 58, 82, 0.2);
+  cursor: default;
+}
+
+/* --- Sort + count --- */
+.flights-toolbar {
+  margin: 1.5rem 0 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+.sort-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.65rem 1.25rem;
+  margin-bottom: 0.85rem;
+}
+
+.sort-row__prefix {
+  font-size: 0.95rem;
+  color: #444;
+  font-weight: 700;
+}
+
+.sort-row__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+}
+
+.sort-pill {
+  display: inline-block;
+  font-size: 0.95rem;
+  color: #2a6d8f;
+  text-decoration: none;
+  padding: 0.2rem 0;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.sort-pill:hover {
+  border-bottom-color: #367878;
+  color: #1a5c5c;
+}
+
+.sort-pill--current {
+  color: #222;
+  font-weight: 700;
+  border-bottom-color: #367878;
+  pointer-events: none;
+}
+
+.results-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+.results-meta__count {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #333;
+}
+
+.results-meta__order {
+  font-size: 0.95rem;
+  color: #2a6d8f;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.results-meta__order:hover {
+  color: #1a3a52;
+}
+
+/* One line for chosen cabin (from homepage search); replaces repeating “Economy” on every card */
+.cabin-banner {
+  margin: 0 0 1.1rem;
+  padding: 0.65rem 1rem;
+  font-size: clamp(1rem, 1.15vw, 1.12rem);
+  color: #333;
+  background: #f3f7f7;
+  border: 1px solid #d8e8e8;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+.cabin-banner strong {
+  color: #1a5c5c;
+  font-weight: 800;
+}
+
+.cabin-banner--first {
+  background: #fff5f5;
+  border-color: #f0c4c4;
+  color: #5c1a1a;
+}
+
+.cabin-banner--first strong {
+  color: #c62828;
+  font-weight: 800;
+}
+
+.cabin-banner--business {
+  background: #f7fbff;
+  border-color: #c8d6ec;
+}
+
+.cabin-banner--business strong {
+  color: #2f5f9f;
+}
+
+/* --- Flight cards (row + right price column) --- */
+.flight-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.flight-results__empty {
+  padding: 2.5rem 1.25rem;
+  text-align: center;
+  color: #555;
+  background: #fafafa;
+  border: 1px dashed #c8c8c8;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.flight-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(148px, 200px);
+  grid-template-rows: auto auto;
+  align-items: stretch;
+  border: 1px solid #c8c8c8;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.flight-card__detail {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 1.35rem 1.5rem 1.15rem;
+  min-width: 0;
+}
+
+.flight-card__buy {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  border-left: 1px solid #d8d8d8;
+  background: #fafafa;
+  padding: 0;
+  min-width: 0;
+}
+
+.flight-card__price-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 1.35rem 1rem 1.35rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+}
+
+.flight-card__price-btn:hover {
+  background: #f0f9f9;
+}
+
+.flight-card__price-btn:focus-visible {
+  outline: 3px solid #367878;
+  outline-offset: -3px;
+}
+
+.flight-card__price-label {
+  font-size: 0.78rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.flight-card__price-value {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #1a4d6e;
+  letter-spacing: -0.02em;
+}
+
+.flight-card__fares {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: 0fr;
+  border-top: 1px solid transparent;
+  padding: 0 1.5rem;
+  background: #f6f7f8;
+  transition:
+    grid-template-rows 0.58s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.35s ease,
+    padding 0.58s ease;
+}
+
+.flight-card__fares[data-state="open"] {
+  grid-template-rows: 1fr;
+  border-top-color: #e8e8e8;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.flight-card__fares-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * Fare select exit scales beyond the normal card box.
+ * While .fare-grid--select-busy is active, overflow is relaxed to avoid clipping.
+ */
+.flight-card:has(.fare-grid--select-busy) {
+  overflow: visible;
+}
+
+.flight-card:has(.fare-grid--select-busy) .flight-card__fares,
+.flight-card:has(.fare-grid--select-busy) .flight-card__fares-clip {
+  overflow: visible;
+}
+
+.flight-card__fares-inner {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.48s ease,
+    transform 0.48s ease;
+}
+
+.flight-card__fares[data-state="open"] .flight-card__fares-inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-card__fares {
+    transition: none;
+  }
+
+  .flight-card__fares-inner {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .flight-card {
+    grid-template-columns: 1fr;
+  }
+
+  .flight-card__buy {
+    grid-column: 1;
+    grid-row: 2;
+    border-left: none;
+    border-top: 1px solid #d8d8d8;
+  }
+
+  .flight-card__fares {
+    grid-row: 3;
+  }
+}
+
+/* Times row */
+.flight-card__times {
+  display: grid;
+  /* Keep side columns even so the middle track stays visually centered. */
+  grid-template-columns: minmax(5.25rem, 1fr) minmax(0, 2.4fr) minmax(5.25rem, 1fr);
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.flight-card__endpoint {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.flight-card__endpoint--arrive {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.flight-card__time {
+  font-size: clamp(1.35rem, 2.5vw, 1.68rem);
+  font-weight: 800;
+  color: #1a5c5c;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.flight-card__plus-day {
+  font-size: 0.55em;
+  font-weight: 800;
+  margin-left: 0.08em;
+  vertical-align: super;
+  color: #367878;
+}
+
+.flight-card__code {
+  font-size: 0.95rem;
+  color: #6a6a6a;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.flight-card__timeline-wrap {
+  min-width: 0;
+  padding-top: 0.2rem;
+}
+
+/* Duration and stop text align to the track width (not the plane icon width). */
+.flight-card__track-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Two-column grid: plane icon + track content. Keeps text centered on the track itself. 
+   --flight-bar-end-inset reserves space for the destination ring. */
+.flight-card__track-with-plane {
+  --flight-bar-end-inset: 0.875rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto auto;
+  column-gap: 0.45rem;
+  row-gap: 0.3rem;
+  width: 100%;
+}
+
+.flight-card__track-block--has-stops .flight-card__track-with-plane {
+  row-gap: 0.2rem;
+}
+
+.flight-card__track-block {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.flight-card__duration-above {
+  grid-column: 2;
+  grid-row: 1;
+  box-sizing: border-box;
+  padding-right: var(--flight-bar-end-inset);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #6a6a6a;
+  text-align: center;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.flight-card__timeline {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+}
+
+.flight-card__plane {
+  grid-column: 1;
+  grid-row: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  color: #367878;
+}
+
+.flight-card__plane-icon {
+  display: block;
+  transform: rotate(90deg);
+}
+
+.flight-card__track {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 2.25rem;
+  padding-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+}
+
+/* Extra room below the bar for airport codes (codes sit in padding area). */
+.flight-card__track-column--has-stops .flight-card__track {
+  padding-bottom: 1.35rem;
+  min-height: 2.5rem;
+}
+
+.flight-card__timeline--stops-0 .flight-card__track {
+  padding-bottom: 0;
+}
+
+.flight-card__track-line {
+  position: absolute;
+  left: 0;
+  right: var(--flight-bar-end-inset, 0.875rem);
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: #bdbdbd;
+  border-radius: 1px;
+}
+
+.flight-card__track-stops {
+  position: absolute;
+  left: 0;
+  right: var(--flight-bar-end-inset, 0.875rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  pointer-events: none;
+}
+
+/* Multiple connections: spread dots between start and end ring. */
+.flight-card__timeline--stops-2 .flight-card__track-stops,
+.flight-card__timeline--stops-3 .flight-card__track-stops {
+  justify-content: space-evenly;
+}
+
+.flight-card__timeline--stops-0 .flight-card__track-stops {
+  display: none;
+}
+
+.flight-card__stop-group {
+  position: relative;
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 0;
+  flex-shrink: 0;
+}
+
+.flight-card__stop-dot {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #6a6a6a;
+  box-sizing: border-box;
+}
+
+.flight-card__stop-code {
+  position: absolute;
+  left: 50%;
+  top: 11px;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.flight-card__end-ring {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #367878;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.flight-card__stops-line {
+  grid-column: 2;
+  grid-row: 3;
+  box-sizing: border-box;
+  padding-right: var(--flight-bar-end-inset);
+  margin: 0;
+  font-size: 0.92rem;
+  color: #5a5a5a;
+  text-align: center;
+  line-height: 1.4;
+  min-width: 0;
+}
+
+.flight-card__track-block--has-stops .flight-card__stops-line {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+}
+
+/* Footer: optional flight chain (collapsed) + Route details; chain is position:absolute so summary stays fixed on the right. */
+.flight-card__footer {
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ececec;
+}
+
+.flight-card__footer-bar {
+  position: relative;
+}
+
+/* Chain is out of flow so the Route details control can stay a narrow hit target on the right. */
+.flight-card__preflight-chain {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  max-width: calc(100% - 11.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(0.95rem, 2vw, 1.1rem);
+  font-weight: 800;
+  color: #234;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  z-index: 0;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.28s ease,
+    visibility 0.28s ease;
+}
+
+.flight-card__footer-bar:has(.flight-card__details[open]) .flight-card__preflight-chain {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.flight-card__details {
+  font-size: 1rem;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Only the “Route details” label toggles `<details>` — not a full-width row. */
+.flight-card__details-summary {
+  cursor: pointer;
+  color: #2a6d8f;
+  font-weight: 700;
+  list-style: none;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  text-align: right;
+}
+
+.flight-card__details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.flight-card__details-summary::after {
+  content: " ▼";
+  font-size: 0.75em;
+}
+
+.flight-card__details[open] .flight-card__details-summary::after {
+  content: " ▲";
+}
+
+.flight-card__details-body {
+  margin-top: 1rem;
+  padding: 0;
+  padding-right: 1.25rem;
+  border-radius: 6px;
+  color: #333;
+  line-height: 1.55;
+  font-size: 1.02rem;
+  box-sizing: border-box;
+}
+
+.flight-card__details[open]:not(.flight-card__details--closing) > .flight-card__details-body {
+  animation: flight-route-details-open 0.4s ease-out 0.05s both;
+}
+
+@keyframes flight-route-details-open {
+  from {
+    opacity: 0;
+    transform: translateY(-0.45rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flight-card__details[open].flight-card__details--closing > .flight-card__details-body {
+  animation: flight-route-details-close 0.34s ease-in forwards;
+}
+
+@keyframes flight-route-details-close {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-0.4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-card__preflight-chain {
+    transition: none;
+  }
+
+  .flight-card__footer-bar:has(.flight-card__details[open]) .flight-card__preflight-chain {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .flight-card__details[open]:not(.flight-card__details--closing) > .flight-card__details-body {
+    animation: none;
+  }
+
+  .flight-card__details[open].flight-card__details--closing > .flight-card__details-body {
+    animation: none;
+  }
+}
+
+.route-itinerary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Left column: flight numbers + ↓; right column: segment / connect boxes (direct + multi-stop). */
+.route-itinerary--ledger .route-itinerary__row--segment {
+  display: grid;
+  grid-template-columns: 5.35rem minmax(0, 1fr);
+  gap: 0.45rem 0.3rem;
+  align-items: center;
+}
+
+.route-itinerary__lead--fn {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  align-self: stretch;
+  min-height: 0;
+}
+
+.route-itinerary__fn {
+  font-size: 1.24rem;
+  font-weight: 800;
+  color: #1a3d5c;
+  letter-spacing: 0.03em;
+  text-align: left;
+  line-height: 1.25;
+}
+
+.route-itinerary__row--join {
+  display: grid;
+  grid-template-columns: 5.35rem minmax(0, 1fr);
+  gap: 0.45rem 0.3rem;
+  align-items: center;
+}
+
+.route-itinerary__lead--arrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #367878;
+  line-height: 1;
+  /* Column is centred on full width; flight numbers are left — nudge arrow left to sit under their visual centre */
+  transform: translateX(-0.42rem);
+}
+
+.route-seg {
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid #e4e4e4;
+  border-radius: 6px;
+  margin-bottom: 0;
+}
+
+.route-seg__times {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.route-seg__time {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1a5c5c;
+}
+
+.route-seg__arrow {
+  color: #999;
+  font-size: 1.1rem;
+}
+
+.route-seg__airports {
+  margin: 0 0 0.35rem;
+  font-size: 1.02rem;
+}
+
+.route-seg__meta {
+  margin: 0;
+  font-size: 0.92rem;
+  color: #666;
+}
+
+.route-connect {
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  background: #eceff1;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.route-connect__label {
+  display: block;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.route-connect__name {
+  display: block;
+  font-size: 0.88rem;
+  color: #666;
+  margin-top: 0.2rem;
+  line-height: 1.35;
+}
+
+.route-connect__layover {
+  display: block;
+  font-size: 0.92rem;
+  color: #555;
+  margin-top: 0.35rem;
+}
+
+.route-connect__layover-time {
+  font-weight: 800;
+  color: #367878;
+}
+
+.route-total-row {
+  display: grid;
+  grid-template-columns: 5.35rem minmax(0, 1fr);
+  gap: 0.45rem 0.3rem;
+  align-items: stretch;
+  margin-top: 0.65rem;
+}
+
+.route-total-row__spacer {
+  min-width: 0;
+}
+
+.route-total-bar {
+  margin: 0;
+  padding: 0.65rem 1rem;
+  background: #e8eef0;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #333;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .route-itinerary--ledger .route-itinerary__row--segment {
+    grid-template-columns: 3.85rem minmax(0, 1fr);
+  }
+
+  .route-itinerary__row--join {
+    grid-template-columns: 3.85rem minmax(0, 1fr);
+  }
+
+  .route-total-row {
+    grid-template-columns: 3.85rem minmax(0, 1fr);
+  }
+
+  .route-itinerary__fn {
+    font-size: 1.12rem;
+  }
+
+  .flight-card__details-body {
+    padding-left: 0;
+    padding-right: 1rem;
+  }
+}
+
+/* Fare comparison grid (icon-led sections) */
+.fare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.fare-grid.fare-grid--business {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.fare-grid.fare-grid--first {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 900px) {
+  .fare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fare-plan {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  padding: 1.1rem 1.15rem 1.25rem;
+  background: #fff;
+}
+
+.fare-plan.fare-plan--business {
+  border-color: #c8d6ec;
+  background: #f7fbff;
+}
+
+.fare-plan.fare-plan--business .fare-plan__name em,
+.fare-plan.fare-plan--business .fare-block__glyph {
+  color: #2f5f9f;
+}
+
+.fare-plan.fare-plan--business .fare-plan__cta {
+  background: #2f5f9f;
+}
+
+.fare-plan.fare-plan--business .fare-plan__cta:hover {
+  background: #234b7d;
+}
+
+.fare-grid.fare-grid--business .fare-plan {
+  min-height: 0;
+}
+
+.fare-plan.fare-plan--first {
+  border-color: #e7d5ad;
+  background: #fffaf0;
+}
+
+.fare-plan.fare-plan--first .fare-plan__name em,
+.fare-plan.fare-plan--first .fare-block__glyph {
+  color: #8b6a20;
+}
+
+.fare-plan.fare-plan--first .fare-plan__cta {
+  background: #8b6a20;
+}
+
+.fare-plan.fare-plan--first .fare-plan__cta:hover {
+  background: #6e5319;
+}
+
+/* Fare-column exit animation state. */
+.fare-grid.fare-grid--select-busy {
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fare-grid.fare-grid--select-busy .fare-plan.fare-plan--chosen {
+  border-color: #367878;
+  box-shadow: 0 0 0 1px #367878;
+}
+
+.fare-grid.fare-grid--select-busy .fare-plan.fare-plan--chosen-exit {
+  border-color: #367878;
+  box-shadow: 0 0 0 1px #367878;
+}
+
+.fare-grid.fare-grid--select-busy .fare-plan.fare-plan--peer-out {
+  border-color: #e4e4e4;
+  box-shadow: none;
+}
+
+.fare-plan--peer-out {
+  animation: fare-plan-peer-out 0.42s ease forwards;
+}
+
+.fare-plan--chosen-exit {
+  animation: fare-plan-chosen-tap-and-leave 1.04s forwards;
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes fare-plan-peer-out {
+  to {
+    opacity: 0;
+    transform: scale(0.986);
+    filter: blur(0.35px);
+  }
+}
+
+/*
+ * Single timeline: micro zoom-in, short hold, then one continuous fade+shrink.
+ * The hold prevents a visible "first zoom-out" before the fade starts.
+ * Overflow on .flight-card / .flight-card__fares-clip is relaxed while .fare-grid--select-busy so
+ * this scale is not clipped at the top/left/bottom edges.
+ */
+@keyframes fare-plan-chosen-tap-and-leave {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    animation-timing-function: cubic-bezier(0.33, 0, 0.2, 1);
+  }
+
+  38.4615% {
+    opacity: 1;
+    transform: scale(1.016);
+    animation-timing-function: linear;
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.016);
+    animation-timing-function: cubic-bezier(0.2, 0, 0.2, 1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+.fare-plan__name {
+  margin: 0 0 0.65rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 1.08rem;
+  color: #222;
+}
+
+.fare-plan__name em {
+  font-style: normal;
+  font-weight: 800;
+  color: #367878;
+}
+
+.fare-plan__tag {
+  margin: -0.25rem 0 0.65rem;
+  font-size: 0.82rem;
+  color: #6a6a6a;
+  font-weight: 600;
+}
+
+.fare-plan__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fare-block {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #ececec;
+}
+
+.fare-block:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0.25rem;
+}
+
+.fare-block__head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.4rem;
+}
+
+.fare-block__glyph {
+  flex-shrink: 0;
+  display: block;
+  color: #367878;
+}
+
+.fare-block__glyph use {
+  fill: currentColor;
+}
+
+.fare-block__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1a3a4a;
+  letter-spacing: 0.01em;
+}
+
+.fare-block__text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.55;
+}
+
+.fare-block__list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  color: #444;
+  line-height: 1.48;
+}
+
+.fare-block__list li {
+  margin-bottom: 0.38rem;
+}
+
+.fare-block__list li:last-child {
+  margin-bottom: 0;
+}
+
+.fare-block__text strong,
+.fare-block__list strong {
+  font-weight: 800;
+  color: #2a2a2a;
+}
+
+.fare-plan__price {
+  margin: 0.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid #e4e4e4;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #1a4d6e;
+  text-align: center;
+}
+
+.fare-plan__cta {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #fff;
+  background: #1a5c8c;
+  transition: background 0.15s ease;
+}
+
+.fare-plan__cta:hover {
+  background: #154a73;
+}
+
+.fare-plan__cta:focus-visible {
+  outline: 3px solid #367878;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fare-plan--peer-out,
+  .fare-plan--chosen-exit {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+
+.flights-outbound-recap {
+  margin: 0.45rem 0 1.35rem;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  background: #e8f4f4;
+  border: 1px solid #c5e0e0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.flights-leg-nav {
+  margin: -0.25rem 0 1.25rem;
+}
+
+.flights-leg-nav__link {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a4a5a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.flights-leg-nav__link:hover {
+  color: #0d2d38;
+}
+
+
+/* Pager */
+.flight-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.flight-pager__page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.35rem;
+  height: 2.35rem;
+  padding: 0 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #c8c8c8;
+  text-decoration: none;
+  color: #2a6d8f;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: #fff;
+}
+
+.flight-pager__page:hover {
+  background: #eef6f9;
+  border-color: #367878;
+}
+
+.flight-pager__page--current {
+  background: #367878;
+  border-color: #367878;
+  color: #fff;
+  cursor: default;
+}

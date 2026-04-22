@@ -1,0 +1,583 @@
+/* Passenger step (/book/passengers) — full width like search/review (inherits .flights-page padding) */
+.bp-wf {
+  padding-bottom: 2.5rem;
+}
+
+.bp-wf-rule {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border: none;
+  border-top: 1px solid #d8d8d8;
+}
+
+.bp-wf-signin {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  min-height: 13.5rem;
+  margin: 0 0 0;
+  border-radius: 8px;
+  border: 1px solid #c5e0e0;
+  overflow: hidden;
+  background: #f8fdfd;
+}
+
+.bp-wf-signin__visual {
+  position: relative;
+  min-height: 12rem;
+  height: 100%;
+  background: #1a3a45;
+}
+
+.bp-wf-signin__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 12rem;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+
+.bp-wf-signin__body {
+  padding: 1.15rem 1.35rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.bp-wf-signin__text {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: #333;
+}
+
+.bp-wf-signin__btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1.15rem;
+  border-radius: 6px;
+  border: 1px solid #2a6f7a;
+  background: #fff;
+  color: #1a4a5a;
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.bp-wf-signin__btn:hover {
+  background: #e8f4f4;
+}
+
+.bp-wf-signin__guest {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #666;
+}
+
+@media (max-width: 560px) {
+  .bp-wf-signin {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .bp-wf-signin__visual {
+    min-height: 10.5rem;
+    max-height: 14rem;
+  }
+
+  .bp-wf-signin__photo {
+    min-height: 10.5rem;
+    max-height: 14rem;
+  }
+}
+
+.bp-wf-form {
+  margin: 0;
+}
+
+.bp-wf-fieldset {
+  margin: 0 0 0.85rem;
+  padding: 0;
+  border: none;
+}
+
+.bp-wf-pax {
+  display: grid;
+  grid-template-columns: minmax(12.5rem, 26%) minmax(0, 1fr);
+  gap: 1rem 1.35rem;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .bp-wf-pax {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bp-wf-pax--contact {
+  margin-top: 0.15rem;
+}
+
+/* Wider badge column; passenger + contact share the same grid track */
+.bp-wf-pax__badge {
+  width: 100%;
+  min-height: 6.25rem;
+  padding: 0.65rem 0.75rem;
+  border: 2px solid #222;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  line-height: 1.25;
+  text-transform: uppercase;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.bp-wf-pax__badge--contact {
+  text-transform: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.3;
+  min-height: 6.25rem;
+}
+
+.bp-wf-pax__contact-label {
+  display: block;
+  white-space: nowrap;
+}
+
+.bp-wf-pax__num {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.bp-wf-pax__fields {
+  min-width: 0;
+}
+
+/* One outer border around title + name fields (reference layouts) */
+.bp-wf-fields-card {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0.9rem 1.05rem 1.05rem;
+  box-sizing: border-box;
+}
+
+.bp-wf-fields-card:focus-within {
+  border-color: #367878;
+  box-shadow: 0 0 0 1px #367878;
+}
+
+.bp-wf-fields-card__title-row {
+  position: relative;
+  max-width: 15rem;
+  margin-bottom: 0.85rem;
+}
+
+.bp-wf-fields-card__names-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem 1.1rem;
+}
+
+@media (max-width: 520px) {
+  .bp-wf-fields-card__names-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bp-wf-field-block {
+  min-width: 0;
+}
+
+.bp-wf-field-block .bp-wf-label {
+  margin-bottom: 0.35rem;
+}
+
+.bp-wf-combobox-wrap {
+  position: relative;
+}
+
+/* Homepage-style trip combobox (white trigger + list), scoped to passenger page */
+.bp-wf .combo-trigger.bp-wf-combo-trigger {
+  min-height: 3rem;
+  padding: 0.55rem 2.25rem 0.55rem 0.75rem;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  color: #333;
+}
+
+.bp-wf .combo-trigger.bp-wf-combo-trigger:hover {
+  background-color: #f0f9f9;
+  color: #367878;
+  border-color: #367878;
+}
+
+.bp-wf .autocomplete-dropdown.bp-wf-title-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 100;
+  margin-top: 2px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+}
+
+.bp-wf .autocomplete-dropdown.bp-wf-title-menu.is-open {
+  display: block;
+}
+
+.bp-wf .bp-wf-title-menu .trip-option {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  color: #333;
+}
+
+.bp-wf .bp-wf-title-menu .trip-option:hover {
+  background-color: #f0f9f9;
+  color: #367878;
+}
+
+.bp-wf-field {
+  min-width: 0;
+}
+
+.bp-wf-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 0.22rem;
+}
+
+.bp-wf-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #c8c8c8;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.bp-wf-input--tall {
+  min-height: 3rem;
+}
+
+.bp-wf-input:focus {
+  border-color: #367878;
+  outline: 3px solid rgba(54, 120, 120, 0.35);
+  outline-offset: 1px;
+}
+
+.bp-wf-contact {
+  margin-top: 1.75rem;
+  padding-top: 1.65rem;
+  border-top: 1px solid #111;
+}
+
+.bp-wf-contact__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #111;
+}
+
+.bp-wf-contact__hint {
+  margin: 0 0 1.05rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #555;
+}
+
+.bp-wf-contact__stack {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.bp-wf-phone-line {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 8.5rem) 1fr;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+@media (max-width: 520px) {
+  .bp-wf-phone-line {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bp-wf-cta-wrap {
+  margin-top: 1.25rem;
+}
+
+/* Passenger step: inline errors — same palette as homepage `.flight-search-error`. */
+.bp-wf-inline-error {
+  width: 100%;
+  max-width: 100%;
+  margin: 0.65rem 0;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: #8b2e2e;
+  background: #fdeaea;
+  border: 1px solid #e0a0a0;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.bp-wf-inline-error[hidden] {
+  display: none !important;
+}
+
+/* Passenger page refinement pass */
+.bp-wf-rule.bp-wf-rule--after-signin {
+  border-top-color: #111;
+}
+
+.bp-wf-input--membership-locked {
+  background: #f4f4f4;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Country code: + sits outside the bordered numeric field. */
+.bp-wf-dial-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  min-height: 2.35rem;
+}
+
+.bp-wf-dial-prefix {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.15rem 0 0.05rem;
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #333;
+  user-select: none;
+  line-height: 1;
+}
+
+.bp-wf-dial-row .bp-wf-dial-input {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bp-wf-strapline-block {
+  margin-top: 1.1rem;
+}
+
+.bp-wf-strapline-block .flights-hero__strapline {
+  margin-top: 0;
+}
+
+.bp-wf-strapline-block .flights-hero__hint {
+  margin-top: 0.6rem;
+  font-size: 1.15rem;
+}
+
+.bp-wf-signin {
+  min-height: 0;
+  align-items: stretch;
+  margin-top: 1.35rem;
+  margin-bottom: 1.35rem;
+  grid-template-columns: minmax(12.5rem, 26%) minmax(0, 1fr);
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.bp-wf-signin__visual {
+  min-height: 2.75rem;
+  background: #f4f4f4;
+}
+
+.bp-wf-signin__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 2.75rem;
+  object-fit: cover;
+  object-position: 50% 46%;
+}
+
+.bp-wf-signin__body {
+  padding: 0.35rem 0.8rem 0.45rem 2.5rem;
+  gap: 0.55rem;
+}
+
+.bp-wf-signin__text,
+.bp-wf-signin__btn,
+.bp-wf-signin__guest {
+  font-size: 1.125rem;
+}
+
+.bp-wf-signin__text {
+  line-height: 1.28;
+}
+
+.bp-wf-signin__btn {
+  padding: 0.28rem 0.85rem;
+}
+
+.bp-wf-signin__guest {
+  line-height: 1.3;
+}
+
+.bp-wf-contact__title {
+  font-size: 1.52rem;
+}
+
+.bp-wf-contact__hint {
+  font-size: 1.04rem;
+}
+
+.bp-wf-pax__badge {
+  min-height: 6.25rem;
+  font-size: 0.9rem;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  border-color: #367878;
+  background: #367878;
+  color: #fff;
+}
+
+.bp-wf-pax__badge--contact {
+  background: #6a6a6a;
+  border-color: #6a6a6a;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.bp-wf-pax__num {
+  font-size: 0.9rem;
+}
+
+.bp-wf-label {
+  font-size: 0.9rem;
+}
+
+.bp-wf .combo-trigger.bp-wf-combo-trigger,
+.bp-wf .bp-wf-title-menu .trip-option {
+  font-size: 1.125rem;
+}
+
+.bp-wf-label {
+  font-size: 1.125rem;
+}
+
+.bp-wf-input {
+  padding: 0.12rem 1rem;
+  font-size: 1.3rem;
+}
+
+.bp-wf-input--tall {
+  min-height: 2.35rem;
+}
+
+.bp-wf-fields-card--contact .bp-wf-phone-line {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+  margin-bottom: 0.9rem;
+}
+
+/* Match vertical rhythm after phone row (same as .bp-wf-phone-line margin-bottom). */
+.bp-wf-fields-card--contact > .bp-wf-field + .bp-wf-field {
+  margin-top: 0.9rem;
+}
+
+.bp-wf-rule--continue {
+  margin-top: 1.8rem;
+  border-top-color: #111;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.review-wf-continue:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.review-wf-continue:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.booking-stepper__label--done-link {
+  color: #367878;
+  text-decoration: none;
+  font-weight: 400;
+}
+
+.booking-stepper__label--done-link:hover {
+  color: #2a5f5f;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+}
+
+.review-wf-continue-wrap.bp-wf-cta-wrap {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.review-wf-continue {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bp-wf {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.booking-stepper__label--locked {
+  cursor: default;
+  text-decoration: none;
+  color: #5a5a5a;
+  font-weight: 600;
+}
+

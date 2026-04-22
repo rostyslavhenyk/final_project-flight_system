@@ -1,0 +1,10 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+{# Legal and privacy summary page for user transparency #}
+<h1>Legal and Privacies</h1>
+<p>
+    This website may request optional location permission to suggest the nearest departure airport.
+    Location access is used only for this suggestion and users can continue with manual airport entry.
+</p>
+{% endblock %}

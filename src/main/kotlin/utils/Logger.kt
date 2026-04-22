@@ -82,7 +82,18 @@ object Logger {
         outcome: String,
         jsMode: String,
     ) {
-        write(sessionId, requestId, taskCode, "validation_error", outcome, 0, HttpStatusCode.BadRequest.value, jsMode)
+        write(
+            LogEntry(
+                sessionId = sessionId,
+                requestId = requestId,
+                taskCode = taskCode,
+                step = "validation_error",
+                outcome = outcome,
+                durationMs = 0,
+                statusCode = HttpStatusCode.BadRequest.value,
+                jsMode = jsMode,
+            ),
+        )
     }
 
     fun success(
@@ -92,6 +103,17 @@ object Logger {
         durationMs: Long,
         jsMode: String,
     ) {
-        write(sessionId, requestId, taskCode, "success", "", durationMs, HttpStatusCode.OK.value, jsMode)
+        write(
+            LogEntry(
+                sessionId = sessionId,
+                requestId = requestId,
+                taskCode = taskCode,
+                step = "success",
+                outcome = "",
+                durationMs = durationMs,
+                statusCode = HttpStatusCode.OK.value,
+                jsMode = jsMode,
+            ),
+        )
     }
 }

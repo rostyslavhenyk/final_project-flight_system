@@ -1,0 +1,6 @@
+/* Aggregator stylesheet for flights pages.
+ * Split into focused files under static/css/flights/. */
+
+@import url("/static/css/flights/core.css");
+@import url("/static/css/flights/passengers.css");
+@import url("/static/css/flights/review.css");

@@ -7,6 +7,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import java.io.StringWriter
+import java.nio.charset.StandardCharsets
+import java.net.URLDecoder
 import utils.jsMode
 import utils.timed
 import data.UserRepository
@@ -23,18 +25,37 @@ fun Route.logInRoutes() {
 fun ApplicationCall.createLoginStatus(message: String): String =
     """<div id="log-in-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
+/** Only same-origin relative paths (e.g. `/book/passengers?…`) — blocks open redirects. */
+internal fun safeReturnUrlForLogin(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    val s =
+        try {
+            URLDecoder.decode(raw.trim(), StandardCharsets.UTF_8)
+        } catch (_: Exception) {
+            raw.trim()
+        }
+    if (!s.startsWith("/")) return null
+    if (s.startsWith("//")) return null
+    if (s.contains("://")) return null
+    return s
+}
+
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T0_log_in", jsMode()) {
         val pebble = getEngine()
         val logged_state: LoggedInState = loggedIn()
+        val returnRaw = request.queryParameters["returnUrl"]
+        val safeReturn = safeReturnUrlForLogin(returnRaw)
 
         if (logged_state.logged_in) {
-            respondRedirect("/")
+            respondRedirect(safeReturn ?: "/")
+            return@timed
         }
 
         val model =
             mapOf(
                 "title" to "Log In",
+                "returnUrl" to (returnRaw ?: ""),
             )
 
         val template = pebble.getTemplate("log-in/index.peb")
@@ -81,7 +102,10 @@ private suspend fun ApplicationCall.handleLogInPost() {
         }
 
         sessions.set(UserSession(usr.id, usr.firstname))
-        response.headers.append("HX-Redirect", "/")
+        val returnAfterLogin =
+            safeReturnUrlForLogin(params["returnUrl"]?.toString())
+                ?: "/"
+        response.headers.append("HX-Redirect", returnAfterLogin)
         respond(HttpStatusCode.OK)
     }
 }

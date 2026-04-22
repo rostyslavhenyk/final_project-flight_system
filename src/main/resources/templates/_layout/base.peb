@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+    {# Core metadata for all pages #}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Flight System{% endblock %}</title>
 
+    {# Global design system CSS (shared across all pages) #}
     <link rel="stylesheet" href="/static/css/custom.css">
+    {# Per-page optional head content (extra CSS/JS) #}
     {% block extra_head %}{% endblock %}
     <script src="/static/js/htmx-1.9.12.min.js" defer></script>
 </head>
 <body>
+    {# Accessibility skip link for keyboard/screen-reader users #}
     <a class="skip-link" href="#main">Skip to main content</a>
 
     <div id="status" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <br>
 
+    {# Global top navigation #}
     <header id="navbar">
     <div class="brand">
         <a href="/" class="brand-link">Glide Airways</a>
@@ -38,16 +43,23 @@
     </nav>
 </header>
 
+    {# Main content slot for page templates #}
     <main id="main" tabindex="-1">
         {% block content %}
         {% endblock %}
     </main>
 
+    {# Global footer shared by all pages #}
     <footer class="site-footer">
         <div class="footer-inner">
-            <div class="footer-links">
+            <div class="footer-top">
                 <a href="/commitment">Our commitment to you</a>
+                <span class="footer-sep" aria-hidden="true">|</span>
                 <a href="/">Contact us</a>
+                <span class="footer-sep" aria-hidden="true">|</span>
+                <a href="/legal">Legal and privacies</a>
+            </div>
+            <div class="footer-links">
                 <p id="connect_with_us">Connect with us</p>
                 <div class="social-icons">
                     <span class="icon-circle">
@@ -60,7 +72,7 @@
                         <img src="/static/images/x_icon.svg" alt="X">
                     </span>
                 </div>
-                <p id="credits">Visual design inspired by Cathay Pacific and Ryanair.</p>
+                <p id="credits">Visual design references modern airline booking websites.</p>
             </div>
         </div>
     </footer>

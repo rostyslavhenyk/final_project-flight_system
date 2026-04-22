@@ -1,0 +1,107 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Review your flights · Glide Airways{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/flights-results.css">
+<script src="/static/js/flights-results.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="flights-page book-review-wf">
+    <nav class="booking-stepper" aria-label="Booking progress">
+        <ol class="booking-stepper__list">
+            <li class="booking-stepper__item booking-stepper__item--current">
+                <span class="booking-stepper__num">1</span>
+                <span class="booking-stepper__label">Choose flights</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">2</span>
+                <span class="booking-stepper__label">Passenger info</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">3</span>
+                <span class="booking-stepper__label">Seat and extras</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">4</span>
+                <span class="booking-stepper__label">Confirm and pay</span>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="review-wf-stack{% if highlightSelection %} review-wf-stack--highlight{% endif %}">
+
+        <section class="review-wf-leg" aria-labelledby="review-dep-heading">
+            <h2 class="review-wf-leg__title" id="review-dep-heading">Departing flight</h2>
+            <p class="review-wf-leg__route">{{ departingRouteLine }}</p>
+
+            <div class="review-wf-row review-wf-row--flight">
+                <div class="review-wf-row__main review-wf-row__main--bordered">
+                    <article class="flight-card flight-card--review-wf" aria-label="Departing flight summary">
+                        {# Use quoted keys; unquoted keys are treated as variable names in Pebble. #}
+                        {% include 'flights/book-review-flight-panel.peb' with {"card": departingCard} %}
+                    </article>
+                </div>
+                <a class="review-wf-pill" href="{{ selectAnotherDepartingFlightHref }}">Select another flight</a>
+            </div>
+
+            <p class="review-wf-package-label">Your package</p>
+            <div class="review-wf-row review-wf-row--package">
+                <div class="review-wf-row__main review-wf-row__main--bordered review-wf-package-box">
+                    <p class="review-wf-package-name">{{ departingPackageName }}</p>
+                    <div class="review-wf-package-row">
+                        <p class="review-wf-package-price-line"><span class="review-wf-package-price-wrap">GBP {{ departingPrice }} <span class="review-wf-package-per">per person</span></span></p>
+                        <details class="flight-card__details review-wf-package-details" data-package-details>
+                            <summary class="flight-card__details-summary">Package details</summary>
+                            <div class="flight-card__details-body">
+                                {% include 'flights/review-package-body.peb' with {"selectedTier": departingTier} %}
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                <a class="review-wf-pill" href="{{ selectAnotherDepartingFareHref }}">Select another fare</a>
+            </div>
+        </section>
+
+        {% if isDualLegReview %}
+        <hr class="bp-wf-rule bp-wf-rule--after-signin book-review-wf__leg-divider" aria-hidden="true">
+        <section class="review-wf-leg" aria-labelledby="review-ret-heading">
+            <h2 class="review-wf-leg__title" id="review-ret-heading">Returning flight</h2>
+            <p class="review-wf-leg__route">{{ returningRouteLine }}</p>
+
+            <div class="review-wf-row review-wf-row--flight">
+                <div class="review-wf-row__main review-wf-row__main--bordered">
+                    <article class="flight-card flight-card--review-wf" aria-label="Returning flight summary">
+                        {% include 'flights/book-review-flight-panel.peb' with {"card": returningCard} %}
+                    </article>
+                </div>
+                <a class="review-wf-pill" href="{{ selectAnotherReturningFlightHref }}">Select another flight</a>
+            </div>
+
+            <p class="review-wf-package-label">Your package</p>
+            <div class="review-wf-row review-wf-row--package">
+                <div class="review-wf-row__main review-wf-row__main--bordered review-wf-package-box">
+                    <p class="review-wf-package-name">{{ returningPackageName }}</p>
+                    <div class="review-wf-package-row">
+                        <p class="review-wf-package-price-line"><span class="review-wf-package-price-wrap">GBP {{ returningPrice }} <span class="review-wf-package-per">per person</span></span></p>
+                        <details class="flight-card__details review-wf-package-details" data-package-details>
+                            <summary class="flight-card__details-summary">Package details</summary>
+                            <div class="flight-card__details-body">
+                                {% include 'flights/review-package-body.peb' with {"selectedTier": returningTier} %}
+                            </div>
+                        </details>
+                    </div>
+                </div>
+                <a class="review-wf-pill" href="{{ selectAnotherReturningFareHref }}">Select another fare</a>
+            </div>
+        </section>
+        {% endif %}
+
+        <hr class="bp-wf-rule bp-wf-rule--continue" aria-hidden="true">
+        <div class="review-wf-continue-wrap bp-wf-cta-wrap">
+            <a class="review-wf-continue" href="{{ continuePassengersHref }}">Continue</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
