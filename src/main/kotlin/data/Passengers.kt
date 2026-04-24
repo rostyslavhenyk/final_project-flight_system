@@ -1,19 +1,25 @@
 package data
 
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Passengers : Table("passengers") {
+    private const val FIRST_NAME_LENGTH = 128
+    private const val LAST_NAME_LENGTH = 128
+    private const val PASSPORT_NUMBER_LENGTH = 24
+
     val id = integer("id").autoIncrement()
 
     val bookingId = integer("bookingID").references(Bookings.id)
 
-    val firstName = varchar("firstName", 100)
-
-    val lastName = varchar("lastName", 100)
-
-    val passportNumber = varchar("passportNumber", 20)
+    val firstName = varchar("firstName", FIRST_NAME_LENGTH)
+    val lastName = varchar("lastName", LAST_NAME_LENGTH)
+    val passportNumber = varchar("passportNumber", PASSPORT_NUMBER_LENGTH)
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -27,8 +33,6 @@ data class Passenger(
 )
 
 object PassengerRepository {
-    val nullPassenger = Passenger(-1, -1, "", "", "")
-
     private fun ResultRow.toPassenger() =
         Passenger(
             id = this[Passengers.id],

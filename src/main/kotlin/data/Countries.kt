@@ -7,9 +7,11 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 object Countries : Table("countries") {
     private const val NAME_LENGTH = 128
+    private const val TZ_LENGTH = 8
 
     val id = integer("id").autoIncrement()
     val name = varchar("name", NAME_LENGTH)
+    val timeZone = varchar("timeZone", TZ_LENGTH)
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -17,6 +19,7 @@ object Countries : Table("countries") {
 data class Country(
     val countryID: Int,
     val name: String,
+    val timeZone: String,
 )
 
 object CountryRepository {
@@ -38,5 +41,6 @@ object CountryRepository {
         Country(
             countryID = this[Countries.id],
             name = this[Countries.name],
+            timeZone = this[Countries.timeZone],
         )
 }

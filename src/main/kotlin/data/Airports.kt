@@ -31,20 +31,27 @@ data class Airport(
 )
 
 object AirportRepository {
-    val nullAirport = Airport(-1, -1, "", "", "")
+    private fun ResultRow.toAirport() =
+        Airport(
+            airportID = this[Airports.id],
+            countryID = this[Airports.countryId],
+            city = this[Airports.city],
+            name = this[Airports.name],
+            code = this[Airports.code],
+        )
 
     fun all(): List<Airport> =
         transaction {
             Airports.selectAll().map { it.toAirport() }
         }
 
-    fun get(id: Int): Airport =
+    fun get(id: Int): Airport? =
         transaction {
             Airports
                 .selectAll()
                 .where { Airports.id eq id }
                 .map { it.toAirport() }
-                .singleOrNull() ?: nullAirport
+                .singleOrNull()
         }
 
     fun add(
@@ -56,7 +63,7 @@ object AirportRepository {
         transaction {
             val id =
                 Airports.insert {
-                    it[Airports.countryId] = countryID
+                    it[countryId] = countryID
                     it[Airports.city] = city
                     it[Airports.name] = name
                     it[Airports.code] = code
@@ -69,13 +76,4 @@ object AirportRepository {
         transaction {
             Airports.deleteWhere { Airports.id eq id } > 0
         }
-
-    private fun ResultRow.toAirport(): Airport =
-        Airport(
-            airportID = this[Airports.id],
-            countryID = this[Airports.countryId],
-            city = this[Airports.city],
-            name = this[Airports.name],
-            code = this[Airports.code],
-        )
 }

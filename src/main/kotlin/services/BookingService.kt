@@ -1,7 +1,12 @@
 package services
 
-import data.*
-import org.jetbrains.exposed.sql.*
+import data.Bookings
+import data.Booking
+import data.Seats
+
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
 
@@ -22,15 +27,16 @@ object BookingService {
                     ?: error("Seat not found")
 
             if (seat[Seats.flightId] != flightID) {
-                error("Seat does not belong to flight")
+                error("Seat does not belong to this flight")
             }
 
-            val isValidSeat =
-                seat[Seats.status] == "RESERVED" &&
-                    seat[Seats.expiresAt] > now
+            // Seat must be free OR expired reservation
+            val isUnavailable =
+                seat[Seats.status] == "CONFIRMED" ||
+                    (seat[Seats.status] == "RESERVED" && seat[Seats.expiresAt] > now)
 
-            if (!isValidSeat) {
-                error("Seat not available")
+            if (isUnavailable) {
+                error("Seat is not available")
             }
 
             val alreadyBooked =
@@ -49,10 +55,12 @@ object BookingService {
                     it[Bookings.userID] = userID
                     it[Bookings.seatID] = seatID
                     it[Bookings.createdAt] = now
+                    it[Bookings.status] = "CONFIRMED"
                 } get Bookings.id
 
             Seats.update({ Seats.id eq seatID }) {
                 it[status] = "CONFIRMED"
+                it[expiresAt] = now
             }
 
             Booking(
@@ -60,6 +68,8 @@ object BookingService {
                 flightID = flightID,
                 userID = userID,
                 seatID = seatID,
+                purchaseID = null,
+                status = "CONFIRMED",
                 createdAt = now,
             )
         }

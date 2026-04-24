@@ -1,10 +1,10 @@
 package data
 
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
@@ -36,20 +36,28 @@ data class Flight(
 )
 
 object FlightRepository {
-    val nullFlight = Flight(-1, -1, "", "", 0.0, "Unknown")
+    private fun ResultRow.toFlight(): Flight =
+        Flight(
+            flightID = this[Flights.id],
+            routeID = this[Flights.routeId],
+            departureTime = this[Flights.departureTime],
+            arrivalTime = this[Flights.arrivalTime],
+            price = this[Flights.price],
+            status = this[Flights.status],
+        )
 
     fun all(): List<Flight> =
         transaction {
             Flights.selectAll().map { it.toFlight() }
         }
 
-    fun get(id: Int): Flight =
+    fun get(id: Int): Flight? =
         transaction {
             Flights
                 .selectAll()
                 .where { Flights.id eq id }
                 .map { it.toFlight() }
-                .singleOrNull() ?: nullFlight
+                .singleOrNull()
         }
 
     fun add(
@@ -76,14 +84,4 @@ object FlightRepository {
         transaction {
             Flights.deleteWhere { Flights.id eq id } > 0
         }
-
-    private fun ResultRow.toFlight(): Flight =
-        Flight(
-            flightID = this[Flights.id],
-            routeID = this[Flights.routeId],
-            departureTime = this[Flights.departureTime],
-            arrivalTime = this[Flights.arrivalTime],
-            price = this[Flights.price],
-            status = this[Flights.status],
-        )
 }

@@ -1,15 +1,21 @@
 package data
 
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object BoardingPasses : Table("boarding_passes") {
+    private const val GATE_NAME = 10
+
     val id = integer("id").autoIncrement()
 
-    val bookingId = integer("bookingID").references(Bookings.id)
+    val bookingID = integer("bookingID").references(Bookings.id)
 
-    val gate = varchar("gate", 10)
+    val gate = varchar("gate", GATE_NAME)
 
     val boardingTime = long("boardingTime")
 
@@ -20,26 +26,24 @@ object BoardingPasses : Table("boarding_passes") {
 
 data class BoardingPass(
     val id: Int,
-    val bookingId: Int,
+    val bookingID: Int,
     val gate: String,
     val boardingTime: Long,
     val issuedAt: Long,
 )
 
 object BoardingPassRepository {
-    val nullBoardingPass = BoardingPass(-1, -1, "", 0L, 0L)
-
     private fun ResultRow.toBoardingPass() =
         BoardingPass(
             id = this[BoardingPasses.id],
-            bookingId = this[BoardingPasses.bookingId],
+            bookingID = this[BoardingPasses.bookingID],
             gate = this[BoardingPasses.gate],
             boardingTime = this[BoardingPasses.boardingTime],
             issuedAt = this[BoardingPasses.issuedAt],
         )
 
     fun create(
-        bookingId: Int,
+        bookingID: Int,
         gate: String,
         boardingTime: Long,
         issuedAt: Long = System.currentTimeMillis(),
@@ -47,20 +51,20 @@ object BoardingPassRepository {
         transaction {
             val id =
                 BoardingPasses.insert {
-                    it[BoardingPasses.bookingId] = bookingId
+                    it[BoardingPasses.bookingID] = bookingID
                     it[BoardingPasses.gate] = gate
                     it[BoardingPasses.boardingTime] = boardingTime
                     it[BoardingPasses.issuedAt] = issuedAt
                 } get BoardingPasses.id
 
-            BoardingPass(id, bookingId, gate, boardingTime, issuedAt)
+            BoardingPass(id, bookingID, gate, boardingTime, issuedAt)
         }
 
-    fun getByBooking(bookingId: Int): BoardingPass? =
+    fun getByBooking(bookingID: Int): BoardingPass? =
         transaction {
             BoardingPasses
                 .selectAll()
-                .where { BoardingPasses.bookingId eq bookingId }
+                .where { BoardingPasses.bookingID eq bookingID }
                 .map { it.toBoardingPass() }
                 .singleOrNull()
         }

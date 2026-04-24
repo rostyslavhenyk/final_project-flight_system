@@ -13,6 +13,9 @@ object Seats : Table("seats") {
     val id = integer("id").autoIncrement()
 
     val flightId = integer("flightID").references(Flights.id)
+
+    val userId = integer("userID").references(Users.id).nullable()
+
     val rowNumber = integer("rowNumber")
     val seatLetter = varchar("seatLetter", SEAT_LETTER_LENGTH)
 
@@ -25,6 +28,7 @@ object Seats : Table("seats") {
 data class Seat(
     val id: Int,
     val flightId: Int,
+    val userId: Int?, // purely for holding logic
     val rowNumber: Int,
     val seatLetter: String,
     val status: String,
@@ -32,14 +36,15 @@ data class Seat(
 )
 
 object SeatRepository {
-    private const val DEFAULT_HOLD_TIME = 600_000L
+    private const val DEFAULT_HOLD_TIME = 600_000L // 10 minutes
 
-    val nullSeat = Seat(-1, -1, -1, "", "", 0L)
+    val nullSeat = Seat(-1, -1, null, -1, "", "", 0L)
 
     private fun ResultRow.toSeat() =
         Seat(
             id = this[Seats.id],
             flightId = this[Seats.flightId],
+            userId = this[Seats.userId],
             rowNumber = this[Seats.rowNumber],
             seatLetter = this[Seats.seatLetter],
             status = this[Seats.status],
@@ -72,6 +77,7 @@ object SeatRepository {
         }
 
     fun hold(
+        userIdValue: Int,
         flightIdValue: Int,
         row: Int,
         seat: String,
@@ -99,6 +105,7 @@ object SeatRepository {
             if (alreadyTaken) return@transaction false
 
             Seats.insert {
+                it[userId] = userIdValue
                 it[flightId] = flightIdValue
                 it[rowNumber] = row
                 it[seatLetter] = seat

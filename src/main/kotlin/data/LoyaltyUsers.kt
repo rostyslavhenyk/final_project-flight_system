@@ -10,14 +10,12 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object LoyaltyUsers : Table("loyalty_users") {
+    private const val TIER_NAME = 32
 
     val id = integer("id").autoIncrement()
-
-    val userID = integer("userID").references(Users.id)
-
+    val userID = integer("userID").references(Users.id).uniqueIndex()
     val points = integer("points")
-    val tier = varchar("tier", 20)
-
+    val tier = varchar("tier", TIER_NAME)
     val joinDate = long("joinDate")
 
     override val primaryKey = PrimaryKey(id)
@@ -32,7 +30,6 @@ data class LoyaltyUser(
 )
 
 object LoyaltyRepository {
-
     private fun ResultRow.toLoyaltyUser() =
         LoyaltyUser(
             id = this[LoyaltyUsers.id],
@@ -60,7 +57,7 @@ object LoyaltyRepository {
         userID: Int,
         points: Int = 0,
         tier: String = "SILVER",
-        joinDate: Long = System.currentTimeMillis()
+        joinDate: Long = System.currentTimeMillis(),
     ): LoyaltyUser =
         transaction {
             val id =
@@ -74,7 +71,10 @@ object LoyaltyRepository {
             LoyaltyUser(id, userID, points, tier, joinDate)
         }
 
-    fun updatePoints(userID: Int, newPoints: Int): Boolean =
+    fun updatePoints(
+        userID: Int,
+        newPoints: Int,
+    ): Boolean =
         transaction {
             LoyaltyUsers.update({ LoyaltyUsers.userID eq userID }) {
                 it[points] = newPoints

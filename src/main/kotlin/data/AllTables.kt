@@ -12,5 +12,8 @@ object AllTables {
             Bookings,
             Passengers,
             BoardingPasses,
+            LoyaltyUsers,
+            Purchases,
+            Payments,
         )
 }
