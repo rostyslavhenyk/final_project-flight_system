@@ -15,14 +15,13 @@
     <div id="status" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <br>
-
     <header id="navbar">
         <nav>
             <a href="/">Homepage</a>
             <a href="/flights">Flights</a>
             <a href="/membership">Membership</a>
             <a href="/help">Help</a>
-            {% if logged_in %}
+            {% if loggedIn %}
                 <a href="/my-account">My Account</a>
                 <a href="/logout">Log Out</a>
             {% else %}

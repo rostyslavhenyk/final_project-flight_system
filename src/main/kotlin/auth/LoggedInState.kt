@@ -1,6 +1,6 @@
 package auth
 
 data class LoggedInState(
-    val logged_in: Boolean,
+    val loggedIn: Boolean,
     val session: UserSession?,
 )

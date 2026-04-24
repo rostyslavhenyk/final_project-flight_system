@@ -2,7 +2,7 @@
 
 {% block content %}
 <br>
-{% if logged_in %}
+{% if loggedIn %}
     <h1 style="text-align: center;">Welcome {{ user.firstname }}!</h1>
 {% else %}
     <h1 style="text-align: center;">Welcome to the (company)!</h1>

@@ -21,7 +21,7 @@ import java.util.UUID
  *
  * @property id Unique session identifier (UUID)
  */
-data class SessionData(
+data class SessionUtils(
     val id: String = UUID.randomUUID().toString(),
 )
 

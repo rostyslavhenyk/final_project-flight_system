@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import utils.baseModel
 import java.io.StringWriter
 import utils.jsMode
 import utils.timed
@@ -17,10 +18,11 @@ private suspend fun ApplicationCall.handleHelpLoad() {
         val pebble = getEngine()
 
         val model =
-            mapOf(
-                "title" to "Help",
+            baseModel(
+                mapOf(
+                    "title" to "Help",
+                ),
             )
-
         val template = pebble.getTemplate("help/index.peb")
         val writer = StringWriter()
         fullEvaluate(template, writer, model)

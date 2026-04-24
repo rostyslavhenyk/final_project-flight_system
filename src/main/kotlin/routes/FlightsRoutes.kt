@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import utils.baseModel
 import java.io.StringWriter
 import utils.jsMode
 import utils.timed
@@ -17,8 +18,10 @@ private suspend fun ApplicationCall.handleFlightsList() {
         val pebble = getEngine()
 
         val model =
-            mapOf(
-                "title" to "Flights",
+            baseModel(
+                mapOf(
+                    "title" to "Flights",
+                ),
             )
 
         val template = pebble.getTemplate("flights/index.peb")

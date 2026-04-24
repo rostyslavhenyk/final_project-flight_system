@@ -6,7 +6,7 @@
 <br>
 
 <section aria-labelledby="list-heading">
-    {% if logged_in %}
+    {% if loggedIn %}
     <h1> Welcome to your membership </h1>
     {% endif %}
 </section>

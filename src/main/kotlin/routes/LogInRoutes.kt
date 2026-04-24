@@ -12,7 +12,7 @@ import utils.timed
 import data.UserRepository
 import data.User
 import auth.UserSession
-import auth.LoggedInState
+import utils.baseModel
 
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
@@ -26,15 +26,15 @@ fun ApplicationCall.createLoginStatus(message: String): String =
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T0_log_in", jsMode()) {
         val pebble = getEngine()
-        val logged_state: LoggedInState = loggedIn()
 
-        if (logged_state.logged_in) {
+        if (sessions.get<UserSession>() != null) {
             respondRedirect("/")
+            return@timed
         }
 
         val model =
-            mapOf(
-                "title" to "Log In",
+            baseModel(
+                mapOf("title" to "Log In"),
             )
 
         val template = pebble.getTemplate("log-in/index.peb")
@@ -46,7 +46,6 @@ private suspend fun ApplicationCall.handleLogInLoad() {
 
 private suspend fun ApplicationCall.handleLogInPost() {
     timed("T1_log_in_post", jsMode()) {
-        val pebble = getEngine()
         val params = receiveParameters()
         val email = params["email"]
         val password = params["password"]
@@ -60,7 +59,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        val usr: User = UserRepository.getByEmail(email.toString())
+        val usr: User = UserRepository.getByEmail(email)
 
         if (usr.id == -1) {
             respondText(
