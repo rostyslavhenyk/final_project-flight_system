@@ -100,8 +100,8 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val u = UserRepository.add(firstname, lastname, 0, email, password)
-        sessions.set(UserSession(u.id, firstname))
+        val newUser = UserRepository.add(firstname, lastname, 0, email, password)
+        sessions.set(UserSession(newUser.id, firstname))
         response.headers.append("HX-Redirect", "/")
         respond(HttpStatusCode.OK)
     }

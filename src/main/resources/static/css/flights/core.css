@@ -20,7 +20,8 @@
 
 /* --- Booking stepper --- */
 .booking-stepper {
-  margin: 1.25rem 0 1.75rem;
+  /* Same vertical margin top and bottom; padding only under the row (above the rule). */
+  margin: 1.25rem 0 1.25rem;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid #d8d8d8;
 }

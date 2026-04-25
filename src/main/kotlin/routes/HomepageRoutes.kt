@@ -7,6 +7,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import java.io.StringWriter
+import java.time.LocalDate
 import data.AirportRepository
 import data.GeoRepository
 import data.LatestOffersService
@@ -14,29 +15,32 @@ import utils.jsMode
 import utils.timed
 
 fun Route.homepageRoutes() {
-    // Registers the homepage URL.
     get("/") { call.handleLoadPage() }
 }
 
 private suspend fun ApplicationCall.handleLoadPage() {
-    // Timed wrapper used by module instrumentation.
+    // `timed` is for coursework timing hooks (see utils.timed).
     timed("T1_homepage_load", jsMode()) {
         val pebble = getEngine()
-        // Optional origin code from query string (e.g. /?origin=LBA).
+        // Optional `?origin=LBA` on the URL overrides the default below.
         val originCode = request.queryParameters["origin"]?.takeIf { it.isNotBlank() } ?: "MAN"
-        // Resolve the human-readable origin name from geo dataset.
+        val departDate =
+            request.queryParameters["depart"]
+                ?.takeIf { it.isNotBlank() }
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                ?: LocalDate.now().plusDays(14)
+        // Look up a display name from `data/airports_geo.csv` (via GeoRepository).
         val nearest = GeoRepository.allGeo().find { it.code == originCode }
         val originName = nearest?.name ?: "Manchester (MAN)"
         val originLabel = originName.substringBefore(" (")
 
-        // Model passed to homepage template:
-        // - airports: for autocomplete dropdowns
-        // - offerCards: priced destination cards (distance-based random GBP)
+        // Pebble model keys must match what `homepage/index.peb` reads.
+        // `offerCards` prices use the same Economy Light logic as `/search-flights` for the chosen date.
         val model =
             mapOf(
                 "title" to "Homepage",
                 "airports" to AirportRepository.all(),
-                "offerCards" to LatestOffersService.cardsForOrigin(originCode),
+                "offerCards" to LatestOffersService.cardsForOrigin(originCode, departDate),
                 "originCode" to originCode,
                 "originName" to originName,
                 "originLabel" to originLabel,

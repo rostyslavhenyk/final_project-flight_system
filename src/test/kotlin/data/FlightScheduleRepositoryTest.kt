@@ -3,13 +3,14 @@ package data
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import java.io.File
+import java.sql.DriverManager
 import java.time.LocalDate
 import java.time.LocalTime
 
 class FlightScheduleRepositoryTest {
     @Test
     fun `generated flights keep GA numeric format and five-minute times`() {
-        val res =
+        val searchPage =
             FlightScheduleRepository.search(
                 originCode = "MAN",
                 destCode = "HKG",
@@ -19,33 +20,42 @@ class FlightScheduleRepositoryTest {
                 page = 1,
                 pageSize = 50,
             )
-        assertTrue(res.rows.isNotEmpty(), "Expected MAN->HKG schedules to exist")
-        res.rows.forEach { row ->
-            row.legFlightNumbers.forEach { fn ->
-                assertTrue(Regex("^GA\\d{3}$").matches(fn), "Flight number must be GA + 3 digits: $fn")
+        assertTrue(searchPage.rows.isNotEmpty(), "Expected MAN->HKG schedules to exist")
+        searchPage.rows.forEach { row ->
+            row.legFlightNumbers.forEach { flightNumber ->
+                assertTrue(Regex("^GA\\d{3}$").matches(flightNumber), "Flight number must be GA + 3 digits: $flightNumber")
             }
-            row.legDepartureTimes.forEach { t ->
-                assertTrue(t.minute % 5 == 0, "Departure minute must be multiple of 5: $t")
+            row.legDepartureTimes.forEach { legTime ->
+                assertTrue(legTime.minute % 5 == 0, "Departure minute must be multiple of 5: $legTime")
             }
-            row.legArrivalTimes.forEach { t ->
-                assertTrue(t.minute % 5 == 0, "Arrival minute must be multiple of 5: $t")
+            row.legArrivalTimes.forEach { legTime ->
+                assertTrue(legTime.minute % 5 == 0, "Arrival minute must be multiple of 5: $legTime")
             }
         }
     }
 
     @Test
     fun `every homepage airport pair has at least five schedules`() {
-        val lines =
-            File("data/airports.csv").readLines().drop(1).map { it.trim() }.filter { it.isNotBlank() }
+        val db = File("data/db/airports.db")
+        assertTrue(db.exists(), "Test requires data/db/airports.db (run scripts/convert_csvs_to_sqlite.py if needed)")
         val codes =
-            lines.mapNotNull { line ->
-                Regex("""\(([A-Z]{3})\)""").find(line)?.groupValues?.get(1)
+            DriverManager.getConnection("jdbc:sqlite:${db.path}").use { conn ->
+                conn.prepareStatement("SELECT name FROM airports ORDER BY name").use { ps ->
+                    ps.executeQuery().use { rs ->
+                        buildList {
+                            while (rs.next()) {
+                                val name = rs.getString("name")?.trim().orEmpty()
+                                Regex("""\(([A-Z]{3})\)""").find(name)?.groupValues?.get(1)?.let { add(it) }
+                            }
+                        }
+                    }
+                }
             }
         val date = LocalDate.of(2026, 4, 25)
         for (origin in codes) {
             for (dest in codes) {
                 if (origin == dest) continue
-                val res =
+                val searchPage =
                     FlightScheduleRepository.search(
                         originCode = origin,
                         destCode = dest,
@@ -56,8 +66,8 @@ class FlightScheduleRepositoryTest {
                         pageSize = 10,
                     )
                 assertTrue(
-                    res.totalCount >= 5,
-                    "Expected at least five flights for $origin -> $dest, got ${res.totalCount}",
+                    searchPage.totalCount >= 5,
+                    "Expected at least five flights for $origin -> $dest, got ${searchPage.totalCount}",
                 )
             }
         }
@@ -65,7 +75,7 @@ class FlightScheduleRepositoryTest {
 
     @Test
     fun `MAN to HKG results respect spacing bands and GA### flight numbers`() {
-        val res =
+        val searchPage =
             FlightScheduleRepository.search(
                 originCode = "MAN",
                 destCode = "HKG",
@@ -75,26 +85,28 @@ class FlightScheduleRepositoryTest {
                 page = 1,
                 pageSize = 50,
             )
-        assertTrue(res.totalCount >= 5)
-        val rows = res.rows
-        fun depMin(t: LocalTime) = t.hour * 60 + t.minute
-        fun band(d: LocalTime): Int {
-            val m = depMin(d)
+        assertTrue(searchPage.totalCount >= 5)
+        val rows = searchPage.rows
+        fun minuteOfDay(time: LocalTime) = time.hour * 60 + time.minute
+        fun departureBand(departTime: LocalTime): Int {
+            val minutes = minuteOfDay(departTime)
             return when {
-                m < 5 * 60 -> 2
-                m < 12 * 60 -> 0
-                m < 18 * 60 -> 1
+                minutes < 5 * 60 -> 2
+                minutes < 12 * 60 -> 0
+                minutes < 18 * 60 -> 1
                 else -> 2
             }
         }
         // Pairwise 60-minute spacing is best-effort once hierarchy / time-of-day seeding and top-up run.
-        val bands = rows.map { band(it.departTime) }.toSet()
+        val bands = rows.map { departureBand(it.departTime) }.toSet()
         assertTrue(
             bands.size >= 2,
             "Expected departure time diversity across day parts; got bands=$bands",
         )
-        rows.forEach { r ->
-            r.legFlightNumbers.forEach { fn -> assertTrue(Regex("^GA\\d{3}$").matches(fn)) }
+        rows.forEach { row ->
+            row.legFlightNumbers.forEach { flightNumber ->
+                assertTrue(Regex("^GA\\d{3}$").matches(flightNumber))
+            }
         }
     }
 }

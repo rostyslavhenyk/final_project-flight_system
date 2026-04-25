@@ -1,23 +1,16 @@
 package data
 
 import java.io.File
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
+import java.sql.DriverManager
+import java.time.LocalDate
 import kotlin.random.Random
 
 /**
- * Latest-offer cards: Hong Kong first, then a stable shuffle of the rest. When the departure airport
- * matches a destination city, that slot is filled from **alternate** rows in [offer_destinations.csv].
- * Distances use great-circle km between [airports_geo.csv] and [destination_geo.csv]. Prices are
- * deterministic per (origin, destination).
+ * Homepage “latest offers” strip: Hong Kong first, then other destinations in a fixed random order.
+ * If the user’s origin is the same city as a card destination, we swap in an alternate row from the DB.
+ * Card prices reuse [FlightScheduleRepository] (Economy Light), same idea as the search results page.
  *
- * **offer_destinations.csv** columns: `destination_key`, `display_name`, `category` (`primary` or
- * `alternate`), `gallery_urls` — three URLs separated by `|` (pipe) so commas inside URLs are safe.
+ * Data lives in `data/db/offer_destinations.db` (no CSV here).
  */
 object LatestOffersService {
     data class OfferCard(
@@ -33,112 +26,59 @@ object LatestOffersService {
         val imageUrlsJoined: String get() = imageUrls.joinToString("|||GLIDE|||")
     }
 
-    private val destinationsFile = File("data/offer_destinations.csv")
-    private val destinationGeoFile = File("data/destination_geo.csv")
-
+    private val destinationsDb = File("data/db/offer_destinations.db")
     private val destinationOrderSeed = 0x4F46465253485546L
-    private val priceSalt = "glide-offers-price-v1"
 
     private data class DestinationRow(val key: String, val displayName: String, val imageUrls: List<String>)
 
-    private data class CsvDestination(
+    private data class DestinationRecord(
         val key: String,
         val displayName: String,
         val imageUrls: List<String>,
         val category: String,
     )
 
-    private val destinationCoords: Map<String, Pair<Double, Double>> by lazy {
-        if (!destinationGeoFile.exists()) return@lazy emptyMap()
-        destinationGeoFile.readLines().drop(1).mapNotNull { line ->
-            if (line.isBlank()) return@mapNotNull null
-            val p = line.split(",", limit = 3)
-            if (p.size != 3) return@mapNotNull null
-            val lat = p[1].trim().toDoubleOrNull() ?: return@mapNotNull null
-            val lon = p[2].trim().toDoubleOrNull() ?: return@mapNotNull null
-            p[0].trim() to (lat to lon)
-        }.toMap()
-    }
-
-    /**
-     * One CSV line → key, display name, category, gallery_urls (pipe-separated).
-     * Uses [split limit 4] so commas inside URLs in the last column are not split incorrectly
-     * (gallery must use `|` only, not commas, in this coursework format).
-     */
-    private fun parseDestinationCsvLine(line: String): CsvDestination? {
-        val trimmed = line.trimEnd('\r').trim()
-        if (trimmed.isBlank() || trimmed.startsWith("#")) return null
-        val parts = trimmed.split(",", limit = 4)
-        if (parts.size < 4) return null
-        val key = parts[0].trim()
-        val name = parts[1].trim()
-        val category = parts[2].trim().lowercase()
-        val gallery = parts[3].trim()
-        val urls =
-            gallery.split('|').map { it.trim() }.filter {
-                it.isNotBlank() && (it.startsWith("http://") || it.startsWith("https://"))
+    private fun loadDbRows(): List<DestinationRecord> {
+        if (!destinationsDb.exists()) return emptyList()
+        val jdbcUrl = "jdbc:sqlite:${destinationsDb.path}"
+        return runCatching {
+            DriverManager.getConnection(jdbcUrl).use { conn ->
+                conn.prepareStatement(
+                    "SELECT destination_key, display_name, category, gallery_urls FROM offer_destinations",
+                ).use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        buildList {
+                            while (rs.next()) {
+                                val key = rs.getString("destination_key")?.trim().orEmpty()
+                                val displayName = rs.getString("display_name")?.trim().orEmpty()
+                                val category = rs.getString("category")?.trim()?.lowercase().orEmpty()
+                                val gallery = rs.getString("gallery_urls")?.trim().orEmpty()
+                                val imageUrls =
+                                    gallery.split('|').map { it.trim() }.filter {
+                                        it.isNotBlank() && (it.startsWith("http://") || it.startsWith("https://"))
+                                    }
+                                if (key.isNotBlank() && displayName.isNotBlank() && category.isNotBlank() && imageUrls.isNotEmpty()) {
+                                    add(DestinationRecord(key = key, displayName = displayName, imageUrls = imageUrls, category = category))
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        if (urls.isEmpty()) return null
-        return CsvDestination(key, name, urls, category)
+        }.getOrElse { emptyList() }
     }
 
-    private fun loadCsvRows(): List<CsvDestination> {
-        if (!destinationsFile.exists()) return emptyList()
-        return destinationsFile.readLines().drop(1).mapNotNull { parseDestinationCsvLine(it) }
-    }
+    private fun loadRows(): List<DestinationRecord> = loadDbRows()
 
     private fun loadDestinations(): List<DestinationRow> =
-        loadCsvRows()
+        loadRows()
             .filter { it.category == "primary" }
             .map { DestinationRow(it.key, it.displayName, it.imageUrls) }
 
     private fun loadAlternates(): List<DestinationRow> =
-        loadCsvRows()
+        loadRows()
             .filter { it.category == "alternate" }
             .map { DestinationRow(it.key, it.displayName, it.imageUrls) }
-
-    private fun haversineKm(
-        lat1: Double,
-        lon1: Double,
-        lat2: Double,
-        lon2: Double,
-    ): Int {
-        val r = 6371.0
-        val φ1 = lat1 * PI / 180.0
-        val φ2 = lat2 * PI / 180.0
-        val Δφ = (lat2 - lat1) * PI / 180.0
-        val Δλ = (lon2 - lon1) * PI / 180.0
-        val a = sin(Δφ / 2).pow(2) + cos(φ1) * cos(φ2) * sin(Δλ / 2).pow(2)
-        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return (r * c).roundToInt()
-    }
-
-    private fun distanceKm(originCode: String, destKey: String): Int? {
-        val o = GeoRepository.coordinatesForAirport(originCode) ?: return null
-        val d = destinationCoords[destKey] ?: return null
-        return haversineKm(o.first, o.second, d.first, d.second)
-    }
-
-    private fun priceBoundsGbp(distanceKm: Int): Pair<Int, Int> {
-        val min = ((distanceKm * 0.055) + 320).toInt().coerceIn(280, 2500)
-        val max = ((distanceKm * 0.085) + 520).toInt().coerceIn(min + 80, 3200)
-        return min to max
-    }
-
-    private fun stableHash64(s: String): Long {
-        var h = 1469598103934665603L
-        for (c in s) {
-            h = h xor c.code.toLong()
-            h *= 1099511628211L
-        }
-        return h
-    }
-
-    private fun deterministicPriceGbp(originCode: String, destKey: String, min: Int, max: Int): Int {
-        val seed = stableHash64("$priceSalt|$originCode|$destKey")
-        val rng = Random(seed)
-        return rng.nextInt(min, max + 1)
-    }
 
     private fun orderedDestinations(all: List<DestinationRow>): List<DestinationRow> {
         val hk = all.find { it.key == "hong_kong" }
@@ -186,7 +126,29 @@ object LatestOffersService {
             else -> "Hong Kong (HKG)"
         }
 
-    fun cardsForOrigin(originCode: String): List<OfferCard> {
+    private fun destinationAirportCodeForKey(key: String): String? =
+        when (key) {
+            "hong_kong" -> "HKG"
+            "bangkok" -> "BKK"
+            "singapore" -> "SIN"
+            "tokyo" -> "NRT"
+            "dubai" -> "DXB"
+            "sydney" -> "SYD"
+            "los_angeles" -> "LAX"
+            "new_york" -> "JFK"
+            "paris" -> "CDG"
+            "barcelona" -> "BCN"
+            "vancouver" -> "YVR"
+            "rome" -> "FCO"
+            "seoul" -> "ICN"
+            "istanbul" -> "IST"
+            else -> null
+        }
+
+    fun cardsForOrigin(
+        originCode: String,
+        departDate: LocalDate = LocalDate.now().plusDays(14),
+    ): List<OfferCard> {
         val primary = loadDestinations()
         if (primary.isEmpty()) return emptyList()
         val alternates = loadAlternates().toMutableList()
@@ -199,13 +161,17 @@ object LatestOffersService {
                 } else {
                     row
                 } ?: return@mapNotNull null
-            val km = distanceKm(originCode, effective.key) ?: return@mapNotNull null
-            val (min, max) = priceBoundsGbp(km)
+            val destCode = destinationAirportCodeForKey(effective.key) ?: return@mapNotNull null
+            val price =
+                FlightScheduleRepository
+                    .lowestEconomyLightFare(originCode = originCode, destCode = destCode, depart = departDate)
+                    ?.toInt()
+                    ?: return@mapNotNull null
             OfferCard(
                 destinationKey = effective.key,
                 destinationName = effective.displayName,
                 bookAirport = bookAirportForDestinationKey(effective.key),
-                priceGbp = deterministicPriceGbp(originCode, effective.key, min, max),
+                priceGbp = price,
                 imageUrls = effective.imageUrls,
             )
         }

@@ -16,6 +16,7 @@ import utils.SessionData
 import data.GeoRepository
 import data.LatestOffersService
 import java.io.StringWriter
+import java.time.LocalDate
 import io.ktor.util.*
 
 fun main() {
@@ -32,7 +33,7 @@ fun main() {
 }
 
 fun Application.configureLogging() {
-    // Lightweight access log format for route debugging.
+    // One line per request: method, path, status (handy when something 404s).
     install(CallLogging) {
         format { call ->
             val status = call.response.status()
@@ -44,7 +45,7 @@ fun Application.configureLogging() {
 }
 
 fun Application.configureTemplating() {
-    // Configure Pebble template engine for server-rendered HTML.
+    // Pebble = HTML templates under `resources/templates/`. Cache off so edits show without restart.
     val pebbleEngine =
         PebbleEngine
             .Builder()
@@ -58,8 +59,8 @@ fun Application.configureTemplating() {
             .build()
 
     environment.monitor.subscribe(ApplicationStarted) {
-        log.info("✓ Pebble templates loaded from resources/templates/")
-        log.info("✓ Server running on configured port")
+        log.info("Pebble templates: resources/templates/")
+        log.info("Server port from env PORT or default 8080")
     }
 
     attributes.put(PebbleEngineKey, pebbleEngine)
@@ -90,7 +91,7 @@ suspend fun ApplicationCall.renderTemplate(
 fun ApplicationCall.isHtmxRequest(): Boolean = request.headers["HX-Request"] == "true"
 
 fun Application.configureSessions() {
-    // Configure anonymous and authenticated session cookies.
+    // Anonymous session + logged-in user cookie (see SessionData / UserSession).
     install(Sessions) {
         cookie<SessionData>("SESSION") {
             cookie.path = "/"
@@ -111,7 +112,7 @@ fun Application.configureRouting() {
 
         configureHealthCheck()
 
-        // API endpoint used by homepage JS to resolve nearest airport by lat/lon.
+        // Homepage calls this after the browser geolocation prompt (see homepage.js).
         get("/api/nearest-airport") {
             val lat = call.request.queryParameters["lat"]?.toDoubleOrNull()
             val lon = call.request.queryParameters["lon"]?.toDoubleOrNull()
@@ -126,6 +127,11 @@ fun Application.configureRouting() {
 
         get("/api/latest-offers") {
             val origin = call.request.queryParameters["origin"]?.takeIf { it.isNotBlank() } ?: "MAN"
+            val departDate =
+                call.request.queryParameters["depart"]
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                    ?: LocalDate.now().plusDays(14)
             val originLabelOverride = call.request.queryParameters["originLabel"]?.takeIf { it.isNotBlank() }
             val nearest = GeoRepository.allGeo().find { it.code == origin }
             val originLabel =
@@ -133,16 +139,16 @@ fun Application.configureRouting() {
                     ?: nearest?.name?.substringBefore(" (")
                     ?: origin
 
-            fun esc(s: String): String = s.replace("\\", "\\\\").replace("\"", "\\\"")
+            fun escapeJson(value: String): String = value.replace("\\", "\\\\").replace("\"", "\\\"")
 
-            val cards = LatestOffersService.cardsForOrigin(origin)
+            val cards = LatestOffersService.cardsForOrigin(origin, departDate)
             val cardJson =
                 cards.joinToString(",") { c ->
-                    val imgs = c.imageUrls.joinToString(",") { "\"${esc(it)}\"" }
-                    """{"destinationKey":"${esc(c.destinationKey)}","destinationName":"${esc(c.destinationName)}","bookAirport":"${esc(c.bookAirport)}","priceGbp":${c.priceGbp},"imageUrls":[$imgs]}"""
+                    val imageJsonList = c.imageUrls.joinToString(",") { "\"${escapeJson(it)}\"" }
+                    """{"destinationKey":"${escapeJson(c.destinationKey)}","destinationName":"${escapeJson(c.destinationName)}","bookAirport":"${escapeJson(c.bookAirport)}","priceGbp":${c.priceGbp},"imageUrls":[$imageJsonList]}"""
                 }
             val json =
-                """{"originCode":"${esc(origin)}","originLabel":"${esc(originLabel)}","cards":[$cardJson]}"""
+                """{"originCode":"${escapeJson(origin)}","originLabel":"${escapeJson(originLabel)}","cards":[$cardJson]}"""
             call.respondText(json, ContentType.Application.Json)
         }
 

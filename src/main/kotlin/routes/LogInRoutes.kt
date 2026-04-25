@@ -28,26 +28,26 @@ fun ApplicationCall.createLoginStatus(message: String): String =
 /** Only same-origin relative paths (e.g. `/book/passengers?…`) — blocks open redirects. */
 internal fun safeReturnUrlForLogin(raw: String?): String? {
     if (raw.isNullOrBlank()) return null
-    val s =
+    val decodedPath =
         try {
             URLDecoder.decode(raw.trim(), StandardCharsets.UTF_8)
         } catch (_: Exception) {
             raw.trim()
         }
-    if (!s.startsWith("/")) return null
-    if (s.startsWith("//")) return null
-    if (s.contains("://")) return null
-    return s
+    if (!decodedPath.startsWith("/")) return null
+    if (decodedPath.startsWith("//")) return null
+    if (decodedPath.contains("://")) return null
+    return decodedPath
 }
 
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T0_log_in", jsMode()) {
         val pebble = getEngine()
-        val logged_state: LoggedInState = loggedIn()
+        val loggedInState: LoggedInState = loggedIn()
         val returnRaw = request.queryParameters["returnUrl"]
         val safeReturn = safeReturnUrlForLogin(returnRaw)
 
-        if (logged_state.logged_in) {
+        if (loggedInState.logged_in) {
             respondRedirect(safeReturn ?: "/")
             return@timed
         }
@@ -81,9 +81,9 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        val usr: User = UserRepository.getByEmail(email.toString())
+        val userFromDb: User = UserRepository.getByEmail(email.toString())
 
-        if (usr.id == -1) {
+        if (userFromDb.id == -1) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,
@@ -92,7 +92,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        if (usr.password != password) {
+        if (userFromDb.password != password) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,
@@ -101,7 +101,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        sessions.set(UserSession(usr.id, usr.firstname))
+        sessions.set(UserSession(userFromDb.id, userFromDb.firstname))
         val returnAfterLogin =
             safeReturnUrlForLogin(params["returnUrl"]?.toString())
                 ?: "/"

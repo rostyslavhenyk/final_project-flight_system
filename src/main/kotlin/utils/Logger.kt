@@ -29,10 +29,10 @@ data class LogEntry(
     val jsMode: String,
 )
 
-// Week 9: writes interaction metrics for Task 1 instrumentation
+// Week 9: writes interaction metrics for Task 1 instrumentation (not loaded into app DBs)
 object Logger {
     private val out =
-        File("data/metrics.csv").apply {
+        File("data/metrics_unused.csv").apply {
             parentFile?.mkdirs()
             if (!exists()) writeText("ts_iso,session_id,request_id,task_code,step,outcome,ms,http_status,js_mode\n")
         }

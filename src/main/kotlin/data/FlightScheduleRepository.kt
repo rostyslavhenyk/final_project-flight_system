@@ -3,14 +3,22 @@ package data
 import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.sql.DriverManager
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import kotlin.math.PI
 import kotlin.math.absoluteValue
 import kotlin.math.abs
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /** Max rows kept per (route × arrival day offset × arrival hour) before presentation thinning. */
 private const val MAX_FLIGHTS_PER_ARRIVAL_HOUR_BUCKET = 15
@@ -37,9 +45,9 @@ private const val AFTERNOON_END = 18 * 60
 /**
  * Flight search data for `/search-flights`.
  *
- * **Staff-editable data (CSV):**
- * - [AIRPORTS_CSV] — city names, full airport names, optional search aliases (pipe-separated).
- * - [TEMPLATES_CSV] — one row per *flight pattern* (not per calendar day): route, total gate-to-gate
+ * **Staff-editable data (SQLite under `data/db/`):**
+ * - `airports_display.db` — city names, full airport names, optional search aliases (pipe-separated).
+ * - `flight_schedule_templates.db` — one row per *flight pattern* (not per calendar day): route, total gate-to-gate
  *   minutes, stops, stopover airport codes (pipe-separated), merchandising rank,
  *   **arrival offset days** (for +1 at destination vs departure date),
  *   **per-leg** local departure times, local arrival times, and flight numbers (pipe-separated, one
@@ -56,8 +64,8 @@ private const val AFTERNOON_END = 18 * 60
  */
 object FlightScheduleRepository {
 
-    private val AIRPORTS_CSV = File("data/airports_display.csv")
-    private val TEMPLATES_CSV = File("data/flight_schedule_templates.csv")
+    private val AIRPORTS_DB = File("data/db/airports_display.db")
+    private val TEMPLATES_DB = File("data/db/flight_schedule_templates.db")
     private val TIME_FMT = DateTimeFormatter.ofPattern("H:mm")
 
     enum class SortKey {
@@ -100,7 +108,7 @@ object FlightScheduleRepository {
         val pageCount: Int,
     )
 
-    /** Row from [AIRPORTS_CSV] used for display and text-based airport resolution. */
+    /** Row from `airports_display` (SQLite) used for display and text-based airport resolution. */
     data class AirportMeta(
         val code: String,
         val city: String,
@@ -108,7 +116,7 @@ object FlightScheduleRepository {
         val aliases: List<String> = emptyList(),
     )
 
-    /** Internal: one line from [TEMPLATES_CSV] before expanding to a calendar date. */
+    /** Internal: one row from `flight_schedule_templates` before expanding to a calendar date. */
     private data class FlightTemplate(
         val originCode: String,
         val destCode: String,
@@ -122,10 +130,10 @@ object FlightScheduleRepository {
         val legFlightNumbers: List<String>,
     )
 
-    /** Airports loaded from CSV (lazy, once per JVM). */
+    /** Airports loaded from SQLite (lazy, once per JVM). */
     private val airports: List<AirportMeta> by lazy { loadAirportsWithFallback() }
 
-    /** Schedule templates loaded from CSV (lazy, once per JVM). */
+    /** Schedule templates loaded from SQLite (lazy, once per JVM). */
     private val templates: List<FlightTemplate> by lazy { loadTemplatesWithFallback() }
 
     /**
@@ -134,7 +142,7 @@ object FlightScheduleRepository {
     fun parseAirportCode(raw: String): String? = resolveAirportCode(raw)
 
     /**
-     * City label for headings (e.g. "Manchester"), from [AIRPORTS_CSV].
+     * City label for headings (e.g. "Manchester"), from `airports_display` DB.
      */
     fun cityForCode(code: String?): String {
         if (code.isNullOrBlank()) return "Unknown city"
@@ -142,7 +150,7 @@ object FlightScheduleRepository {
     }
 
     /**
-     * Full airport name for route details (e.g. "Manchester Airport"), from [AIRPORTS_CSV].
+     * Full airport name for route details (e.g. "Manchester Airport"), from `airports_display` DB.
      */
     fun airportNameForCode(code: String?): String {
         if (code.isNullOrBlank()) return "Unknown airport"
@@ -192,6 +200,28 @@ object FlightScheduleRepository {
         val from = (safePage - 1) * safePageSize
         val slice = sorted.drop(from).take(safePageSize)
         return PagedResult(slice, sorted.size, safePage, safePageSize, pageCount)
+    }
+
+    /**
+     * Lowest generated Economy Light fare for a route/date from the schedule templates.
+     * Used by homepage cards so they display the same pricing engine as Step 1 search.
+     */
+    fun lowestEconomyLightFare(
+        originCode: String,
+        destCode: String,
+        depart: LocalDate,
+    ): BigDecimal? {
+        val shown =
+            search(
+                originCode = originCode,
+                destCode = destCode,
+                depart = depart,
+                sort = SortKey.FARE,
+                ascending = true,
+                page = 1,
+                pageSize = 400,
+            ).rows
+        return shown.minOfOrNull { it.priceLight }?.setScale(2, RoundingMode.HALF_UP)
     }
 
     /**
@@ -333,7 +363,13 @@ object FlightScheduleRepository {
         val arrivalOffsetDays = zoned.arrivalOffsetDays
         val durationMinutes = zoned.durationMinutes
 
-        val light = generatedPriceLight(date, template, variantIdx)
+        val light =
+            generatedPriceLight(
+                date = date,
+                template = template,
+                variantIdx = variantIdx,
+                departTime = departTime,
+            )
         val essential = light + BigDecimal("92.00")
         val flex = light + BigDecimal("248.00")
         val dateBump = (date.dayOfMonth % 3)
@@ -786,20 +822,59 @@ object FlightScheduleRepository {
         date: LocalDate,
         template: FlightTemplate,
         variantIdx: Int,
+        departTime: LocalTime,
     ): BigDecimal {
         val hashInput = "${template.legFlightNumbers.joinToString("-")}-${date}-$variantIdx"
         val spread = (hashInput.hashCode().absoluteValue % 90) + 15
-        val seasonMultiplier =
-            when (date.monthValue) {
-                6, 7, 8, 12 -> BigDecimal("1.14")
-                else -> BigDecimal("1.00")
-            }
+        val seasonMultiplier = seasonMultiplier(date)
+        val peakMultiplier = peakDepartureMultiplier(departTime)
+        val distanceKm = routeDistanceKm(template.originCode, template.destCode) ?: 0
+        val distanceAdder = BigDecimal(distanceKm) * BigDecimal("0.035")
         val base =
             BigDecimal(template.durationMinutes) * BigDecimal("0.39") +
                 BigDecimal(template.stops * 58) +
+                distanceAdder +
                 BigDecimal(spread) +
                 BigDecimal("120")
-        return (base * seasonMultiplier).setScale(2, RoundingMode.HALF_UP)
+        return (base * seasonMultiplier * peakMultiplier).setScale(2, RoundingMode.HALF_UP)
+    }
+
+    private fun seasonMultiplier(date: LocalDate): BigDecimal =
+        when (date.monthValue) {
+            6, 7, 8, 12 -> BigDecimal("1.14")
+            else -> BigDecimal("1.00")
+        }
+
+    private fun peakDepartureMultiplier(departTime: LocalTime): BigDecimal {
+        val minute = toMinuteOfDay(departTime)
+        val morningPeak = minute in (6 * 60)..(9 * 60 + 59)
+        val eveningPeak = minute in (17 * 60)..(20 * 60 + 59)
+        return if (morningPeak || eveningPeak) BigDecimal("1.08") else BigDecimal("1.00")
+    }
+
+    private fun routeDistanceKm(
+        originCode: String,
+        destCode: String,
+    ): Int? {
+        val o = GeoRepository.coordinatesForAirport(originCode) ?: return null
+        val d = GeoRepository.coordinatesForAirport(destCode) ?: return null
+        return haversineKm(o.first, o.second, d.first, d.second)
+    }
+
+    private fun haversineKm(
+        lat1: Double,
+        lon1: Double,
+        lat2: Double,
+        lon2: Double,
+    ): Int {
+        val r = 6371.0
+        val φ1 = lat1 * PI / 180.0
+        val φ2 = lat2 * PI / 180.0
+        val Δφ = (lat2 - lat1) * PI / 180.0
+        val Δλ = (lon2 - lon1) * PI / 180.0
+        val a = sin(Δφ / 2).pow(2) + cos(φ1) * cos(φ2) * sin(Δλ / 2).pow(2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return (r * c).roundToInt()
     }
 
     /**
@@ -838,53 +913,90 @@ object FlightScheduleRepository {
         }
     }
 
-    /**
-     * Read [AIRPORTS_CSV]; if missing, write bundled defaults then parse.
-     */
-    private fun loadAirportsWithFallback(): List<AirportMeta> {
-        ensureAirportsSeedFile()
-        if (!AIRPORTS_CSV.exists()) return emptyList()
-        return AIRPORTS_CSV
-            .readLines()
-            .drop(1)
-            .mapNotNull { line -> parseAirportLine(line) }
+    /** Read airports from SQLite only. */
+    private fun loadAirportsWithFallback(): List<AirportMeta> = loadAirportsFromSqlite()
+
+    private fun loadAirportsFromSqlite(): List<AirportMeta> {
+        if (!AIRPORTS_DB.exists()) return emptyList()
+        val jdbcUrl = "jdbc:sqlite:${AIRPORTS_DB.path}"
+        return runCatching {
+            DriverManager.getConnection(jdbcUrl).use { conn ->
+                conn.prepareStatement(
+                    "SELECT code, city, airportName, aliases FROM airports_display",
+                ).use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        buildList {
+                            while (rs.next()) {
+                                val code = rs.getString("code")?.trim().orEmpty()
+                                val city = rs.getString("city")?.trim().orEmpty()
+                                val airportName = rs.getString("airportName")?.trim().orEmpty()
+                                val aliasesRaw = rs.getString("aliases")?.trim().orEmpty()
+                                val aliases =
+                                    aliasesRaw
+                                        .split("|")
+                                        .map { it.trim() }
+                                        .filter { it.isNotBlank() }
+                                if (code.isNotBlank() && city.isNotBlank() && airportName.isNotBlank()) {
+                                    add(
+                                        AirportMeta(
+                                            code = code.uppercase(),
+                                            city = city,
+                                            airportName = airportName,
+                                            aliases = aliases,
+                                        ),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }.getOrElse { emptyList() }
+    }
+
+    /** Read schedule templates from SQLite only. */
+    private fun loadTemplatesWithFallback(): List<FlightTemplate> = loadTemplatesFromSqlite()
+
+    private fun loadTemplatesFromSqlite(): List<FlightTemplate> {
+        if (!TEMPLATES_DB.exists()) return emptyList()
+        val jdbcUrl = "jdbc:sqlite:${TEMPLATES_DB.path}"
+        return runCatching {
+            DriverManager.getConnection(jdbcUrl).use { conn ->
+                conn.prepareStatement(
+                    """
+                    SELECT originCode, destCode, durationMinutes, stops, stopoverCodes,
+                           recommendedRankBase, arrivalOffsetDays, legDepartureTimes,
+                           legArrivalTimes, legFlightNumbers
+                    FROM flight_schedule_templates
+                    """.trimIndent(),
+                ).use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        buildList {
+                            while (rs.next()) {
+                                val line =
+                                    listOf(
+                                        rs.getString("originCode")?.trim().orEmpty(),
+                                        rs.getString("destCode")?.trim().orEmpty(),
+                                        rs.getString("durationMinutes")?.trim().orEmpty(),
+                                        rs.getString("stops")?.trim().orEmpty(),
+                                        rs.getString("stopoverCodes")?.trim().orEmpty(),
+                                        rs.getString("recommendedRankBase")?.trim().orEmpty(),
+                                        rs.getString("arrivalOffsetDays")?.trim().orEmpty(),
+                                        rs.getString("legDepartureTimes")?.trim().orEmpty(),
+                                        rs.getString("legArrivalTimes")?.trim().orEmpty(),
+                                        rs.getString("legFlightNumbers")?.trim().orEmpty(),
+                                    ).joinToString(",")
+                                parseTemplateLine(line)?.let { add(it) }
+                            }
+                        }
+                    }
+                }
+            }
+        }.getOrElse { emptyList() }
     }
 
     /**
-     * Read [TEMPLATES_CSV]; if missing, write bundled defaults then parse.
-     */
-    private fun loadTemplatesWithFallback(): List<FlightTemplate> {
-        ensureTemplatesSeedFile()
-        if (!TEMPLATES_CSV.exists()) return emptyList()
-        return TEMPLATES_CSV
-            .readLines()
-            .drop(1)
-            .mapNotNull { line -> parseTemplateLine(line) }
-    }
-
-    /**
-     * Parse one non-header line of [AIRPORTS_CSV]: code,city,airportName,aliases
-     */
-    private fun parseAirportLine(line: String): AirportMeta? {
-        val parts = line.split(",").map { it.trim() }
-        if (parts.size < 3) return null
-        val aliases =
-            parts.getOrNull(3)
-                ?.takeIf { it.isNotBlank() }
-                ?.split("|")
-                ?.map { it.trim() }
-                ?.filter { it.isNotBlank() }
-                ?: emptyList()
-        return AirportMeta(
-            code = parts[0].uppercase(),
-            city = parts[1],
-            airportName = parts[2],
-            aliases = aliases,
-        )
-    }
-
-    /**
-     * Parse one non-header line of [TEMPLATES_CSV].
+     * Parse one comma-joined template row (same shape as former CSV line).
      *
      * Columns: originCode, destCode, durationMinutes, stops, stopoverCodes, recommendedRankBase,
      * arrivalOffsetDays, legDepartureTimes, legArrivalTimes, legFlightNumbers
@@ -931,32 +1043,4 @@ object FlightScheduleRepository {
         }
     }
 
-    /**
-     * Create [AIRPORTS_CSV] with default content if the file is absent (same pattern as [AirportRepository]).
-     */
-    private fun ensureAirportsSeedFile() {
-        AIRPORTS_CSV.parentFile?.mkdirs()
-        if (AIRPORTS_CSV.exists()) return
-        AIRPORTS_CSV.writeText(
-            """
-            code,city,airportName,aliases
-            MAN,Manchester,Manchester Airport,manchester
-            HKG,Hong Kong,Hong Kong International Airport,hong kong
-            """.trimIndent() + "\n",
-        )
-    }
-
-    /**
-     * Create [TEMPLATES_CSV] with a minimal default if the file is absent.
-     */
-    private fun ensureTemplatesSeedFile() {
-        TEMPLATES_CSV.parentFile?.mkdirs()
-        if (TEMPLATES_CSV.exists()) return
-        TEMPLATES_CSV.writeText(
-            """
-            originCode,destCode,durationMinutes,stops,stopoverCodes,recommendedRankBase,arrivalOffsetDays,legDepartureTimes,legArrivalTimes,legFlightNumbers
-            MAN,HKG,785,1,DXB,10,1,11:10|14:40,20:15|06:35,GA218|GA319
-            """.trimIndent() + "\n",
-        )
-    }
 }

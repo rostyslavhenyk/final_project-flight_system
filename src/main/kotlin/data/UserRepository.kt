@@ -1,6 +1,7 @@
 package data
 
 import java.io.File
+import java.sql.DriverManager
 import java.util.concurrent.atomic.AtomicInteger
 
 data class User(
@@ -12,11 +13,13 @@ data class User(
     var password: String,
 )
 
+/**
+ * Users persisted in SQLite only: `data/db/users.db` (no CSV fallback).
+ */
 object UserRepository {
-    private val file = File("data/users.csv")
+    private val dbFile = File("data/db/users.db")
     private val users = mutableListOf<User>()
     private val idCounter = AtomicInteger(1)
-    private val csvHeader = "id,firstname,lastname,role_id,email,password\n"
 
     public val size: Int
         get() = this.users.size
@@ -25,16 +28,38 @@ object UserRepository {
         get() = User(-1, "", "", -1, "", "")
 
     init {
-        file.parentFile?.mkdirs()
-        if (!file.exists()) {
-            file.writeText(csvHeader)
-        } else {
-            file.readLines().drop(1).forEach { line ->
-                val parts = line.split(",", limit = 6)
-                if (parts.size == 6) {
-                    val id = parts[0].toIntOrNull() ?: return@forEach
-                    users.add(User(id, parts[1], parts[2], parts[3].toInt(), parts[4], parts[5]))
-                    idCounter.set(maxOf(idCounter.get(), id + 1))
+        dbFile.parentFile?.mkdirs()
+        DriverManager.getConnection("jdbc:sqlite:${dbFile.path}").use { conn ->
+            conn.createStatement().use { st ->
+                st.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY,
+                        firstname TEXT NOT NULL,
+                        lastname TEXT NOT NULL,
+                        role_id INTEGER NOT NULL,
+                        email TEXT NOT NULL,
+                        password TEXT NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
+            conn.prepareStatement("SELECT id, firstname, lastname, role_id, email, password FROM users ORDER BY id").use { ps ->
+                ps.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val id = rs.getInt("id")
+                        users.add(
+                            User(
+                                id = id,
+                                firstname = rs.getString("firstname").orEmpty(),
+                                lastname = rs.getString("lastname").orEmpty(),
+                                role_id = rs.getInt("role_id"),
+                                email = rs.getString("email").orEmpty(),
+                                password = rs.getString("password").orEmpty(),
+                            ),
+                        )
+                        idCounter.set(maxOf(idCounter.get(), id + 1))
+                    }
                 }
             }
         }
@@ -76,17 +101,29 @@ object UserRepository {
     }
 
     fun persist() {
-        file.writeText(
-            csvHeader +
-                users.joinToString("\n") {
-                    "${it.id},${it.firstname.replace(
-                        ",",
-                        "",
-                    )},${it.lastname.replace(
-                        ",",
-                        "",
-                    )},${it.role_id},${it.email.replace(",", "")},${it.password.replace(",", "")}"
-                },
-        )
+        DriverManager.getConnection("jdbc:sqlite:${dbFile.path}").use { conn ->
+            conn.autoCommit = false
+            try {
+                conn.createStatement().use { it.execute("DELETE FROM users") }
+                conn.prepareStatement(
+                    "INSERT INTO users (id, firstname, lastname, role_id, email, password) VALUES (?,?,?,?,?,?)",
+                ).use { ps ->
+                    for (u in users) {
+                        ps.setInt(1, u.id)
+                        ps.setString(2, u.firstname.replace(",", ""))
+                        ps.setString(3, u.lastname.replace(",", ""))
+                        ps.setInt(4, u.role_id)
+                        ps.setString(5, u.email.replace(",", ""))
+                        ps.setString(6, u.password.replace(",", ""))
+                        ps.addBatch()
+                    }
+                    ps.executeBatch()
+                }
+                conn.commit()
+            } catch (e: Exception) {
+                conn.rollback()
+                throw e
+            }
+        }
     }
 }

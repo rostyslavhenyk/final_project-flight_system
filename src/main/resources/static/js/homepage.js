@@ -23,7 +23,7 @@
    * Wires one airport text field (`#from` or `#to`) to its dropdown list (`#from-list` / `#to-list`).
    * HTML already contains every airport as `<div role="option" data-value="...">` from the server — there is no second request.
    *
-   * Prefix match: an option is shown if the airport string (lowercase) STARTS WITH what the user typed (indexOf(q) === 0).
+   * Prefix match: an option is shown if the airport string (lowercase) starts with what the user typed.
    * So "h" matches "Hong Kong (HKG)"; "hi" matches nothing → we show the empty-state paragraph.
    *
    * `document.getElementById(id)` returns the first element with that id, or null if missing.
@@ -72,13 +72,13 @@
      * `classList.add('is-open')` adds a CSS class; homepage.css uses `.autocomplete-dropdown.is-open { display: block }`.
      */
     function filter() {
-      var q = (input.value || '').trim().toLowerCase();
+      var queryText = (input.value || '').trim().toLowerCase();
       var matched = [];
       var emptyEl = list.querySelector('.autocomplete-dropdown__empty');
       options.forEach(function(el) {
         var value = (el.getAttribute('data-value') || '').trim();
         var valueLower = value.toLowerCase();
-        var match = !q || valueLower.indexOf(q) === 0;
+        var match = !queryText || valueLower.indexOf(queryText) === 0;
         el.style.display = match ? 'block' : 'none';
         if (match) matched.push(el);
       });
@@ -93,7 +93,7 @@
         .forEach(function(el) { list.appendChild(el); });
       if (emptyEl) {
         list.appendChild(emptyEl);
-        var showNoMatch = q.length > 0 && matched.length === 0;
+        var showNoMatch = queryText.length > 0 && matched.length === 0;
         /* `hidden` is a boolean HTML attribute: hidden=false removes it so the message is visible. */
         emptyEl.hidden = !showNoMatch;
       }
@@ -398,15 +398,15 @@
     var returnInput = document.getElementById('return');
     if (!departTrigger || !returnTrigger || !departInput || !returnInput) return;
 
-    function formatDate(d) {
-      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    function formatDate(dateValue) {
+      return dateValue.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     }
 
-    function toLocalIsoDate(d) {
-      var y = d.getFullYear();
-      var m = String(d.getMonth() + 1).padStart(2, '0');
-      var day = String(d.getDate()).padStart(2, '0');
-      return y + '-' + m + '-' + day;
+    function toLocalIsoDate(dateValue) {
+      var year = dateValue.getFullYear();
+      var month = String(dateValue.getMonth() + 1).padStart(2, '0');
+      var day = String(dateValue.getDate()).padStart(2, '0');
+      return year + '-' + month + '-' + day;
     }
 
     function setReturnEnabled(enabled) {
@@ -426,6 +426,7 @@
       onChange: function(selected) {
         if (selected.length) {
           departInput.value = toLocalIsoDate(selected[0]);
+          departInput.dispatchEvent(new Event('change', { bubbles: true }));
           departTrigger.textContent = formatDate(selected[0]);
           if (fpReturn) fpReturn.set('minDate', selected[0]);
         }
@@ -439,6 +440,7 @@
       onChange: function(selected) {
         if (selected.length) {
           returnInput.value = toLocalIsoDate(selected[0]);
+          returnInput.dispatchEvent(new Event('change', { bubbles: true }));
           returnTrigger.textContent = formatDate(selected[0]);
         }
       }
@@ -455,8 +457,8 @@
         setReturnEnabled(false);
       } else {
         setReturnEnabled(true);
-        var d = departInput.value;
-        if (d) fpReturn.set('minDate', d);
+        var departDate = departInput.value;
+        if (departDate) fpReturn.set('minDate', departDate);
       }
     });
 
@@ -541,8 +543,8 @@
     if (!list) return {};
     var set = {};
     list.querySelectorAll('[role="option"]').forEach(function(el) {
-      var v = el.getAttribute('data-value');
-      if (v) set[v.trim()] = true;
+      var airportValue = el.getAttribute('data-value');
+      if (airportValue) set[airportValue.trim()] = true;
     });
     return set;
   }
@@ -572,8 +574,8 @@
       if (slides.length < 2 || reduceMotion) return;
       var timer = null;
       var idx = 0;
-      function setActive(i) {
-        idx = i % slides.length;
+      function setActive(nextIndex) {
+        idx = nextIndex % slides.length;
         slides.forEach(function(s, j) {
           s.classList.toggle('is-active', j === idx);
         });
@@ -635,10 +637,10 @@
       h3.className = 'offer-card-dest';
       h3.textContent = c.destinationName || '';
       li.appendChild(h3);
-      var p = document.createElement('p');
-      p.className = 'offer-card-meta';
-      p.textContent = 'Economy · from GBP ' + (c.priceGbp != null ? c.priceGbp : '');
-      li.appendChild(p);
+      var priceMeta = document.createElement('p');
+      priceMeta.className = 'offer-card-meta';
+      priceMeta.textContent = 'Economy · from GBP ' + (c.priceGbp != null ? c.priceGbp : '');
+      li.appendChild(priceMeta);
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'offer-card-cta';
@@ -650,11 +652,11 @@
     if (!cards.length) {
       var li = document.createElement('li');
       li.className = 'offer-card';
-      var p = document.createElement('p');
-      p.className = 'offer-card-meta';
-      p.textContent =
+      var emptyStateMeta = document.createElement('p');
+      emptyStateMeta.className = 'offer-card-meta';
+      emptyStateMeta.textContent =
         'Fares are not available for this departure airport. Please choose another airport or contact reservations.';
-      li.appendChild(p);
+      li.appendChild(emptyStateMeta);
       ul.appendChild(li);
     }
     wireOfferCardImageStacks(ul);
@@ -666,6 +668,7 @@
    */
   function initOffersFromLeavingFrom() {
     var fromInput = document.getElementById('from');
+    var departInput = document.getElementById('depart');
     var section = document.querySelector('.latest-offers');
     if (!fromInput || !section) return;
 
@@ -676,14 +679,19 @@
       (section.getAttribute('data-ssr-label') || 'Manchester').trim();
 
     function fetchOffers(originCode, originLabel) {
-      var key = originCode + '|' + originLabel;
+      var departInput = document.getElementById('depart');
+      var depart = (departInput && departInput.value || '').trim();
+      var key = originCode + '|' + originLabel + '|' + depart;
       if (key === lastOfferFetchKey) return;
-      var q =
+      var requestUrl =
         '/api/latest-offers?origin=' +
         encodeURIComponent(originCode) +
         '&originLabel=' +
         encodeURIComponent(originLabel);
-      fetch(q)
+      if (depart) {
+        requestUrl += '&depart=' + encodeURIComponent(depart);
+      }
+      fetch(requestUrl)
         .then(function(r) { return r.json(); })
         .then(function(data) {
           lastOfferFetchKey = key;
@@ -693,20 +701,20 @@
     }
 
     function sync() {
-      var v = (fromInput.value || '').trim();
+      var fromValue = (fromInput.value || '').trim();
       var fallbackCode = (section.getAttribute('data-ssr-origin') || 'MAN').trim();
       var fallbackLabel = (section.getAttribute('data-ssr-label') || 'Manchester').trim();
 
-      if (!v) {
+      if (!fromValue) {
         fetchOffers(fallbackCode, fallbackLabel);
         return;
       }
 
-      var m = v.match(/\(([A-Z]{3})\)\s*$/);
-      if (!m) return;
+      var iataMatch = fromValue.match(/\(([A-Z]{3})\)\s*$/);
+      if (!iataMatch) return;
 
-      var code = m[1];
-      var display = v.replace(/\s*\([A-Z]{3}\)\s*$/, '').trim() || v;
+      var code = iataMatch[1];
+      var display = fromValue.replace(/\s*\([A-Z]{3}\)\s*$/, '').trim() || fromValue;
       fetchOffers(code, display);
     }
 
@@ -718,10 +726,15 @@
     fromInput.addEventListener('input', function() {
       clearTimeout(debounceId);
       debounceId = setTimeout(function() {
-        var v = (fromInput.value || '').trim();
-        if (/\([A-Z]{3}\)\s*$/.test(v)) sync();
+        var fromValue = (fromInput.value || '').trim();
+        if (/\([A-Z]{3}\)\s*$/.test(fromValue)) sync();
       }, 400);
     });
+
+    if (departInput) {
+      departInput.addEventListener('change', sync);
+      departInput.addEventListener('input', sync);
+    }
 
     if ((fromInput.value || '').trim()) sync();
   }
@@ -737,11 +750,11 @@
       var btn = e.target.closest('.offer-card-cta');
       if (!btn) return;
       e.preventDefault();
-      var v = btn.getAttribute('data-book-airport');
-      if (!v) return;
+      var selectedAirport = btn.getAttribute('data-book-airport');
+      if (!selectedAirport) return;
       var toInput = document.getElementById('to');
       if (!toInput) return;
-      toInput.value = v;
+      toInput.value = selectedAirport;
       toInput.dispatchEvent(new Event('change', { bubbles: true }));
       var err = document.getElementById('flight-search-error');
       if (err) {
@@ -776,16 +789,16 @@
       state.images = [];
     }
 
-    function showLb(i) {
+    function showLb(targetIndex) {
       if (!state.images.length || !imgEl || !titleEl || !capEl || !ctrEl) return;
-      var n = state.images.length;
-      state.idx = ((i % n) + n) % n;
-      var u = state.images[state.idx];
-      imgEl.src = u;
+      var imageCount = state.images.length;
+      state.idx = ((targetIndex % imageCount) + imageCount) % imageCount;
+      var imageUrl = state.images[state.idx];
+      imgEl.src = imageUrl;
       imgEl.alt = state.name + ' — photo ' + (state.idx + 1);
       titleEl.textContent = state.name;
-      capEl.textContent = state.name + ' · photo ' + (state.idx + 1) + ' of ' + n;
-      ctrEl.textContent = state.idx + 1 + ' / ' + n;
+      capEl.textContent = state.name + ' · photo ' + (state.idx + 1) + ' of ' + imageCount;
+      ctrEl.textContent = state.idx + 1 + ' / ' + imageCount;
     }
 
     function openLb(stack) {
@@ -862,9 +875,9 @@
       var best = 0;
       var bestDist = Number.POSITIVE_INFINITY;
       cards.forEach(function(card, idx) {
-        var d = Math.abs(card.offsetLeft - left);
-        if (d < bestDist) {
-          bestDist = d;
+        var distance = Math.abs(card.offsetLeft - left);
+        if (distance < bestDist) {
+          bestDist = distance;
           best = idx;
         }
       });

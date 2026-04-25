@@ -1,28 +1,42 @@
 package data
 
 import java.io.File
+import java.sql.DriverManager
 import kotlin.math.pow
 
 /**
  * Airport with coordinates for "nearest airport" from user location.
- * Data in data/airports_geo.csv: code,name,lat,lon
+ * Source: `data/db/airports_geo.db` table `airports_geo` only (no CSV fallback).
  */
 data class AirportGeo(val code: String, val name: String, val lat: Double, val lon: Double)
 
 object GeoRepository {
-    private val file = File("data/airports_geo.csv")
-    private val airports: List<AirportGeo> by lazy {
-        file.parentFile?.mkdirs()
-        if (!file.exists()) return@lazy emptyList()
-        file.readLines()
-            .drop(1)
-            .mapNotNull { line ->
-                val parts = line.split(",", limit = 4)
-                if (parts.size != 4) return@mapNotNull null
-                val lat = parts[2].trim().toDoubleOrNull() ?: return@mapNotNull null
-                val lon = parts[3].trim().toDoubleOrNull() ?: return@mapNotNull null
-                AirportGeo(parts[0].trim(), parts[1].trim(), lat, lon)
+    private val sqliteFile = File("data/db/airports_geo.db")
+
+    private val airports: List<AirportGeo> by lazy { loadFromSqlite() }
+
+    private fun loadFromSqlite(): List<AirportGeo> {
+        if (!sqliteFile.exists()) return emptyList()
+        val jdbcUrl = "jdbc:sqlite:${sqliteFile.path}"
+        return runCatching {
+            DriverManager.getConnection(jdbcUrl).use { conn ->
+                conn.prepareStatement("SELECT code, name, lat, lon FROM airports_geo").use { stmt ->
+                    stmt.executeQuery().use { rs ->
+                        buildList {
+                            while (rs.next()) {
+                                val code = rs.getString("code")?.trim().orEmpty()
+                                val name = rs.getString("name")?.trim().orEmpty()
+                                val lat = rs.getString("lat")?.trim()?.toDoubleOrNull()
+                                val lon = rs.getString("lon")?.trim()?.toDoubleOrNull()
+                                if (code.isNotBlank() && name.isNotBlank() && lat != null && lon != null) {
+                                    add(AirportGeo(code, name, lat, lon))
+                                }
+                            }
+                        }
+                    }
+                }
             }
+        }.getOrElse { emptyList() }
     }
 
     /** Returns the nearest airport to (lat, lon) or null if no data. */
@@ -37,7 +51,7 @@ object GeoRepository {
 
     /** Lat/lon for an IATA code, for distance calculations. */
     fun coordinatesForAirport(code: String): Pair<Double, Double>? {
-        val c = code.trim()
-        return airports.find { it.code.equals(c, ignoreCase = true) }?.let { it.lat to it.lon }
+        val airportCode = code.trim()
+        return airports.find { it.code.equals(airportCode, ignoreCase = true) }?.let { it.lat to it.lon }
     }
 }

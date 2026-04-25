@@ -45,11 +45,11 @@ private suspend fun ApplicationCall.handleFlightsPage() {
 private suspend fun ApplicationCall.handleSearchFlightsList() {
     timed("T0_search_flights_list", jsMode()) {
         val pebble = getEngine()
-        val q = request.queryParameters
+        val queryParams = request.queryParameters
 
-        val fromRaw = q["from"].orEmpty()
-        val toRaw = q["to"].orEmpty()
-        val departRaw = q["depart"].orEmpty()
+        val fromRaw = queryParams["from"].orEmpty()
+        val toRaw = queryParams["to"].orEmpty()
+        val departRaw = queryParams["depart"].orEmpty()
         val originCode = FlightScheduleRepository.resolveAirportCode(fromRaw)
         val destCode = FlightScheduleRepository.resolveAirportCode(toRaw)
 
@@ -60,17 +60,17 @@ private suspend fun ApplicationCall.handleSearchFlightsList() {
                 null
             }
 
-        val sortKey = parseSortKey(q["sort"])
+        val sortKey = parseSortKey(queryParams["sort"])
         val ascending =
             if (sortKey == SortKey.RECOMMENDED) {
                 true
             } else {
-                q["order"] != "desc"
+                queryParams["order"] != "desc"
             }
-        val cabinRaw = q["cabinClass"].orEmpty().lowercase(Locale.UK).trim()
-        val page = q["page"]?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+        val cabinRaw = queryParams["cabinClass"].orEmpty().lowercase(Locale.UK).trim()
+        val page = queryParams["page"]?.toIntOrNull()?.coerceAtLeast(1) ?: 1
 
-        val baseParams = buildBaseParams(q, fromRaw, toRaw, departRaw)
+        val baseParams = buildBaseParams(queryParams, fromRaw, toRaw, departRaw)
 
         val paged =
             if (originCode != null && destCode != null && departDate != null) {
@@ -128,11 +128,11 @@ private suspend fun ApplicationCall.handleSearchFlightsList() {
         val isEconomyCabin = !isFirstCabin && !isBusinessCabin
         val cabinBannerIsFirst = cabinRaw == "first"
 
-        val leg = q["leg"].orEmpty().lowercase(Locale.UK).trim()
+        val leg = queryParams["leg"].orEmpty().lowercase(Locale.UK).trim()
         val inboundLeg = leg == "inbound"
-        val obFrom = q["obFrom"].orEmpty()
-        val obTo = q["obTo"].orEmpty()
-        val obDepart = q["obDepart"].orEmpty()
+        val obFrom = queryParams["obFrom"].orEmpty()
+        val obTo = queryParams["obTo"].orEmpty()
+        val obDepart = queryParams["obDepart"].orEmpty()
         val outboundSummaryLine =
             if (inboundLeg && obFrom.isNotBlank() && obTo.isNotBlank() && obDepart.isNotBlank()) {
                 "$obFrom → $obTo · $obDepart"
@@ -140,29 +140,29 @@ private suspend fun ApplicationCall.handleSearchFlightsList() {
                 ""
             }
         val hasSearch = originCode != null && destCode != null && departDate != null
-        val tripReturn = q["trip"].equals("return", ignoreCase = true)
+        val tripReturn = queryParams["trip"].equals("return", ignoreCase = true)
         val backToOutboundHref =
             if (hasSearch && inboundLeg && tripReturn && outboundSummaryLine.isNotBlank()) {
-                flightsHref(buildOutboundLegSearchParams(q))
+                flightsHref(buildOutboundLegSearchParams(queryParams))
             } else {
                 ""
             }
         // On inbound results, keep a return date for `data-search-return` when raw `return` is blank.
         val returnDateForFareNav =
             when {
-                q["return"].orEmpty().isNotBlank() -> q["return"].orEmpty()
+                queryParams["return"].orEmpty().isNotBlank() -> queryParams["return"].orEmpty()
                 inboundLeg && departRaw.isNotBlank() -> departRaw
                 else -> ""
             }
         val preservedOutboundFlightId =
             if (inboundLeg) {
-                q["obFlight"].orEmpty().ifBlank { q["flight"].orEmpty() }
+                queryParams["obFlight"].orEmpty().ifBlank { queryParams["flight"].orEmpty() }
             } else {
                 ""
             }
         val preservedOutboundFare =
             if (inboundLeg) {
-                q["obFare"].orEmpty().ifBlank { q["fare"].orEmpty() }
+                queryParams["obFare"].orEmpty().ifBlank { queryParams["fare"].orEmpty() }
             } else {
                 ""
             }
@@ -176,18 +176,18 @@ private suspend fun ApplicationCall.handleSearchFlightsList() {
                 "fromRaw" to fromRaw,
                 "toRaw" to toRaw,
                 "departRaw" to departRaw,
-                "trip" to q["trip"].orEmpty(),
-                "cabinClass" to q["cabinClass"].orEmpty(),
-                "adults" to q["adults"].orEmpty(),
-                "children" to q["children"].orEmpty(),
-                "returnRaw" to q["return"].orEmpty(),
+                "trip" to queryParams["trip"].orEmpty(),
+                "cabinClass" to queryParams["cabinClass"].orEmpty(),
+                "adults" to queryParams["adults"].orEmpty(),
+                "children" to queryParams["children"].orEmpty(),
+                "returnRaw" to queryParams["return"].orEmpty(),
                 "returnDateForFareNav" to returnDateForFareNav,
                 "preservedOutboundFlightId" to preservedOutboundFlightId,
                 "preservedOutboundFare" to preservedOutboundFare,
                 "obFromRaw" to obFrom,
                 "obToRaw" to obTo,
                 "obDepartRaw" to obDepart,
-                "outboundPriceRaw" to q["outboundPrice"].orEmpty(),
+                "outboundPriceRaw" to queryParams["outboundPrice"].orEmpty(),
                 "inboundLeg" to inboundLeg,
                 "outboundSummaryLine" to outboundSummaryLine,
                 "backToOutboundHref" to backToOutboundHref,
@@ -264,25 +264,27 @@ private val BOOKING_QUERY_KEYS =
     )
 
 /** Preserves booking state across /book/… steps (omit highlight query when continuing). */
-private fun bookingParamsMap(q: Parameters): LinkedHashMap<String, String> {
-    val m = LinkedHashMap<String, String>()
-    for (k in BOOKING_QUERY_KEYS) {
-        q[k]?.takeIf { it.isNotBlank() }?.let { m[k] = it }
+private fun bookingParamsMap(queryParams: Parameters): LinkedHashMap<String, String> {
+    val preservedParams = LinkedHashMap<String, String>()
+    for (queryKey in BOOKING_QUERY_KEYS) {
+        queryParams[queryKey]?.takeIf { it.isNotBlank() }?.let { preservedValue ->
+            preservedParams[queryKey] = preservedValue
+        }
     }
-    return m
+    return preservedParams
 }
 
 private fun bookingHref(
     path: String,
-    q: Parameters,
+    queryParams: Parameters,
 ): String {
-    val m = bookingParamsMap(q)
-    if (m.isEmpty()) return path
-    val enc: (String) -> String = { s ->
-        URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20")
+    val preservedParams = bookingParamsMap(queryParams)
+    if (preservedParams.isEmpty()) return path
+    val encode: (String) -> String = { value ->
+        URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20")
     }
-    val qs = m.entries.joinToString("&") { (k, v) -> "${enc(k)}=${enc(v)}" }
-    return "$path?$qs"
+    val queryString = preservedParams.entries.joinToString("&") { (key, value) -> "${encode(key)}=${encode(value)}" }
+    return "$path?$queryString"
 }
 
 private fun findRecordForRouteAndFlightId(
@@ -295,7 +297,7 @@ private fun findRecordForRouteAndFlightId(
     val origin = FlightScheduleRepository.resolveAirportCode(fromRaw) ?: return null
     val dest = FlightScheduleRepository.resolveAirportCode(toRaw) ?: return null
     val date = runCatching { LocalDate.parse(departRaw) }.getOrNull() ?: return null
-    val res =
+    val searchPage =
         FlightScheduleRepository.search(
             originCode = origin,
             destCode = dest,
@@ -305,29 +307,29 @@ private fun findRecordForRouteAndFlightId(
             page = 1,
             pageSize = 400,
         )
-    return res.rows.find { row ->
-        val id =
+    return searchPage.rows.find { row ->
+        val rowDomId =
             encAttr(
                 "${row.originCode}-${row.destCode}-${row.departDate}-${row.legFlightNumbers.joinToString("-")}-${row.departTime}",
             )
-        id == flightId
+        rowDomId == flightId
     }
 }
 
-private fun findRecordForBooking(q: Parameters): FlightScheduleRecord? =
+private fun findRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
     findRecordForRouteAndFlightId(
-        fromRaw = q["from"].orEmpty(),
-        toRaw = q["to"].orEmpty(),
-        departRaw = q["depart"].orEmpty(),
-        flightId = q["flight"].orEmpty(),
+        fromRaw = queryParams["from"].orEmpty(),
+        toRaw = queryParams["to"].orEmpty(),
+        departRaw = queryParams["depart"].orEmpty(),
+        flightId = queryParams["flight"].orEmpty(),
     )
 
-private fun findOutboundRecordForBooking(q: Parameters): FlightScheduleRecord? =
+private fun findOutboundRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
     findRecordForRouteAndFlightId(
-        fromRaw = q["obFrom"].orEmpty(),
-        toRaw = q["obTo"].orEmpty(),
-        departRaw = q["obDepart"].orEmpty(),
-        flightId = q["obFlight"].orEmpty(),
+        fromRaw = queryParams["obFrom"].orEmpty(),
+        toRaw = queryParams["obTo"].orEmpty(),
+        departRaw = queryParams["obDepart"].orEmpty(),
+        flightId = queryParams["obFlight"].orEmpty(),
     )
 
 /** Human label e.g. `Economy Light`, `First Flex`. */
@@ -360,18 +362,18 @@ private fun farePackageDisplayName(
     }
 }
 
-private fun backToFlightSearchHref(q: Parameters): String {
-    val fromRaw = q["from"].orEmpty()
-    val toRaw = q["to"].orEmpty()
-    val departRaw = q["depart"].orEmpty()
-    val legNorm = q["leg"].orEmpty().lowercase(Locale.UK).trim()
+private fun backToFlightSearchHref(queryParams: Parameters): String {
+    val fromRaw = queryParams["from"].orEmpty()
+    val toRaw = queryParams["to"].orEmpty()
+    val departRaw = queryParams["depart"].orEmpty()
+    val legNorm = queryParams["leg"].orEmpty().lowercase(Locale.UK).trim()
     val fromCode = FlightScheduleRepository.resolveAirportCode(fromRaw)
     val toCode = FlightScheduleRepository.resolveAirportCode(toRaw)
-    val obFromCode = FlightScheduleRepository.resolveAirportCode(q["obFrom"].orEmpty())
-    val obToCode = FlightScheduleRepository.resolveAirportCode(q["obTo"].orEmpty())
+    val obFromCode = FlightScheduleRepository.resolveAirportCode(queryParams["obFrom"].orEmpty())
+    val obToCode = FlightScheduleRepository.resolveAirportCode(queryParams["obTo"].orEmpty())
     val inferredInbound =
         legNorm.isBlank() &&
-            q["trip"].equals("return", ignoreCase = true) &&
+            queryParams["trip"].equals("return", ignoreCase = true) &&
             fromCode != null &&
             toCode != null &&
             obFromCode != null &&
@@ -380,54 +382,54 @@ private fun backToFlightSearchHref(q: Parameters): String {
             toCode == obFromCode
     val isInboundLeg = legNorm == "inbound" || inferredInbound
     return if (isInboundLeg) {
-        val m = LinkedHashMap(buildBaseParams(q, fromRaw, toRaw, departRaw))
-        m["page"] = "1"
-        if (!q["leg"].equals("inbound", ignoreCase = true)) {
-            m["leg"] = "inbound"
+        val outboundParams = LinkedHashMap(buildBaseParams(queryParams, fromRaw, toRaw, departRaw))
+        outboundParams["page"] = "1"
+        if (!queryParams["leg"].equals("inbound", ignoreCase = true)) {
+            outboundParams["leg"] = "inbound"
         }
-        flightsHref(m)
+        flightsHref(outboundParams)
     } else {
-        flightsHref(buildBaseParams(q, fromRaw, toRaw, departRaw) + mapOf("page" to "1"))
+        flightsHref(buildBaseParams(queryParams, fromRaw, toRaw, departRaw) + mapOf("page" to "1"))
     }
 }
 
 /** Inbound flight list with the chosen outbound flight + fare preserved (matches client inbound search URL). */
-private fun inboundSearchResultsHref(q: Parameters): String {
-    val m = LinkedHashMap<String, String>()
-    val fromRaw = q["from"].orEmpty()
-    val toRaw = q["to"].orEmpty()
-    val departRaw = q["depart"].orEmpty()
-    if (fromRaw.isNotBlank()) m["from"] = fromRaw
-    if (toRaw.isNotBlank()) m["to"] = toRaw
-    if (departRaw.isNotBlank()) m["depart"] = departRaw
-    m["trip"] = "return"
-    m["return"] = ""
-    m["leg"] = "inbound"
-    m["page"] = "1"
-    q["cabinClass"]?.takeIf { it.isNotBlank() }?.let { m["cabinClass"] = it }
-    q["adults"]?.takeIf { it.isNotBlank() }?.let { m["adults"] = it }
-    q["children"]?.takeIf { it.isNotBlank() }?.let { m["children"] = it }
-    q["obFrom"]?.takeIf { it.isNotBlank() }?.let { m["obFrom"] = it }
-    q["obTo"]?.takeIf { it.isNotBlank() }?.let { m["obTo"] = it }
-    q["obDepart"]?.takeIf { it.isNotBlank() }?.let { m["obDepart"] = it }
-    q["obFlight"]?.takeIf { it.isNotBlank() }?.let { m["obFlight"] = it }
-    q["obFare"]?.takeIf { it.isNotBlank() }?.let { m["obFare"] = it }
-    q["outboundPrice"]?.takeIf { it.isNotBlank() }?.let { m["outboundPrice"] = it }
-    q["obFlight"]?.takeIf { it.isNotBlank() }?.let { m["flight"] = it }
-    q["obFare"]?.takeIf { it.isNotBlank() }?.let { m["fare"] = it }
-    return flightsHref(m)
+private fun inboundSearchResultsHref(queryParams: Parameters): String {
+    val inboundParams = LinkedHashMap<String, String>()
+    val fromRaw = queryParams["from"].orEmpty()
+    val toRaw = queryParams["to"].orEmpty()
+    val departRaw = queryParams["depart"].orEmpty()
+    if (fromRaw.isNotBlank()) inboundParams["from"] = fromRaw
+    if (toRaw.isNotBlank()) inboundParams["to"] = toRaw
+    if (departRaw.isNotBlank()) inboundParams["depart"] = departRaw
+    inboundParams["trip"] = "return"
+    inboundParams["return"] = ""
+    inboundParams["leg"] = "inbound"
+    inboundParams["page"] = "1"
+    queryParams["cabinClass"]?.takeIf { it.isNotBlank() }?.let { inboundParams["cabinClass"] = it }
+    queryParams["adults"]?.takeIf { it.isNotBlank() }?.let { inboundParams["adults"] = it }
+    queryParams["children"]?.takeIf { it.isNotBlank() }?.let { inboundParams["children"] = it }
+    queryParams["obFrom"]?.takeIf { it.isNotBlank() }?.let { inboundParams["obFrom"] = it }
+    queryParams["obTo"]?.takeIf { it.isNotBlank() }?.let { inboundParams["obTo"] = it }
+    queryParams["obDepart"]?.takeIf { it.isNotBlank() }?.let { inboundParams["obDepart"] = it }
+    queryParams["obFlight"]?.takeIf { it.isNotBlank() }?.let { inboundParams["obFlight"] = it }
+    queryParams["obFare"]?.takeIf { it.isNotBlank() }?.let { inboundParams["obFare"] = it }
+    queryParams["outboundPrice"]?.takeIf { it.isNotBlank() }?.let { inboundParams["outboundPrice"] = it }
+    queryParams["obFlight"]?.takeIf { it.isNotBlank() }?.let { inboundParams["flight"] = it }
+    queryParams["obFare"]?.takeIf { it.isNotBlank() }?.let { inboundParams["fare"] = it }
+    return flightsHref(inboundParams)
 }
 
 private fun effectiveFareTier(
     tierRaw: String,
     cabinRaw: String,
 ): String {
-    val t = tierRaw.lowercase(Locale.UK).trim()
+    val normalizedTier = tierRaw.lowercase(Locale.UK).trim()
     val isFirstCabin = cabinRaw == "first"
     return when {
         isFirstCabin -> "flex"
-        t.isBlank() -> "flex"
-        else -> t
+        normalizedTier.isBlank() -> "flex"
+        else -> normalizedTier
     }
 }
 
@@ -447,15 +449,15 @@ private fun moneyForTier(
 private suspend fun ApplicationCall.handleBookReview() {
     timed("T0_book_review", jsMode()) {
         val pebble = getEngine()
-        val q = request.queryParameters
-        val cabinRaw = q["cabinClass"].orEmpty().lowercase(Locale.UK).trim()
-        val tierRawInbound = q["fare"].orEmpty().lowercase(Locale.UK).trim()
-        val inboundRow = findRecordForBooking(q)
+        val queryParams = request.queryParameters
+        val cabinRaw = queryParams["cabinClass"].orEmpty().lowercase(Locale.UK).trim()
+        val tierRawInbound = queryParams["fare"].orEmpty().lowercase(Locale.UK).trim()
+        val inboundRow = findRecordForBooking(queryParams)
         if (inboundRow == null) {
             val model =
                 mapOf(
                     "title" to "Selection not found",
-                    "backHref" to backToFlightSearchHref(q),
+                    "backHref" to backToFlightSearchHref(queryParams),
                 )
             val template = pebble.getTemplate("flights/book-review-missing.peb")
             val writer = StringWriter()
@@ -464,16 +466,16 @@ private suspend fun ApplicationCall.handleBookReview() {
             return@timed
         }
 
-        val tripReturn = q["trip"].equals("return", ignoreCase = true)
-        val outboundRow = findOutboundRecordForBooking(q)
+        val tripReturn = queryParams["trip"].equals("return", ignoreCase = true)
+        val outboundRow = findOutboundRecordForBooking(queryParams)
         val isDualLegReview = tripReturn && outboundRow != null
 
         val isEconomyCabin = cabinRaw != "business" && cabinRaw != "first"
         val isBusinessCabin = cabinRaw == "business"
         val isFirstCabin = cabinRaw == "first"
 
-        val highlight = q["highlight"] == "1"
-        val continuePassengersHref = bookingHref("/book/passengers", q)
+        val highlight = queryParams["highlight"] == "1"
+        val continuePassengersHref = bookingHref("/book/passengers", queryParams)
 
         val departingCard = flightCardMap(if (isDualLegReview) outboundRow!! else inboundRow, cabinRaw)
         val returningCard = if (isDualLegReview) flightCardMap(inboundRow, cabinRaw) else null
@@ -484,7 +486,7 @@ private suspend fun ApplicationCall.handleBookReview() {
         val inboundPackageName = farePackageDisplayName(inboundTier, cabinRaw)
 
         val outboundFares = if (isDualLegReview) cabinFareSet(outboundRow!!, cabinRaw) else inboundFares
-        val outboundTierRaw = q["obFare"].orEmpty().lowercase(Locale.UK).trim()
+        val outboundTierRaw = queryParams["obFare"].orEmpty().lowercase(Locale.UK).trim()
         val outboundTier = effectiveFareTier(outboundTierRaw, cabinRaw)
         val outboundPrice = moneyForTier(outboundFares, outboundTier, cabinRaw)
         val outboundPackageName = farePackageDisplayName(outboundTier, cabinRaw)
@@ -495,26 +497,33 @@ private suspend fun ApplicationCall.handleBookReview() {
 
         val departingRouteLine =
             if (isDualLegReview) {
-                routeCityPairLine(q["obFrom"].orEmpty(), q["obTo"].orEmpty())
+                routeCityPairLine(queryParams["obFrom"].orEmpty(), queryParams["obTo"].orEmpty())
             } else {
-                routeCityPairLine(q["from"].orEmpty(), q["to"].orEmpty())
+                routeCityPairLine(queryParams["from"].orEmpty(), queryParams["to"].orEmpty())
             }
         val returningRouteLine =
             if (isDualLegReview) {
-                routeCityPairLine(q["from"].orEmpty(), q["to"].orEmpty())
+                routeCityPairLine(queryParams["from"].orEmpty(), queryParams["to"].orEmpty())
             } else {
                 ""
             }
 
         val selectAnotherDepartingFlightHref =
             if (isDualLegReview) {
-                flightsHref(buildOutboundLegSearchParams(q))
+                flightsHref(buildOutboundLegSearchParams(queryParams))
             } else {
-                flightsHref(buildBaseParams(q, q["from"].orEmpty(), q["to"].orEmpty(), q["depart"].orEmpty()) + mapOf("page" to "1"))
+                flightsHref(
+                    buildBaseParams(
+                        queryParams,
+                        queryParams["from"].orEmpty(),
+                        queryParams["to"].orEmpty(),
+                        queryParams["depart"].orEmpty(),
+                    ) + mapOf("page" to "1"),
+                )
             }
         val selectAnotherDepartingFareHref = selectAnotherDepartingFlightHref
 
-        val selectAnotherReturningFlightHref = if (isDualLegReview) inboundSearchResultsHref(q) else ""
+        val selectAnotherReturningFlightHref = if (isDualLegReview) inboundSearchResultsHref(queryParams) else ""
         val selectAnotherReturningFareHref = selectAnotherReturningFlightHref
 
         val model =
@@ -552,21 +561,21 @@ private fun routeCityPairLine(
     fromRaw: String,
     toRaw: String,
 ): String {
-    val o = FlightScheduleRepository.resolveAirportCode(fromRaw) ?: return ""
-    val d = FlightScheduleRepository.resolveAirportCode(toRaw) ?: return ""
-    return "${FlightScheduleRepository.cityForCode(o)} to ${FlightScheduleRepository.cityForCode(d)}"
+    val originResolved = FlightScheduleRepository.resolveAirportCode(fromRaw) ?: return ""
+    val destResolved = FlightScheduleRepository.resolveAirportCode(toRaw) ?: return ""
+    return "${FlightScheduleRepository.cityForCode(originResolved)} to ${FlightScheduleRepository.cityForCode(destResolved)}"
 }
 
 /** Placeholder step 4 until seat selection is implemented. */
 private suspend fun ApplicationCall.handleBookSeats() {
     timed("T0_book_seats", jsMode()) {
         val pebble = getEngine()
-        val q = request.queryParameters
+        val queryParams = request.queryParameters
         val model =
             mapOf(
                 "title" to "Seat and extras",
-                "chooseFlightsHref" to backToFlightSearchHref(q),
-                "passengersHref" to bookingHref("/book/passengers", q),
+                "chooseFlightsHref" to backToFlightSearchHref(queryParams),
+                "passengersHref" to bookingHref("/book/passengers", queryParams),
             )
         val template = pebble.getTemplate("flights/step-3-seats/index.peb")
         val writer = StringWriter()
@@ -579,20 +588,20 @@ private suspend fun ApplicationCall.handleBookSeats() {
 private suspend fun ApplicationCall.handleBookPassengers() {
     timed("T0_book_passengers", jsMode()) {
         val pebble = getEngine()
-        val q = request.queryParameters
-        val fromRaw = q["from"].orEmpty()
-        val toRaw = q["to"].orEmpty()
-        val departRaw = q["depart"].orEmpty()
-        val obFrom = q["obFrom"].orEmpty()
-        val obTo = q["obTo"].orEmpty()
-        val legNorm = q["leg"].orEmpty().lowercase(Locale.UK).trim()
+        val queryParams = request.queryParameters
+        val fromRaw = queryParams["from"].orEmpty()
+        val toRaw = queryParams["to"].orEmpty()
+        val departRaw = queryParams["depart"].orEmpty()
+        val obFrom = queryParams["obFrom"].orEmpty()
+        val obTo = queryParams["obTo"].orEmpty()
+        val legNorm = queryParams["leg"].orEmpty().lowercase(Locale.UK).trim()
         val fromCode = FlightScheduleRepository.resolveAirportCode(fromRaw)
         val toCode = FlightScheduleRepository.resolveAirportCode(toRaw)
         val obFromCode = FlightScheduleRepository.resolveAirportCode(obFrom)
         val obToCode = FlightScheduleRepository.resolveAirportCode(obTo)
         val inferredInbound =
             legNorm.isBlank() &&
-                q["trip"].equals("return", ignoreCase = true) &&
+                queryParams["trip"].equals("return", ignoreCase = true) &&
                 fromCode != null &&
                 toCode != null &&
                 obFromCode != null &&
@@ -602,29 +611,29 @@ private suspend fun ApplicationCall.handleBookPassengers() {
         val isInboundLeg = legNorm == "inbound" || inferredInbound
         val backToChooseFlightsHref =
             if (isInboundLeg) {
-                val m = LinkedHashMap(buildBaseParams(q, fromRaw, toRaw, departRaw))
-                m["page"] = "1"
-                if (!q["leg"].equals("inbound", ignoreCase = true)) {
-                    m["leg"] = "inbound"
+                val returnSearchParams = LinkedHashMap(buildBaseParams(queryParams, fromRaw, toRaw, departRaw))
+                returnSearchParams["page"] = "1"
+                if (!queryParams["leg"].equals("inbound", ignoreCase = true)) {
+                    returnSearchParams["leg"] = "inbound"
                 }
-                flightsHref(m)
+                flightsHref(returnSearchParams)
             } else {
                 flightsHref(
-                    buildBaseParams(q, fromRaw, toRaw, departRaw) + mapOf("page" to "1"),
+                    buildBaseParams(queryParams, fromRaw, toRaw, departRaw) + mapOf("page" to "1"),
                 )
             }
 
-        val adultsN = q["adults"]?.toIntOrNull()?.coerceIn(1, 9) ?: 1
-        val childrenN = q["children"]?.toIntOrNull()?.coerceIn(0, 8) ?: 0
+        val adultsN = queryParams["adults"]?.toIntOrNull()?.coerceIn(1, 9) ?: 1
+        val childrenN = queryParams["children"]?.toIntOrNull()?.coerceIn(0, 8) ?: 0
         val passengerRows = buildPassengerRowModels(adultsN, childrenN)
 
-        val segDep = q["segDep"].orEmpty()
-        val segArr = q["segArr"].orEmpty()
-        val segDur = q["segDur"].orEmpty()
-        val segFlights = q["segFlights"].orEmpty()
-        val segOrig = q["segOrig"].orEmpty()
-        val segDest = q["segDest"].orEmpty()
-        val segArrPlus = q["segArrPlus"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+        val segDep = queryParams["segDep"].orEmpty()
+        val segArr = queryParams["segArr"].orEmpty()
+        val segDur = queryParams["segDur"].orEmpty()
+        val segFlights = queryParams["segFlights"].orEmpty()
+        val segOrig = queryParams["segOrig"].orEmpty()
+        val segDest = queryParams["segDest"].orEmpty()
+        val segArrPlus = queryParams["segArrPlus"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0
         val hasFlightDetail = segDep.isNotBlank() && segArr.isNotBlank()
 
         val logged = loggedIn()
@@ -639,7 +648,7 @@ private suspend fun ApplicationCall.handleBookPassengers() {
         val thisUri = request.local.uri
         val loginHref =
             "/login?returnUrl=" + URLEncoder.encode(thisUri, StandardCharsets.UTF_8)
-        val continueSeatsHref = bookingHref("/book/seats", q)
+        val continueSeatsHref = bookingHref("/book/seats", queryParams)
 
         val model =
             mapOf(
@@ -647,14 +656,14 @@ private suspend fun ApplicationCall.handleBookPassengers() {
                 "fromRaw" to fromRaw,
                 "toRaw" to toRaw,
                 "departRaw" to departRaw,
-                "returnRaw" to q["return"].orEmpty(),
-                "trip" to q["trip"].orEmpty(),
-                "cabinClass" to q["cabinClass"].orEmpty(),
+                "returnRaw" to queryParams["return"].orEmpty(),
+                "trip" to queryParams["trip"].orEmpty(),
+                "cabinClass" to queryParams["cabinClass"].orEmpty(),
                 "adults" to adultsN.toString(),
                 "children" to childrenN.toString(),
-                "fare" to q["fare"].orEmpty(),
-                "flight" to q["flight"].orEmpty(),
-                "price" to q["price"].orEmpty(),
+                "fare" to queryParams["fare"].orEmpty(),
+                "flight" to queryParams["flight"].orEmpty(),
+                "price" to queryParams["price"].orEmpty(),
                 "backToChooseFlightsHref" to backToChooseFlightsHref,
                 "passengerRows" to passengerRows,
                 "hasFlightDetail" to hasFlightDetail,
@@ -736,31 +745,31 @@ private fun SortKey.toParam(): String =
  * Uses raw `from`/`to` strings so the browser round-trips exactly what the user submitted.
  */
 private fun buildBaseParams(
-    q: Parameters,
+    queryParams: Parameters,
     fromRaw: String,
     toRaw: String,
     departRaw: String,
 ): Map<String, String> {
-    val m = LinkedHashMap<String, String>()
-    if (fromRaw.isNotBlank()) m["from"] = fromRaw
-    if (toRaw.isNotBlank()) m["to"] = toRaw
-    if (departRaw.isNotBlank()) m["depart"] = departRaw
-    q["trip"]?.takeIf { it.isNotBlank() }?.let { m["trip"] = it }
-    q["cabinClass"]?.takeIf { it.isNotBlank() }?.let { m["cabinClass"] = it }
-    q["adults"]?.takeIf { it.isNotBlank() }?.let { m["adults"] = it }
-    q["children"]?.takeIf { it.isNotBlank() }?.let { m["children"] = it }
-    q["return"]?.takeIf { it.isNotBlank() }?.let { m["return"] = it }
-    q["leg"]?.takeIf { it.isNotBlank() }?.let { m["leg"] = it }
-    q["obFrom"]?.takeIf { it.isNotBlank() }?.let { m["obFrom"] = it }
-    q["obTo"]?.takeIf { it.isNotBlank() }?.let { m["obTo"] = it }
-    q["obDepart"]?.takeIf { it.isNotBlank() }?.let { m["obDepart"] = it }
+    val preservedParams = LinkedHashMap<String, String>()
+    if (fromRaw.isNotBlank()) preservedParams["from"] = fromRaw
+    if (toRaw.isNotBlank()) preservedParams["to"] = toRaw
+    if (departRaw.isNotBlank()) preservedParams["depart"] = departRaw
+    queryParams["trip"]?.takeIf { it.isNotBlank() }?.let { preservedParams["trip"] = it }
+    queryParams["cabinClass"]?.takeIf { it.isNotBlank() }?.let { preservedParams["cabinClass"] = it }
+    queryParams["adults"]?.takeIf { it.isNotBlank() }?.let { preservedParams["adults"] = it }
+    queryParams["children"]?.takeIf { it.isNotBlank() }?.let { preservedParams["children"] = it }
+    queryParams["return"]?.takeIf { it.isNotBlank() }?.let { preservedParams["return"] = it }
+    queryParams["leg"]?.takeIf { it.isNotBlank() }?.let { preservedParams["leg"] = it }
+    queryParams["obFrom"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obFrom"] = it }
+    queryParams["obTo"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obTo"] = it }
+    queryParams["obDepart"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obDepart"] = it }
     /** Inbound results URL carries the chosen outbound flight + tier alongside the inbound route. */
-    q["flight"]?.takeIf { it.isNotBlank() }?.let { m["flight"] = it }
-    q["fare"]?.takeIf { it.isNotBlank() }?.let { m["fare"] = it }
-    q["obFlight"]?.takeIf { it.isNotBlank() }?.let { m["obFlight"] = it }
-    q["obFare"]?.takeIf { it.isNotBlank() }?.let { m["obFare"] = it }
-    q["outboundPrice"]?.takeIf { it.isNotBlank() }?.let { m["outboundPrice"] = it }
-    return m
+    queryParams["flight"]?.takeIf { it.isNotBlank() }?.let { preservedParams["flight"] = it }
+    queryParams["fare"]?.takeIf { it.isNotBlank() }?.let { preservedParams["fare"] = it }
+    queryParams["obFlight"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obFlight"] = it }
+    queryParams["obFare"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obFare"] = it }
+    queryParams["outboundPrice"]?.takeIf { it.isNotBlank() }?.let { preservedParams["outboundPrice"] = it }
+    return preservedParams
 }
 
 /**
@@ -772,30 +781,30 @@ private fun buildBaseParams(
  * outbound cards populate `data-search-return` and fare selection continues to the inbound search
  * instead of `/book/passengers`.
  */
-private fun buildOutboundLegSearchParams(q: Parameters): Map<String, String> {
-    val m = LinkedHashMap<String, String>()
-    val obFrom = q["obFrom"].orEmpty()
-    val obTo = q["obTo"].orEmpty()
-    val obDepart = q["obDepart"].orEmpty()
-    val leg = q["leg"].orEmpty().lowercase(Locale.UK).trim()
-    val departAny = q["depart"].orEmpty()
-    val retExplicit = q["return"].orEmpty()
+private fun buildOutboundLegSearchParams(queryParams: Parameters): Map<String, String> {
+    val outboundParams = LinkedHashMap<String, String>()
+    val obFrom = queryParams["obFrom"].orEmpty()
+    val obTo = queryParams["obTo"].orEmpty()
+    val obDepart = queryParams["obDepart"].orEmpty()
+    val leg = queryParams["leg"].orEmpty().lowercase(Locale.UK).trim()
+    val departAny = queryParams["depart"].orEmpty()
+    val retExplicit = queryParams["return"].orEmpty()
     val returnDate =
         when {
             retExplicit.isNotBlank() -> retExplicit
             leg == "inbound" && departAny.isNotBlank() -> departAny
             else -> ""
         }
-    if (obFrom.isNotBlank()) m["from"] = obFrom
-    if (obTo.isNotBlank()) m["to"] = obTo
-    if (obDepart.isNotBlank()) m["depart"] = obDepart
-    if (returnDate.isNotBlank()) m["return"] = returnDate
-    m["trip"] = "return"
-    q["cabinClass"]?.takeIf { it.isNotBlank() }?.let { m["cabinClass"] = it }
-    q["adults"]?.takeIf { it.isNotBlank() }?.let { m["adults"] = it }
-    q["children"]?.takeIf { it.isNotBlank() }?.let { m["children"] = it }
-    m["page"] = "1"
-    return m
+    if (obFrom.isNotBlank()) outboundParams["from"] = obFrom
+    if (obTo.isNotBlank()) outboundParams["to"] = obTo
+    if (obDepart.isNotBlank()) outboundParams["depart"] = obDepart
+    if (returnDate.isNotBlank()) outboundParams["return"] = returnDate
+    outboundParams["trip"] = "return"
+    queryParams["cabinClass"]?.takeIf { it.isNotBlank() }?.let { outboundParams["cabinClass"] = it }
+    queryParams["adults"]?.takeIf { it.isNotBlank() }?.let { outboundParams["adults"] = it }
+    queryParams["children"]?.takeIf { it.isNotBlank() }?.let { outboundParams["children"] = it }
+    outboundParams["page"] = "1"
+    return outboundParams
 }
 
 /**
@@ -804,28 +813,31 @@ private fun buildOutboundLegSearchParams(q: Parameters): Map<String, String> {
  */
 private fun flightsHref(params: Map<String, String>): String {
     if (params.isEmpty()) return "/search-flights"
-    val enc: (String) -> String = { s ->
-        URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20")
+    val encodeQueryPart: (String) -> String = { part ->
+        URLEncoder.encode(part, StandardCharsets.UTF_8).replace("+", "%20")
     }
-    val qs = params.entries.joinToString("&") { (k, v) -> "${enc(k)}=${enc(v)}" }
-    return "/search-flights?$qs"
+    val queryString =
+        params.entries.joinToString("&") { (key, value) ->
+            "${encodeQueryPart(key)}=${encodeQueryPart(value)}"
+        }
+    return "/search-flights?$queryString"
 }
 
 /** `742` → `"12h 22m"` (total journey / card summary). */
 private fun formatDurationMinutes(min: Int): String {
-    val h = min / 60
-    val m = min % 60
-    return "${h}h ${m}m"
+    val hours = min / 60
+    val minutes = min % 60
+    return "${hours}h ${minutes}m"
 }
 
 /** Layover in route details, e.g. `14h 30 min` or `45 min`. */
 private fun formatLayoverDuration(min: Int): String {
-    val h = min / 60
-    val m = min % 60
+    val hours = min / 60
+    val minutes = min % 60
     return when {
-        h > 0 && m > 0 -> "${h}h ${m} min"
-        h > 0 -> "${h}h"
-        else -> "${m} min"
+        hours > 0 && minutes > 0 -> "${hours}h ${minutes} min"
+        hours > 0 -> "${hours}h"
+        else -> "${minutes} min"
     }
 }
 
@@ -833,8 +845,8 @@ private fun formatMoney(gbp: java.math.BigDecimal): String =
     gbp.setScale(2, RoundingMode.HALF_UP).toPlainString()
 
 /** Always `HH:mm` (e.g. `00:15`, `08:20`) for consistent display. */
-private fun formatTime(t: LocalTime): String =
-    String.format(Locale.UK, "%02d:%02d", t.hour, t.minute)
+private fun formatTime(time: LocalTime): String =
+    String.format(Locale.UK, "%02d:%02d", time.hour, time.minute)
 
 /** Economy / business / first tier prices for a schedule row (before column invariants). */
 private fun cabinFareSet(row: FlightScheduleRecord, cabinRaw: String): Map<String, BigDecimal> {
@@ -899,15 +911,15 @@ private fun enforceFareInvariants(
 }
 
 private fun flightCardMap(row: FlightScheduleRecord, cabinRaw: String): Map<String, Any?> {
-    val fnKey = row.legFlightNumbers.joinToString("-")
-    val id =
+    val legFlightNumbersKey = row.legFlightNumbers.joinToString("-")
+    val cardDomId =
         encAttr(
-            "${row.originCode}-${row.destCode}-${row.departDate}-${fnKey}-${row.departTime}",
+            "${row.originCode}-${row.destCode}-${row.departDate}-${legFlightNumbersKey}-${row.departTime}",
         )
     val arrivalPlusDays = row.arrivalOffsetDays.coerceAtLeast(0)
     val fares = cabinFareSet(row, cabinRaw)
     return mapOf(
-        "id" to id,
+        "id" to cardDomId,
         "departTime" to formatTime(row.departTime),
         "arrivalTime" to formatTime(row.arrivalTime),
         "arrivalPlusDays" to arrivalPlusDays,
@@ -951,21 +963,21 @@ private fun buildRouteBlocks(row: FlightScheduleRecord): List<Map<String, Any?>>
         add(row.destCode)
     }
     val blocks = mutableListOf<Map<String, Any?>>()
-    for (i in 0 until legs) {
-        val dep = row.legDepartureTimes[i]
-        val arr = row.legArrivalTimes[i]
+    for (legIndex in 0 until legs) {
+        val legDepart = row.legDepartureTimes[legIndex]
+        val legArrive = row.legArrivalTimes[legIndex]
         val arrCumulative =
-            row.legArrivalOffsetDays.getOrElse(i) { if (arr.isBefore(dep)) 1 else 0 }
+            row.legArrivalOffsetDays.getOrElse(legIndex) { if (legArrive.isBefore(legDepart)) 1 else 0 }
         val depPlusDays =
-            if (i == 0) {
+            if (legIndex == 0) {
                 0
             } else {
-                row.legArrivalOffsetDays.getOrElse(i - 1) {
-                    if (row.legArrivalTimes[i - 1].isBefore(row.legDepartureTimes[i])) 1 else 0
+                row.legArrivalOffsetDays.getOrElse(legIndex - 1) {
+                    if (row.legArrivalTimes[legIndex - 1].isBefore(row.legDepartureTimes[legIndex])) 1 else 0
                 }
             }
         val arrPlusDays =
-            if (i == legs - 1) {
+            if (legIndex == legs - 1) {
                 maxOf(arrCumulative, row.arrivalOffsetDays.coerceAtLeast(0))
             } else {
                 arrCumulative
@@ -973,26 +985,26 @@ private fun buildRouteBlocks(row: FlightScheduleRecord): List<Map<String, Any?>>
         blocks.add(
             mapOf(
                 "kind" to "segment",
-                "fromCode" to codes[i],
-                "toCode" to codes[i + 1],
-                "fromName" to FlightScheduleRepository.airportNameForCode(codes[i]),
-                "toName" to FlightScheduleRepository.airportNameForCode(codes[i + 1]),
-                "depart" to formatTime(dep),
+                "fromCode" to codes[legIndex],
+                "toCode" to codes[legIndex + 1],
+                "fromName" to FlightScheduleRepository.airportNameForCode(codes[legIndex]),
+                "toName" to FlightScheduleRepository.airportNameForCode(codes[legIndex + 1]),
+                "depart" to formatTime(legDepart),
                 "depPlusDays" to depPlusDays,
-                "arrive" to formatTime(arr),
+                "arrive" to formatTime(legArrive),
                 "arrPlusDays" to arrPlusDays,
-                "flight" to row.legFlightNumbers[i],
+                "flight" to row.legFlightNumbers[legIndex],
             ),
         )
-        if (i < row.stops) {
-            val hub = codes[i + 1]
-            val layMin = row.stopoverLayoverMinutes.getOrElse(i) { 75 }
+        if (legIndex < row.stops) {
+            val stopoverAirportCode = codes[legIndex + 1]
+            val layoverMinutes = row.stopoverLayoverMinutes.getOrElse(legIndex) { 75 }
             blocks.add(
                 mapOf(
                     "kind" to "connect",
-                    "airportCode" to hub,
-                    "airportName" to FlightScheduleRepository.airportNameForCode(hub),
-                    "layoverLabel" to formatLayoverDuration(layMin),
+                    "airportCode" to stopoverAirportCode,
+                    "airportName" to FlightScheduleRepository.airportNameForCode(stopoverAirportCode),
+                    "layoverLabel" to formatLayoverDuration(layoverMinutes),
                 ),
             )
         }
@@ -1000,8 +1012,8 @@ private fun buildRouteBlocks(row: FlightScheduleRecord): List<Map<String, Any?>>
     return blocks
 }
 
-/** Safe id for HTML `id="…"` attributes. */
-private fun encAttr(s: String): String = s.replace(":", "-")
+/** Colons break HTML ids; strip them so client `getElementById` still works. */
+private fun encAttr(rawId: String): String = rawId.replace(":", "-")
 
 private val dayChipFmt = DateTimeFormatter.ofPattern("EEE d MMM", Locale.UK)
 
@@ -1012,14 +1024,14 @@ private fun buildCarouselDays(
 ): List<Map<String, Any?>> {
     val today = LocalDate.now()
     return (-3..3).map { offset ->
-        val d = selected.plusDays(offset.toLong())
+        val chipDate = selected.plusDays(offset.toLong())
         val params = base.toMutableMap()
-        params["depart"] = d.toString()
+        params["depart"] = chipDate.toString()
         params["page"] = "1"
-        val past = d.isBefore(today)
+        val past = chipDate.isBefore(today)
         mapOf(
-            "label" to dayChipFmt.format(d),
-            "iso" to d.toString(),
+            "label" to dayChipFmt.format(chipDate),
+            "iso" to chipDate.toString(),
             "selected" to (offset == 0),
             "past" to past,
             "href" to if (past) "" else flightsHref(params),
@@ -1067,17 +1079,17 @@ private fun buildPager(
         start = (end - maxButtons + 1).coerceAtLeast(1)
     }
     val orderStr = if (ascending) "asc" else "desc"
-    return (start..end).map { p ->
+    return (start..end).map { pageNumber ->
         mapOf(
-            "num" to p,
-            "current" to (p == paged.page),
+            "num" to pageNumber,
+            "current" to (pageNumber == paged.page),
             "href" to
                 flightsHref(
                     base +
                         mapOf(
                             "sort" to sort.toParam(),
                             "order" to orderStr,
-                            "page" to p.toString(),
+                            "page" to pageNumber.toString(),
                         ),
                 ),
         )

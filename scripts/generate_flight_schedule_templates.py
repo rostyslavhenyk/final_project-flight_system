@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
 """
-Regenerate data/flight_schedule_templates.csv with diverse hubs, duration jitter (15–60+ min
-between options sharing the same stopover), at least one 2-stop pattern per origin/destination,
-and realistic multi-hub routings. Re-run after editing airport lists.
+Regenerate flight schedule templates into SQLite (data/db/flight_schedule_templates.db),
+matching the table shape used by Kotlin (DB-first, CSV fallback).
+
+Optional: pass --csv to also write data/flight_schedule_templates.csv for diffs or tooling.
+
+Re-run after editing airport lists (CODES / regions).
 """
 
 from __future__ import annotations
 
+import argparse
 import csv
+import sqlite3
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "data" / "flight_schedule_templates.csv"
+CSV_OUT = ROOT / "data" / "flight_schedule_templates.csv"
+DB_OUT = ROOT / "data" / "db" / "flight_schedule_templates.db"
 
 # Must match data/airports.csv (City (XXX)) and data/airports_display.csv
 CODES = [
@@ -212,7 +218,55 @@ def row_direct_longhaul(o: str, d: str, rank: int, seq: int) -> list[str]:
     return [o, d, str(dur), "0", "", str(max(5, rank)), str(off), dep, arr, fn]
 
 
+def write_sqlite(rows: list[list[str]]) -> None:
+    """Create/replace flight_schedule_templates table (same column names as CSV header)."""
+    DB_OUT.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(DB_OUT))
+    try:
+        cur = conn.cursor()
+        cur.execute("DROP TABLE IF EXISTS flight_schedule_templates")
+        cur.execute(
+            """
+            CREATE TABLE flight_schedule_templates (
+                originCode TEXT,
+                destCode TEXT,
+                durationMinutes TEXT,
+                stops TEXT,
+                stopoverCodes TEXT,
+                recommendedRankBase TEXT,
+                arrivalOffsetDays TEXT,
+                legDepartureTimes TEXT,
+                legArrivalTimes TEXT,
+                legFlightNumbers TEXT
+            )
+            """
+        )
+        cur.executemany(
+            "INSERT INTO flight_schedule_templates VALUES (?,?,?,?,?,?,?,?,?,?)",
+            rows,
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def write_csv(rows: list[list[str]], header: list[str]) -> None:
+    CSV_OUT.parent.mkdir(parents=True, exist_ok=True)
+    with CSV_OUT.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        w.writerows(rows)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate flight schedule templates into SQLite.")
+    parser.add_argument(
+        "--csv",
+        action="store_true",
+        help="Also write data/flight_schedule_templates.csv (optional; default is DB only).",
+    )
+    args = parser.parse_args()
+
     header = [
         "originCode",
         "destCode",
@@ -272,12 +326,11 @@ def main() -> None:
                 rows.append(row_1stop(o, d, hub, rank + hi + 6, hi, 2, seq))
                 seq += 1
 
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    with OUT.open("w", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(header)
-        w.writerows(rows)
-    print(f"Wrote {len(rows)} rows to {OUT}")
+    write_sqlite(rows)
+    print(f"Wrote {len(rows)} rows to {DB_OUT}")
+    if args.csv:
+        write_csv(rows, header)
+        print(f"Also wrote {len(rows)} rows to {CSV_OUT}")
 
 
 if __name__ == "__main__":
