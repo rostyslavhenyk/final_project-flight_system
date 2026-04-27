@@ -26,13 +26,8 @@ private const val MAX_FLIGHTS_PER_ARRIVAL_HOUR_BUCKET = 15
 /** Max results sharing the same stops count and same stopover airport sequence (e.g. all 1-stop via DXB). */
 private const val MAX_FLIGHTS_PER_IDENTICAL_STOPOVER_PATTERN = 5
 
-/** Rotate itineraries so the same template can appear morning / afternoon / night. */
-private val DAY_PART_ANCHOR_MINUTES = listOf(0, 390, 750)
-
-/** Stagger variants ≥2h apart so thinning to 1h gaps still leaves enough choice. */
-private val VARIANT_DEPARTURE_OFFSETS_MINUTES = listOf(0, 120, 240, 360, 480)
-
 private const val MIN_SPACING_MINUTES = 60
+private const val SCHEDULE_LOOP_DAYS = 5
 
 /** 05:00–11:59 */
 private const val MORNING_START = 5 * 60
@@ -67,6 +62,7 @@ object FlightScheduleRepository {
     private val AIRPORTS_DB = File("data/db/airports_display.db")
     private val TEMPLATES_DB = File("data/db/flight_schedule_templates.db")
     private val TIME_FMT = DateTimeFormatter.ofPattern("H:mm")
+    private val LOOP_ANCHOR_DATE: LocalDate = LocalDate.of(2026, 4, 1)
 
     enum class SortKey {
         RECOMMENDED,
@@ -128,6 +124,7 @@ object FlightScheduleRepository {
         val legDepartureTimes: List<LocalTime>,
         val legArrivalTimes: List<LocalTime>,
         val legFlightNumbers: List<String>,
+        val cycleDay: Int,
     )
 
     /** Airports loaded from SQLite (lazy, once per JVM). */
@@ -225,16 +222,16 @@ object FlightScheduleRepository {
     }
 
     /**
-     * **Recommended:** fewer stops first, then earlier departure, then earlier arrival, then lower
-     * Light fare, then shorter gate-to-gate time (typical OTA “best” ordering).
+     * **Recommended:** fewer stops first, then earlier arrival (day + time), then lower
+     * Light fare, then shorter gate-to-gate time, then earlier departure.
      */
     private fun recommendedComparator(): Comparator<FlightScheduleRecord> =
         compareBy<FlightScheduleRecord> { it.stops }
-            .thenBy { it.departTime }
             .thenBy { it.arrivalOffsetDays }
             .thenBy { it.arrivalTime }
             .thenBy { it.priceLight }
             .thenBy { it.durationMinutes }
+            .thenBy { it.departTime }
 
     /**
      * Order rows for the active sort mode.
@@ -271,17 +268,12 @@ object FlightScheduleRepository {
         val routeTemplates =
             templates.filter { t ->
                 t.originCode.equals(originCode, ignoreCase = true) &&
-                    t.destCode.equals(destCode, ignoreCase = true)
+                    t.destCode.equals(destCode, ignoreCase = true) &&
+                    t.cycleDay == loopDayFor(date)
             }
         val expanded =
-            routeTemplates.flatMap { t ->
-                DAY_PART_ANCHOR_MINUTES.flatMapIndexed { anchorIdx, anchorMin ->
-                    VARIANT_DEPARTURE_OFFSETS_MINUTES.mapIndexed { variantIdx, offsetMin ->
-                        val shift = anchorMin + offsetMin
-                        val flatIdx = anchorIdx * VARIANT_DEPARTURE_OFFSETS_MINUTES.size + variantIdx
-                        buildTemplateVariantRecord(date, t, flatIdx, shift.toLong())
-                    }
-                }
+            routeTemplates.mapIndexed { templateIdx, t ->
+                buildTemplateRecord(date, t, templateIdx)
             }
         return applyRouteCaps(expanded)
     }
@@ -324,42 +316,28 @@ object FlightScheduleRepository {
         return directs + capped
     }
 
-    /**
-     * Build one deterministic variant of a template (same routing, slightly shifted local clock slots).
-     * This gives weekly/monthly loops richer schedules without writing thousands of day rows.
-     */
-    private fun buildTemplateVariantRecord(
+    /** Build one concrete record directly from the template row (no synthetic schedule shifting). */
+    private fun buildTemplateRecord(
         date: LocalDate,
         template: FlightTemplate,
-        variantIdx: Int,
-        shiftMinutes: Long,
+        templateIdx: Int,
     ): FlightScheduleRecord {
-        val shiftedDepartures =
-            template.legDepartureTimes.map { snapToFiveMinuteGrid(it.plusMinutes(shiftMinutes)) }
-        val shiftedArrivals =
-            template.legArrivalTimes.map { snapToFiveMinuteGrid(it.plusMinutes(shiftMinutes)) }
-        val routeKey = "${template.originCode}-${template.destCode}-${template.recommendedRankBase}"
-        val (diverseDeps, diverseArrs) =
-            diversifyItineraryTimes(
-                shiftedDepartures,
-                shiftedArrivals,
-                template.stops,
-                variantIdx,
-                routeKey,
-            )
         val zoned =
             applyAirportLocalZoneConversion(
                 departDate = date,
                 originCode = template.originCode,
                 destCode = template.destCode,
                 stopoverCodes = template.stopoverCodes,
-                legDeps = diverseDeps,
-                legArrs = diverseArrs,
+                legDeps = template.legDepartureTimes,
+                legArrs = template.legArrivalTimes,
                 stops = template.stops,
                 templateArrivalOffsetHint = template.arrivalOffsetDays,
             )
-        val departTime = zoned.legDepartureTimes.first()
-        val arrivalTime = zoned.legArrivalTimes.last()
+        val depTimes = zoned.legDepartureTimes
+        val arrTimes = zoned.legArrivalTimes
+        val legArrivalOffsets = zoned.legArrivalOffsetDays
+        val departTime = depTimes.first()
+        val arrivalTime = arrTimes.last()
         val arrivalOffsetDays = zoned.arrivalOffsetDays
         val durationMinutes = zoned.durationMinutes
 
@@ -367,12 +345,13 @@ object FlightScheduleRepository {
             generatedPriceLight(
                 date = date,
                 template = template,
-                variantIdx = variantIdx,
+                variantIdx = templateIdx,
                 departTime = departTime,
+                computedDurationMinutes = durationMinutes,
             )
         val essential = light + BigDecimal("92.00")
         val flex = light + BigDecimal("248.00")
-        val dateBump = (date.dayOfMonth % 3)
+        val dateBump = (loopDayFor(date) % 3)
 
         return FlightScheduleRecord(
             originCode = template.originCode,
@@ -383,16 +362,16 @@ object FlightScheduleRepository {
             arrivalOffsetDays = arrivalOffsetDays,
             durationMinutes = durationMinutes,
             stops = template.stops,
-            legDepartureTimes = zoned.legDepartureTimes,
-            legArrivalTimes = zoned.legArrivalTimes,
-            legArrivalOffsetDays = zoned.legArrivalOffsetDays,
-            legFlightNumbers = gaLegFlightNumbers(template, variantIdx),
+            legDepartureTimes = depTimes,
+            legArrivalTimes = arrTimes,
+            legArrivalOffsetDays = legArrivalOffsets,
+            legFlightNumbers = templateLegFlightNumbers(template),
             priceLight = light,
             priceEssential = essential.setScale(2, RoundingMode.HALF_UP),
             priceFlex = flex.setScale(2, RoundingMode.HALF_UP),
-            recommendedRank = template.recommendedRankBase + dateBump + variantIdx,
+            recommendedRank = template.recommendedRankBase + dateBump + templateIdx,
             stopoverCodes = template.stopoverCodes,
-            stopoverLayoverMinutes = layoverMinutesFromLegTimes(zoned.legArrivalTimes, zoned.legDepartureTimes),
+            stopoverLayoverMinutes = layoverMinutesFromLegTimes(arrTimes, depTimes),
         )
     }
 
@@ -823,20 +802,26 @@ object FlightScheduleRepository {
         template: FlightTemplate,
         variantIdx: Int,
         departTime: LocalTime,
+        computedDurationMinutes: Int,
     ): BigDecimal {
-        val hashInput = "${template.legFlightNumbers.joinToString("-")}-${date}-$variantIdx"
+        val hashInput = "${template.legFlightNumbers.joinToString("-")}-loop${loopDayFor(date)}-$variantIdx"
         val spread = (hashInput.hashCode().absoluteValue % 90) + 15
         val seasonMultiplier = seasonMultiplier(date)
         val peakMultiplier = peakDepartureMultiplier(departTime)
         val distanceKm = routeDistanceKm(template.originCode, template.destCode) ?: 0
         val distanceAdder = BigDecimal(distanceKm) * BigDecimal("0.035")
         val base =
-            BigDecimal(template.durationMinutes) * BigDecimal("0.39") +
+            BigDecimal(computedDurationMinutes) * BigDecimal("0.39") +
                 BigDecimal(template.stops * 58) +
                 distanceAdder +
                 BigDecimal(spread) +
                 BigDecimal("120")
         return (base * seasonMultiplier * peakMultiplier).setScale(2, RoundingMode.HALF_UP)
+    }
+
+    private fun loopDayFor(date: LocalDate): Int {
+        val delta = ChronoUnit.DAYS.between(LOOP_ANCHOR_DATE, date)
+        return Math.floorMod(delta.toInt(), SCHEDULE_LOOP_DAYS) + 1
     }
 
     private fun seasonMultiplier(date: LocalDate): BigDecimal =
@@ -904,13 +889,14 @@ object FlightScheduleRepository {
         return LocalTime.of(hh, mm)
     }
 
-    /** GA + exactly three digits (staff CSV numbers are ignored for display consistency). */
-    private fun gaLegFlightNumbers(template: FlightTemplate, flatVariantIdx: Int): List<String> {
-        return template.legFlightNumbers.indices.map { legIdx ->
-            val seed = "${template.originCode}|${template.destCode}|${template.legFlightNumbers[legIdx]}|$flatVariantIdx|$legIdx"
-            val n = (seed.hashCode().absoluteValue % 900) + 100
-            "GA$n"
+    /** Use exact leg flight numbers stored in templates DB. */
+    private fun templateLegFlightNumbers(template: FlightTemplate): List<String> {
+        val expectedLegs = template.stops + 1
+        val values = template.legFlightNumbers.map { it.trim().uppercase() }.filter { it.isNotBlank() }
+        require(values.size == expectedLegs) {
+            "Invalid leg flight numbers for ${template.originCode}-${template.destCode}: expected $expectedLegs, got ${values.size}"
         }
+        return values
     }
 
     /** Read airports from SQLite only. */
@@ -966,7 +952,7 @@ object FlightScheduleRepository {
                     """
                     SELECT originCode, destCode, durationMinutes, stops, stopoverCodes,
                            recommendedRankBase, arrivalOffsetDays, legDepartureTimes,
-                           legArrivalTimes, legFlightNumbers
+                           legArrivalTimes, legFlightNumbers, COALESCE(cycleDay, '1') AS cycleDay
                     FROM flight_schedule_templates
                     """.trimIndent(),
                 ).use { stmt ->
@@ -985,6 +971,7 @@ object FlightScheduleRepository {
                                         rs.getString("legDepartureTimes")?.trim().orEmpty(),
                                         rs.getString("legArrivalTimes")?.trim().orEmpty(),
                                         rs.getString("legFlightNumbers")?.trim().orEmpty(),
+                                        rs.getString("cycleDay")?.trim().orEmpty(),
                                     ).joinToString(",")
                                 parseTemplateLine(line)?.let { add(it) }
                             }
@@ -999,7 +986,7 @@ object FlightScheduleRepository {
      * Parse one comma-joined template row (same shape as former CSV line).
      *
      * Columns: originCode, destCode, durationMinutes, stops, stopoverCodes, recommendedRankBase,
-     * arrivalOffsetDays, legDepartureTimes, legArrivalTimes, legFlightNumbers
+     * arrivalOffsetDays, legDepartureTimes, legArrivalTimes, legFlightNumbers, cycleDay
      * (pipe-separated lists must have length stops + 1).
      */
     private fun parseTemplateLine(line: String): FlightTemplate? {
@@ -1037,6 +1024,7 @@ object FlightScheduleRepository {
                 legDepartureTimes = legDeps,
                 legArrivalTimes = legArrs,
                 legFlightNumbers = legFns,
+                cycleDay = parts.getOrNull(10)?.toIntOrNull()?.coerceIn(1, SCHEDULE_LOOP_DAYS) ?: 1,
             )
         } catch (_: Exception) {
             null

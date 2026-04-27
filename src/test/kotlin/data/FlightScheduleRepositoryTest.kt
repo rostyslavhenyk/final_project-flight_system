@@ -9,7 +9,7 @@ import java.time.LocalTime
 
 class FlightScheduleRepositoryTest {
     @Test
-    fun `generated flights keep GA numeric format and five-minute times`() {
+    fun `generated flights keep GA4 numeric format and five-minute times`() {
         val searchPage =
             FlightScheduleRepository.search(
                 originCode = "MAN",
@@ -23,7 +23,7 @@ class FlightScheduleRepositoryTest {
         assertTrue(searchPage.rows.isNotEmpty(), "Expected MAN->HKG schedules to exist")
         searchPage.rows.forEach { row ->
             row.legFlightNumbers.forEach { flightNumber ->
-                assertTrue(Regex("^GA\\d{3}$").matches(flightNumber), "Flight number must be GA + 3 digits: $flightNumber")
+                assertTrue(Regex("^GA\\d{4}$").matches(flightNumber), "Flight number must be GA + 4 digits: $flightNumber")
             }
             row.legDepartureTimes.forEach { legTime ->
                 assertTrue(legTime.minute % 5 == 0, "Departure minute must be multiple of 5: $legTime")
@@ -74,7 +74,7 @@ class FlightScheduleRepositoryTest {
     }
 
     @Test
-    fun `MAN to HKG results respect spacing bands and GA### flight numbers`() {
+    fun `MAN to HKG results respect spacing bands and GA#### flight numbers`() {
         val searchPage =
             FlightScheduleRepository.search(
                 originCode = "MAN",
@@ -105,7 +105,7 @@ class FlightScheduleRepositoryTest {
         )
         rows.forEach { row ->
             row.legFlightNumbers.forEach { flightNumber ->
-                assertTrue(Regex("^GA\\d{3}$").matches(flightNumber))
+                assertTrue(Regex("^GA\\d{4}$").matches(flightNumber))
             }
         }
     }

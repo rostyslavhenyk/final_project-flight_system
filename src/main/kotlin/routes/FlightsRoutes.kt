@@ -972,9 +972,14 @@ private fun buildRouteBlocks(row: FlightScheduleRecord): List<Map<String, Any?>>
             if (legIndex == 0) {
                 0
             } else {
-                row.legArrivalOffsetDays.getOrElse(legIndex - 1) {
+                val prevArrPlusDays =
+                    row.legArrivalOffsetDays.getOrElse(legIndex - 1) {
                     if (row.legArrivalTimes[legIndex - 1].isBefore(row.legDepartureTimes[legIndex])) 1 else 0
                 }
+                // If next-leg departure clock is earlier than previous-leg arrival clock,
+                // it departs on the following local day at that stopover airport.
+                val wrapsToNextDay = row.legDepartureTimes[legIndex].isBefore(row.legArrivalTimes[legIndex - 1])
+                prevArrPlusDays + if (wrapsToNextDay) 1 else 0
             }
         val arrPlusDays =
             if (legIndex == legs - 1) {
