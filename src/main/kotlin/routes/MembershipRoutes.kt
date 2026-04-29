@@ -15,16 +15,14 @@ fun Route.membershipRoutes() {
 
 private suspend fun ApplicationCall.handleMembershipList() {
     timed("T0_membership_list", jsMode()) {
-        val pebble = getEngine()
-
         val model =
             baseModel(
                 mapOf("title" to "Membership"),
             )
 
-        val template = pebble.getTemplate("membership/index.peb")
+        val template = pebbleEngine.getTemplate("user/membership/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+        template.evaluate(writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }

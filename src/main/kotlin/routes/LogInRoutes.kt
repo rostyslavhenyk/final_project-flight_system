@@ -10,7 +10,6 @@ import java.io.StringWriter
 import utils.jsMode
 import utils.timed
 import data.UserRepository
-import data.User
 import auth.UserSession
 import utils.baseModel
 
@@ -25,8 +24,6 @@ fun ApplicationCall.createLoginStatus(message: String): String =
 
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T0_log_in", jsMode()) {
-        val pebble = getEngine()
-
         if (sessions.get<UserSession>() != null) {
             respondRedirect("/")
             return@timed
@@ -37,9 +34,9 @@ private suspend fun ApplicationCall.handleLogInLoad() {
                 mapOf("title" to "Log In"),
             )
 
-        val template = pebble.getTemplate("log-in/index.peb")
+        val template = pebbleEngine.getTemplate("user/log-in/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+        template.evaluate(writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }
@@ -59,9 +56,9 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        val usr: User = UserRepository.getByEmail(email)
+        val usr = UserRepository.getByEmail(email)
 
-        if (usr.id == -1) {
+        if (usr == null) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,
@@ -80,7 +77,8 @@ private suspend fun ApplicationCall.handleLogInPost() {
         }
 
         sessions.set(UserSession(usr.id, usr.firstname))
-        response.headers.append("HX-Redirect", "/")
+        val redirectUrl = if (usr.roleId == 1) "/staff" else "/"
+        response.headers.append("HX-Redirect", redirectUrl)
         respond(HttpStatusCode.OK)
     }
 }

@@ -1,0 +1,21 @@
+{% extends layout %}
+
+{% block content %}
+<h1 style="text-align: center;">My Account</h1>
+<br>
+
+<section aria-labelledby="account-heading">
+    <h2 id="account-heading">{% if isStaff %}Staff Details{% else %}Account Details{% endif %}</h2>
+    <p><strong>Name:</strong> {{ account.firstname }} {{ account.lastname }}</p>
+    <p><strong>Email:</strong> {{ account.email }}</p>
+    <p><strong>Account type:</strong> {% if isStaff %}Staff{% else %}Customer{% endif %}</p>
+</section>
+
+{% if not isStaff %}
+<br>
+<h2 style="text-align: center;">Booked Flights</h2>
+<br>
+<section aria-labelledby="list-heading">
+</section>
+{% endif %}
+{% endblock %}

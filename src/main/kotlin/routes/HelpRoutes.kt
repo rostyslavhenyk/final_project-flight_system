@@ -15,17 +15,15 @@ fun Route.helpRoutes() {
 
 private suspend fun ApplicationCall.handleHelpLoad() {
     timed("T0_about_us", jsMode()) {
-        val pebble = getEngine()
-
         val model =
             baseModel(
                 mapOf(
                     "title" to "Help",
                 ),
             )
-        val template = pebble.getTemplate("help/index.peb")
+        val template = pebbleEngine.getTemplate("user/help/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+        template.evaluate(writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }

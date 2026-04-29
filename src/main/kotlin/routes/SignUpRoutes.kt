@@ -10,7 +10,6 @@ import java.io.StringWriter
 import utils.jsMode
 import utils.timed
 import data.UserRepository
-import data.User
 import auth.UserSession
 import utils.baseModel
 
@@ -24,8 +23,6 @@ fun ApplicationCall.createSignUpStatus(message: String): String =
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
     timed("T0_sign_up", jsMode()) {
-        val pebble = getEngine()
-
         if (sessions.get<UserSession>() != null) {
             respondRedirect("/")
             return@timed
@@ -36,9 +33,9 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
                 mapOf("title" to "Sign Up"),
             )
 
-        val template = pebble.getTemplate("sign-up/index.peb")
+        val template = pebbleEngine.getTemplate("user/sign-up/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+        template.evaluate(writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }
@@ -88,9 +85,9 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val usr: User = UserRepository.getByEmail(email)
+        val existingUser = UserRepository.getByEmail(email)
 
-        if (usr.id != -1) {
+        if (existingUser != null) {
             respondText(
                 createSignUpStatus("User already exists with that email"),
                 ContentType.Text.Html,
