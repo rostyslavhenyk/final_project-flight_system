@@ -1,0 +1,30 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block content %}
+<h1>Manage Users</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for account in users %}
+            <tr>
+                <td>{{ account.id }}</td>
+                <td>{{ account.firstname }} {{ account.lastname }}</td>
+                <td>{{ account.email }}</td>
+                <td>{% if account.roleId == 1 %}Staff{% else %}Customer{% endif %}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">No users found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

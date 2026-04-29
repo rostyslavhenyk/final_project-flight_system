@@ -15,8 +15,6 @@ fun Route.flightsRoutes() {
 
 private suspend fun ApplicationCall.handleFlightsList() {
     timed("T0_flights_list", jsMode()) {
-        val pebble = getEngine()
-
         val model =
             baseModel(
                 mapOf(
@@ -24,9 +22,9 @@ private suspend fun ApplicationCall.handleFlightsList() {
                 ),
             )
 
-        val template = pebble.getTemplate("flights/index.peb")
+        val template = pebbleEngine.getTemplate("user/flights/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+        template.evaluate(writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }

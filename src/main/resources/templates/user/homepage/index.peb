@@ -1,0 +1,6 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+<h1>Welcome {{ user.firstname }}!</h1>
+<p>Normal user homepage</p>
+{% endblock %}

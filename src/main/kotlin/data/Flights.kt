@@ -6,6 +6,8 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Flights : Table("flights") {
@@ -84,4 +86,60 @@ object FlightRepository {
         transaction {
             Flights.deleteWhere { Flights.id eq id } > 0
         }
+
+    // to correctly take out the data for a specific flight:
+    fun allFull(): List<FlightFull> =
+        transaction {
+            val departureAirport = Airports.alias("departure")
+            val arrivalAirport = Airports.alias("arrival")
+
+            (
+                Flights
+                    .innerJoin(Routes)
+                    .innerJoin(departureAirport, { Routes.departureAirportId }, { departureAirport[Airports.id] })
+                    .innerJoin(arrivalAirport, { Routes.arrivalAirportId }, { arrivalAirport[Airports.id] })
+            ).selectAll()
+                .map {
+                    val flight = it.toFlight()
+
+                    val route =
+                        Route(
+                            routeID = it[Routes.id],
+                            departureAirportID = it[Routes.departureAirportId],
+                            arrivalAirportID = it[Routes.arrivalAirportId],
+                        )
+
+                    val departure =
+                        Airport(
+                            airportID = it[departureAirport[Airports.id]],
+                            countryID = it[departureAirport[Airports.countryId]],
+                            city = it[departureAirport[Airports.city]],
+                            name = it[departureAirport[Airports.name]],
+                            code = it[departureAirport[Airports.code]],
+                        )
+
+                    val arrival =
+                        Airport(
+                            airportID = it[arrivalAirport[Airports.id]],
+                            countryID = it[arrivalAirport[Airports.countryId]],
+                            city = it[arrivalAirport[Airports.city]],
+                            name = it[arrivalAirport[Airports.name]],
+                            code = it[arrivalAirport[Airports.code]],
+                        )
+
+                    FlightFull(
+                        flight = flight,
+                        route = route,
+                        departureAirport = departure,
+                        arrivalAirport = arrival,
+                    )
+                }
+        }
 }
+
+data class FlightFull(
+    val flight: Flight,
+    val route: Route,
+    val departureAirport: Airport,
+    val arrivalAirport: Airport,
+)

@@ -4,10 +4,12 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.sessions.*
 import java.io.StringWriter
 import utils.jsMode
 import utils.timed
-import auth.LoggedInState
+import auth.UserSession
+import data.UserRepository
 import utils.baseModel
 
 fun Route.myAccountRoutes() {
@@ -16,21 +18,35 @@ fun Route.myAccountRoutes() {
 
 private suspend fun ApplicationCall.handleMyAccountLoad() {
     timed("T0_my_account", jsMode()) {
-        val loggedState: LoggedInState = loggedIn()
-        if (!loggedState.loggedIn) {
-            return@timed respond(HttpStatusCode.NotFound, "Page not found")
+        val loggedState = loggedIn()
+
+        if (!loggedState.loggedIn || loggedState.session == null) {
+            respond(HttpStatusCode.NotFound, "Page not found")
+            return@timed
         }
 
-        val userId = loggedState.session?.id ?: -1
-        val pebble = getEngine()
+        val account = UserRepository.get(loggedState.session.id)
+
+        if (account == null) {
+            sessions.clear<UserSession>()
+            respond(HttpStatusCode.NotFound, "Page not found")
+            return@timed
+        }
+
         val model =
             baseModel(
-                mapOf("title" to "My Account"),
+                mapOf(
+                    "title" to "My Account",
+                    "account" to account,
+                    "layout" to if (account.roleId == 1) "_layout/basestaff.peb" else "_layout/base.peb",
+                ),
             )
 
-        val template = pebble.getTemplate("my-account/index.peb")
+        val template = pebbleEngine.getTemplate("user/my-account/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+
+        template.evaluate(writer, model)
+
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }

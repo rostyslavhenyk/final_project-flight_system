@@ -58,24 +58,22 @@ object UserRepository {
             User(id, firstname, lastname, roleId, email, password)
         }
 
-    fun get(id: Int): User =
+    fun get(id: Int): User? =
         transaction {
             Users
                 .selectAll()
                 .where { Users.id eq id }
                 .map { it.toUser() }
                 .singleOrNull()
-                ?: User(-1, "", "", -1, "", "")
         }
 
-    fun getByEmail(email: String): User =
+    fun getByEmail(email: String): User? =
         transaction {
             Users
                 .selectAll()
                 .where { Users.email eq email }
                 .map { it.toUser() }
                 .singleOrNull()
-                ?: User(-1, "", "", -1, "", "")
         }
 
     fun delete(id: Int): Boolean =

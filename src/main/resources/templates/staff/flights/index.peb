@@ -1,0 +1,36 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block content %}
+<h1>Manage Flights</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Flight</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Departure</th>
+            <th>Arrival</th>
+            <th>Price</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flight in flights %}
+            <tr>
+                <td>{{ flight.flight.flightID }}</td>
+                <td>{{ flight.departureAirport.code }} - {{ flight.departureAirport.city }}</td>
+                <td>{{ flight.arrivalAirport.code }} - {{ flight.arrivalAirport.city }}</td>
+                <td>{{ flight.flight.departureTime }}</td>
+                <td>{{ flight.flight.arrivalTime }}</td>
+                <td>{{ flight.flight.price }}</td>
+                <td>{{ flight.flight.status }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="7">No flights found.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
