@@ -10,9 +10,8 @@ import java.io.StringWriter
 import utils.jsMode
 import utils.timed
 import data.UserRepository
-import data.User
 import auth.UserSession
-import auth.LoggedInState
+import utils.baseModel
 
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
@@ -24,28 +23,25 @@ fun ApplicationCall.createSignUpStatus(message: String): String =
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
     timed("T0_sign_up", jsMode()) {
-        val pebble = getEngine()
-        val logged_state: LoggedInState = loggedIn()
-
-        if (logged_state.logged_in) {
+        if (sessions.get<UserSession>() != null) {
             respondRedirect("/")
+            return@timed
         }
 
         val model =
-            mapOf(
-                "title" to "Sign Up",
+            baseModel(
+                mapOf("title" to "Sign Up"),
             )
 
-        val template = pebble.getTemplate("sign-up/index.peb")
+        val template = pebbleEngine.getTemplate("user/sign-up/index.peb")
         val writer = StringWriter()
-        fullEvaluate(template, writer, model)
+        template.evaluate(writer, model)
         respondText(writer.toString(), ContentType.Text.Html)
     }
 }
 
 private suspend fun ApplicationCall.handleSignUpPost() {
     timed("T1_sign_up_post", jsMode()) {
-        val pebble = getEngine()
         val params = receiveParameters()
 
         val firstname = params["firstname"]
@@ -89,9 +85,9 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val usr: User = UserRepository.getByEmail(email.toString())
+        val existingUser = UserRepository.getByEmail(email)
 
-        if (usr.id != -1) {
+        if (existingUser != null) {
             respondText(
                 createSignUpStatus("User already exists with that email"),
                 ContentType.Text.Html,
