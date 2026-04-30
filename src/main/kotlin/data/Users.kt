@@ -3,6 +3,7 @@ package data
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -12,6 +13,7 @@ object Users : Table("users") {
     private const val NAME_LENGTH = 128
     private const val EMAIL_LENGTH = 256
     private const val PASSWORD_LENGTH = 128
+    private const val PHONE_LENGTH = 20
 
     val id = integer("id").autoIncrement()
     val firstname = varchar("firstName", NAME_LENGTH)
@@ -19,6 +21,7 @@ object Users : Table("users") {
     val roleId = integer("roleID")
     val email = varchar("email", EMAIL_LENGTH).uniqueIndex()
     val password = varchar("password", PASSWORD_LENGTH)
+    val phone = varchar("phone", PHONE_LENGTH).default("")
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -30,6 +33,7 @@ data class User(
     val roleId: Int,
     val email: String,
     val password: String,
+    val phone: String = "",
 )
 
 object UserRepository {
@@ -44,6 +48,7 @@ object UserRepository {
         roleId: Int,
         email: String,
         password: String,
+        phone: String = "",
     ): User =
         transaction {
             val id =
@@ -53,9 +58,10 @@ object UserRepository {
                     it[Users.roleId] = roleId
                     it[Users.email] = email
                     it[Users.password] = password
+                    it[Users.phone] = phone
                 } get Users.id
 
-            User(id, firstname, lastname, roleId, email, password)
+            User(id, firstname, lastname, roleId, email, password, phone)
         }
 
     fun get(id: Int): User? =
@@ -81,6 +87,20 @@ object UserRepository {
             Users.deleteWhere { Users.id eq id } > 0
         }
 
+    fun updatePassword(id: Int, newPassword: String): Boolean =
+        transaction {
+            Users.update({ Users.id eq id }) {
+                it[password] = newPassword
+            } > 0
+        }
+
+    fun updatePhone(id: Int, newPhone: String): Boolean =
+        transaction {
+            Users.update({ Users.id eq id }) {
+                it[phone] = newPhone
+            } > 0
+        }
+
     private fun ResultRow.toUser(): User =
         User(
             id = this[Users.id],
@@ -89,5 +109,6 @@ object UserRepository {
             roleId = this[Users.roleId],
             email = this[Users.email],
             password = this[Users.password],
+            phone = this[Users.phone],
         )
 }

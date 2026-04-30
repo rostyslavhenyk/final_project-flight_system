@@ -1,0 +1,46 @@
+{% extends "layout/base.peb" %}
+
+{% block content %}
+
+<div class="login-form">
+    <h1>Forgot Password</h1>
+    <p>Enter your email or phone number and we will send you a reset code.</p>
+
+    <div id="step1">
+        <div class="form-group">
+            <label for="reset-email">Email Address</label>
+            <input type="email" id="reset-email" placeholder="your@email.com">
+        </div>
+        <p style="text-align:center; margin: 8px 0;">or</p>
+        <div class="form-group">
+            <label for="reset-phone">Phone Number</label>
+            <input type="tel" id="reset-phone" placeholder="+44 7000 000000">
+        </div>
+        <button onclick="sendResetCode()">Send Code</button>
+        <div id="verify-status" role="status" aria-live="polite"></div>
+    </div>
+
+    <div id="step2" hidden>
+        <div class="form-group">
+            <label for="reset-code">Enter the 6-digit code we sent you</label>
+            <input type="text" id="reset-code" placeholder="123456" maxlength="6">
+        </div>
+        <button onclick="verifyResetCode()">Verify Code</button>
+    </div>
+
+    <div id="step3" hidden>
+        <div class="form-group">
+            <label for="new-password">New Password</label>
+            <input type="password" id="new-password" placeholder="New password">
+        </div>
+        <div class="form-group">
+            <label for="confirm-password">Confirm Password</label>
+            <input type="password" id="confirm-password" placeholder="Confirm password">
+        </div>
+        <button onclick="resetPassword()">Reset Password</button>
+    </div>
+</div>
+
+<script src="/static/js/forgot-password.js"></script>
+
+{% endblock %}

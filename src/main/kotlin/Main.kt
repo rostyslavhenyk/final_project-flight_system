@@ -86,5 +86,6 @@ fun Application.configureRouting() {
         logInRoutes()
         myAccountRoutes()
         staffRoutes()
+        verificationRoutes()
     }
 }
