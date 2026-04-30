@@ -8,7 +8,7 @@ RUN gradle clean build --no-daemon
 FROM eclipse-temurin:21-jdk
 
 WORKDIR /
-COPY --from=build /app/build/libs/*.jar app.jar
+COPY --from=build /build/libs/*.jar app.jar
 
 ENV PORT=8080
 EXPOSE 8080
