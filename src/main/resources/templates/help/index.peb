@@ -1,0 +1,363 @@
+@ -1,362 +0,0 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="help-hero" aria-labelledby="hero-heading">
+    <h1 id="hero-heading">Help &amp; Support</h1>
+    <p>Find answers, track your refund, or get in touch with us</p>
+    <div class="hero-search" role="search">
+        <label for="faqSearch" class="sr-only">Search frequently asked questions</label>
+        <input
+            type="search"
+            id="faqSearch"
+            placeholder="Search for help..."
+            autocomplete="off"
+        >
+        <button type="button" aria-label="Search">
+            Search
+        </button>
+    </div>
+</section>
+
+<!-- QUICK LINKS -->
+<section class="help-quick-links" aria-label="Quick navigation links">
+    <a href="#faq" class="quick-card">FAQs</a>
+    <a href="#booking-help" class="quick-card">Change Booking</a>
+    <a href="#checkin-help" class="quick-card">Check-in Help</a>
+    <a href="#refund" class="quick-card">Track Refund</a>
+    <a href="#contact" class="quick-card">Contact Us</a>
+</section>
+
+<!-- FAQ -->
+<section class="help-section" id="faq" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently Asked Questions</h2>
+    <p class="help-subtitle">Can't find what you're looking for? <a href="#contact">Contact us</a></p>
+
+    <!-- Booking -->
+    <div class="faq-category" id="booking-help">
+        <h3>Booking</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a1" id="faq-q1">
+                How do I book a flight?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a1" role="region" aria-labelledby="faq-q1" hidden>
+                <p>Go to the Flights page, enter your origin, destination, date and number of passengers, then select your preferred flight and complete payment.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a2" id="faq-q2">
+                Can I change my booking?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a2" role="region" aria-labelledby="faq-q2" hidden>
+                <p>Yes. Go to Manage Booking, select the booking you want to change and click "Change Flight". Only available for flights that have not departed yet.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a3" id="faq-q3">
+                How do I cancel my booking?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a3" role="region" aria-labelledby="faq-q3" hidden>
+                <p>Go to Manage Booking and select "Cancel Flight". Cancellations within 24 hours of booking are free. After that a cancellation fee may apply.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Check-in -->
+    <div class="faq-category" id="checkin-help">
+        <h3>Check-in</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a4" id="faq-q4">
+                How do I check in online?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a4" role="region" aria-labelledby="faq-q4" hidden>
+                <p>Online check-in opens 24 hours before your flight. Sign in, go to Check-in and follow the steps. You will need your booking reference and passport.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a5" id="faq-q5">
+                What documents do I need?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a5" role="region" aria-labelledby="faq-q5" hidden>
+                <p>You will need a valid passport or government-issued ID, your booking reference, and any required visa documentation for your destination.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Baggage -->
+    <div class="faq-category">
+        <h3>Baggage</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a6" id="faq-q6">
+                What is the baggage allowance?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a6" role="region" aria-labelledby="faq-q6" hidden>
+                <p>Standard economy includes 1 carry-on bag up to 10kg. Checked baggage can be added during or after booking. Allowances vary by fare type and membership tier.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a7" id="faq-q7">
+                Can I add extra baggage after booking?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a7" role="region" aria-labelledby="faq-q7" hidden>
+                <p>Yes, extra baggage can be added through Manage Booking at any time before your flight departs.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Membership -->
+    <div class="faq-category">
+        <h3>Membership</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a8" id="faq-q8">
+                What are the membership benefits?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a8" role="region" aria-labelledby="faq-q8" hidden>
+                <p>We offer Silver, Gold and Platinum tiers. Benefits include loyalty points, priority boarding, extra baggage and exclusive fare discounts.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a9" id="faq-q9">
+                How do I become a member?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a9" role="region" aria-labelledby="faq-q9" hidden>
+                <p>Visit our Membership page and click "Become a member today". Registration is free and you start earning points from your first booking.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delays -->
+    <div class="faq-category">
+        <h3>Delays &amp; Cancellations</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a10" id="faq-q10">
+                What happens if my flight is delayed?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a10" role="region" aria-labelledby="faq-q10" hidden>
+                <p>You will be notified by email. You can track live flight status on our Flight Status page. Depending on the delay you may be entitled to compensation.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a11" id="faq-q11">
+                What if my flight is cancelled by the airline?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a11" role="region" aria-labelledby="faq-q11" hidden>
+                <p>If we cancel your flight you are entitled to a full refund or free rebooking on the next available flight.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Special Assistance -->
+    <div class="faq-category">
+        <h3>Special Assistance</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a12" id="faq-q12">
+                How do I request special assistance?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a12" role="region" aria-labelledby="faq-q12" hidden>
+                <p>Special assistance such as wheelchair support, dietary meals or travelling with infants can be requested under "Extras" during booking, or by contacting us at least 48 hours before departure.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visa -->
+    <div class="faq-category">
+        <h3>Visa &amp; Travel Documents</h3>
+
+        <div class="faq-item">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-a13" id="faq-q13">
+                Do I need a visa for my destination?
+                <span aria-hidden="true">+</span>
+            </button>
+            <div class="faq-answer" id="faq-a13" role="region" aria-labelledby="faq-q13" hidden>
+                <p>Visa requirements vary by nationality and destination. We recommend checking your destination country's official embassy website before travelling.</p>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- REFUND -->
+<section class="help-section help-section--grey" id="refund" aria-labelledby="refund-heading">
+    <h2 id="refund-heading">Refunds</h2>
+    <p class="help-subtitle">Track an existing refund or raise a new request.</p>
+
+    <div class="refund-tabs" role="tablist" aria-label="Refund options">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="track" id="tab-track" onclick="switchTab('track')">
+            Track Refund
+        </button>
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="request" id="tab-request" onclick="switchTab('request')">
+            Raise a Refund Request
+        </button>
+    </div>
+
+    <!-- Track -->
+    <div class="tab-content" id="track" role="tabpanel" aria-labelledby="tab-track">
+        <form class="help-form" onsubmit="trackRefund(event)" novalidate aria-label="Track refund form">
+            <div class="form-group">
+                <label for="track-ref">Booking Reference</label>
+                <input type="text" id="track-ref" placeholder="e.g. ABC123" required aria-required="true">
+            </div>
+            <div class="form-group">
+                <label for="track-email">Email Address</label>
+                <input type="email" id="track-email" placeholder="Email used to book" required aria-required="true">
+            </div>
+            <button type="submit" class="btn-help">Check Status</button>
+        </form>
+        <div id="trackResult" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Request -->
+    <div class="tab-content" id="request" role="tabpanel" aria-labelledby="tab-request" hidden>
+        <form class="help-form" onsubmit="submitRefund(event)" novalidate aria-label="Raise refund request form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="refund-firstname">First Name</label>
+                    <input type="text" id="refund-firstname" placeholder="First name" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="refund-lastname">Last Name</label>
+                    <input type="text" id="refund-lastname" placeholder="Last name" required aria-required="true">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="refund-email">Email Address</label>
+                <input type="email" id="refund-email" placeholder="Your email" required aria-required="true">
+            </div>
+            <div class="form-group">
+                <label for="refund-ref">Booking Reference</label>
+                <input type="text" id="refund-ref" placeholder="e.g. ABC123" required aria-required="true">
+            </div>
+            <div class="form-group">
+                <label for="refund-reason">Reason for Refund</label>
+                <select id="refund-reason" required aria-required="true">
+                    <option value="">Select a reason</option>
+                    <option>Flight cancelled by airline</option>
+                    <option>Flight significantly delayed</option>
+                    <option>Medical emergency</option>
+                    <option>Duplicate booking</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="refund-details">Additional Details</label>
+                <textarea id="refund-details" placeholder="Describe your situation..." rows="4" aria-describedby="refund-hint"></textarea>
+                <span id="refund-hint" class="form-hint">Optional - any extra information that may help us</span>
+            </div>
+            <button type="submit" class="btn-help">Submit Request</button>
+        </form>
+        <div id="requestResult" role="status" aria-live="polite"></div>
+    </div>
+
+</section>
+
+<!-- CONTACT -->
+<section class="help-section" id="contact" aria-labelledby="contact-heading">
+    <h2 id="contact-heading">Contact Us</h2>
+    <p class="help-subtitle">We aim to respond to all messages within 24 hours.</p>
+
+    <div class="contact-wrapper">
+
+        <div class="contact-form-box">
+            <h3>Send us a message</h3>
+            <form onsubmit="submitContact(event)" novalidate aria-label="Contact us form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contact-firstname">First Name</label>
+                        <input type="text" id="contact-firstname" placeholder="First name" required aria-required="true">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-lastname">Last Name</label>
+                        <input type="text" id="contact-lastname" placeholder="Last name" required aria-required="true">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="contact-email">Email Address</label>
+                    <input type="email" id="contact-email" placeholder="your@email.com" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="contact-subject">Subject</label>
+                    <input type="text" id="contact-subject" placeholder="What is this about?" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="contact-message">Message</label>
+                    <textarea id="contact-message" rows="5" placeholder="How can we help?" required aria-required="true"></textarea>
+                </div>
+                <button type="submit" class="btn-help">Send Message</button>
+            </form>
+            <div id="contactResult" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="contact-info-box" aria-label="Other ways to contact us">
+            <h3>Other ways to reach us</h3>
+            <div class="contact-info-item">
+                <strong>Email</strong>
+                <p><a href="mailto:support@glideairways.com">support@glideairways.com</a></p>
+                <small>We aim to respond within 24 hours</small>
+            </div>
+            <div class="contact-info-item">
+                <strong>Phone</strong>
+                <p><a href="tel:+440000000000">+44 000 000 0000</a></p>
+                <small>Monday to Friday, 8am - 8pm</small>
+            </div>
+            <div class="contact-info-item">
+                <strong>Live Chat</strong>
+                <p>Available 24/7 for urgent queries</p>
+                <button class="btn-help-outline" onclick="openChat()" aria-label="Open live chat">Start Chat</button>
+            </div>
+            <div class="contact-info-item">
+                <strong>Response Times</strong>
+                <p>Form / Email: within 24 hours</p>
+                <p>Refund requests: 3-5 business days</p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- CHAT WIDGET -->
+<div class="chat-widget" id="chatWidget" role="complementary" aria-label="Live chat">
+    <button class="chat-header" onclick="toggleChat()" aria-expanded="false" aria-controls="chatBody" aria-label="Toggle live chat">
+        <span>Live Chat</span>
+        <span aria-hidden="true" id="chatChevron">▲</span>
+    </button>
+    <div class="chat-body" id="chatBody" hidden>
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat messages">
+            <div class="chat-msg bot" role="note">Hi! How can we help you today?</div>
+        </div>
+        <div class="chat-input-row">
+            <label for="chatInput" class="sr-only">Type your message</label>
+            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="handleChatKey(event)">
+            <button onclick="sendChat()" aria-label="Send message">Send</button>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/help.js"></script>
+
+{% endblock %}
