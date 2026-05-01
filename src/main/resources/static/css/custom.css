@@ -2,11 +2,6 @@ body {
     background-color: #e4e4e4;
 }
 
-*:focus-visible {
-  outline: 3px solid #FF8000 !important;
-  outline-offset: 3px !important;
-}
-
 li {
   list-style: none !important;
   list-style-type: none !important;
@@ -55,18 +50,18 @@ h1, h2, h3, h4, h5, h6 {
 /* ========================================
    Focus Indicators (WCAG 2.4.7)
    ======================================== */
-*:focus {
-  outline: 3px solid #4A90E2;
-  outline-offset: 2px;
+main:focus {
+  outline: none;
 }
 
-/* Remove default outline, replace with custom */
-button:focus,
-a:focus,
-input:focus,
-textarea:focus,
-select:focus {
-  outline: 3px solid #4A90E2;
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #202320;
   outline-offset: 2px;
 }
 
@@ -223,7 +218,13 @@ select:focus {
     border-width: 2px;
   }
 
-  *:focus {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  summary:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
     outline-width: 4px;
   }
 }
@@ -271,11 +272,11 @@ a {
 }
 
 main {
-  padding-top: 40px;
+  padding-top: 0;
 }
 
 #navbar {
-  position: fixed;
+  position: sticky;
   top: 0;
   left: 0;
   width: 100%;
