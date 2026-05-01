@@ -1,14 +1,14 @@
 FROM gradle:8.5-jdk21 AS build
 
-WORKDIR /app
+WORKDIR /
 COPY . .
 
 RUN gradle clean build --no-daemon
 
 FROM eclipse-temurin:21-jdk
 
-WORKDIR /app
-COPY --from=build /app/build/libs/*.jar app.jar
+WORKDIR /
+COPY --from=build /build/libs/*.jar app.jar
 
 ENV PORT=8080
 EXPOSE 8080
