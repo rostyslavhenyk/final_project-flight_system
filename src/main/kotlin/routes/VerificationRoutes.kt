@@ -14,6 +14,7 @@ import utils.SmsService
 import utils.VerificationStore
 import data.UserRepository
 
+// handles all routes related to verification and password reset
 fun Route.verificationRoutes() {
     get("/forgot-password") { call.handleForgotPasswordLoad() }
     post("/forgot-password/send") { call.handleForgotPasswordSend() }
@@ -25,7 +26,6 @@ fun Route.verificationRoutes() {
     post("/verify/check-sms") { call.handleCheckSmsCode() }
 }
 
-// creates a status div to show messages to the user
 fun ApplicationCall.createVerifyStatus(message: String): String =
     """<div id="verify-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
@@ -58,7 +58,6 @@ private suspend fun ApplicationCall.handleForgotPasswordSend() {
 
         if (!email.isNullOrBlank()) {
             val user = UserRepository.getByEmail(email)
-
             if (user == null) {
                 respondText(
                     createVerifyStatus("No account found with that email"),
@@ -67,10 +66,8 @@ private suspend fun ApplicationCall.handleForgotPasswordSend() {
                 )
                 return@timed
             }
-
             VerificationStore.saveCode(email, code)
             EmailService.sendPasswordResetCode(email, code)
-
         } else if (!phone.isNullOrBlank()) {
             VerificationStore.saveCode(phone, code)
             SmsService.sendPasswordResetCode(phone, code)
@@ -162,7 +159,6 @@ private suspend fun ApplicationCall.handlePasswordReset() {
         }
 
         val user = UserRepository.getByEmail(key)
-
         if (user == null) {
             respondText(
                 createVerifyStatus("User not found"),

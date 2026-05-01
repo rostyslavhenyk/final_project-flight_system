@@ -26,16 +26,16 @@ function sendResetCode() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
     })
-    .then(function(response) {
-        return response.text().then(function(text) {
-            if (response.ok) {
-                document.getElementById('step1').hidden = true
-                document.getElementById('step2').hidden = false
-            } else {
-                document.getElementById('verify-status').textContent = text
-            }
+        .then(function (response) {
+            return response.text().then(function (text) {
+                if (response.ok) {
+                    document.getElementById('step1').hidden = true
+                    document.getElementById('step2').hidden = false
+                } else {
+                    document.getElementById('verify-status').textContent = text
+                }
+            })
         })
-    })
 }
 
 function verifyResetCode() {
@@ -53,16 +53,16 @@ function verifyResetCode() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
     })
-    .then(function(response) {
-        return response.text().then(function(text) {
-            if (response.ok) {
-                document.getElementById('step2').hidden = true
-                document.getElementById('step3').hidden = false
-            } else {
-                document.getElementById('verify-status').textContent = text
-            }
+        .then(function (response) {
+            return response.text().then(function (text) {
+                if (response.ok) {
+                    document.getElementById('step2').hidden = true
+                    document.getElementById('step3').hidden = false
+                } else {
+                    document.getElementById('verify-status').textContent = text
+                }
+            })
         })
-    })
 }
 
 function resetPassword() {
@@ -80,21 +80,21 @@ function resetPassword() {
     }
 
     var body = resetType + '=' + encodeURIComponent(resetKey) +
-               '&newPassword=' + encodeURIComponent(newPassword) +
-               '&confirmPassword=' + encodeURIComponent(confirmPassword)
+        '&newPassword=' + encodeURIComponent(newPassword) +
+        '&confirmPassword=' + encodeURIComponent(confirmPassword)
 
     fetch('/forgot-password/reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
     })
-    .then(function(response) {
-        if (response.ok) {
-            window.location.href = '/login'
-        } else {
-            response.text().then(function(text) {
-                document.getElementById('verify-status').textContent = text
-            })
-        }
-    })
+        .then(function (response) {
+            if (response.ok) {
+                window.location.href = '/login'
+            } else {
+                response.text().then(function (text) {
+                    document.getElementById('verify-status').textContent = text
+                })
+            }
+        })
 }

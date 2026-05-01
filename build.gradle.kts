@@ -25,6 +25,8 @@ dependencies {
     implementation("io.ktor:ktor-server-sessions-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
+    implementation("com.sun.mail:jakarta.mail:2.0.1")
+    implementation("com.twilio.sdk:twilio:10.1.5")
 
     // Pebble templating
     implementation("io.pebbletemplates:pebble:$pebbleVersion")
