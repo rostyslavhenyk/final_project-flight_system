@@ -1,0 +1,91 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block styles %}
+    <link rel="stylesheet" href="/static/css/staff/tickets.css">
+{% endblock %}
+
+{% block content %}
+<a href="/staff/tickets?tab={% if ticketFull.ticket.source == "STAFF" %}created{% else %}requested{% endif %}" class="staff-back-link">Back to tickets</a>
+
+{% if updated %}
+    <p class="staff-notice">Ticket status updated.</p>
+{% endif %}
+
+<section class="ticket-detail">
+    <header class="ticket-detail-header">
+        <div>
+            <div class="ticket-detail-topline">
+                <span>Ticket No. {{ ticketFull.ticket.ticketID }}</span>
+                <form method="post" action="/staff/tickets/{{ ticketFull.ticket.ticketID }}/status">
+                    <input type="hidden" name="status" value="RESOLVED">
+                    <button type="submit">Mark as completed</button>
+                </form>
+            </div>
+            <h2>{{ ticketFull.ticket.subject }}</h2>
+            <p>{{ ticketFull.user.firstname }} {{ ticketFull.user.lastname }} - {{ ticketFull.user.email }}</p>
+        </div>
+        <div class="ticket-detail-tags">
+            <span>{{ ticketFull.ticket.source }}</span>
+            <span>{{ ticketFull.ticket.status }}</span>
+            <span>{{ ticketFull.ticket.priority }}</span>
+        </div>
+    </header>
+
+    <dl class="ticket-detail-grid">
+        <div>
+            <dt>User ID</dt>
+            <dd>{{ ticketFull.user.id }}</dd>
+        </div>
+        <div>
+            <dt>Created</dt>
+            <dd>{{ ticketFull.createdAtText }}</dd>
+        </div>
+        <div>
+            <dt>Updated</dt>
+            <dd>{{ ticketFull.updatedAtText }}</dd>
+        </div>
+        <div>
+            <dt>Source</dt>
+            <dd>{{ ticketFull.ticket.source }}</dd>
+        </div>
+    </dl>
+
+    <section class="ticket-message">
+        <h3>Description</h3>
+        <p>{{ ticketFull.ticket.message }}</p>
+    </section>
+
+    <section class="ticket-images">
+        <h3>Images</h3>
+        {% if ticketImages is empty %}
+            <p>No images attached.</p>
+        {% else %}
+            <div class="ticket-image-list">
+                {% for image in ticketImages %}
+                    <a href="/staff/tickets/images/{{ image.id }}" target="_blank" rel="noopener">
+                        <img src="/staff/tickets/images/{{ image.id }}" alt="{{ image.filename }}">
+                    </a>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+
+    <form method="post" action="/staff/tickets/{{ ticketFull.ticket.ticketID }}/status" class="ticket-status-form">
+        <label for="ticket-status">Status</label>
+        <select id="ticket-status" name="status" onchange="this.form.requestSubmit()">
+            <option value="OPEN" {% if ticketFull.ticket.status == "OPEN" %}selected{% endif %}>Open</option>
+            <option value="IN_PROGRESS" {% if ticketFull.ticket.status == "IN_PROGRESS" %}selected{% endif %}>In progress</option>
+            <option value="RESOLVED" {% if ticketFull.ticket.status == "RESOLVED" %}selected{% endif %}>Resolved</option>
+            <option value="CLOSED" {% if ticketFull.ticket.status == "CLOSED" %}selected{% endif %}>Closed</option>
+        </select>
+        <noscript>
+            <button type="submit" class="staff-action-button">Update Status</button>
+        </noscript>
+    </form>
+
+    <section class="ticket-reply-box">
+        <label for="reply">Reply...</label>
+        <textarea id="reply" rows="3" placeholder="Reply..."></textarea>
+    </section>
+</section>
+{% endblock %}

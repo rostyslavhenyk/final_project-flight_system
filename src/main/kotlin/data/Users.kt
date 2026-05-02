@@ -38,6 +38,26 @@ object UserRepository {
             Users.selectAll().map { it.toUser() }
         }
 
+    fun allFull(): List<UserFull> =
+        transaction {
+            val loyaltyByUser =
+                LoyaltyUsers
+                    .selectAll()
+                    .map { LoyaltyRepository.run { it.toLoyaltyUser() } }
+                    .associateBy { it.userID }
+
+            Users
+                .selectAll()
+                .map {
+                    val user = it.toUser()
+
+                    UserFull(
+                        user = user,
+                        loyaltyUser = loyaltyByUser[user.id],
+                    )
+                }
+        }
+
     fun add(
         firstname: String,
         lastname: String,
@@ -81,7 +101,7 @@ object UserRepository {
             Users.deleteWhere { Users.id eq id } > 0
         }
 
-    private fun ResultRow.toUser(): User =
+    internal fun ResultRow.toUser(): User =
         User(
             id = this[Users.id],
             firstname = this[Users.firstname],
@@ -91,3 +111,8 @@ object UserRepository {
             password = this[Users.password],
         )
 }
+
+data class UserFull(
+    val user: User,
+    val loyaltyUser: LoyaltyUser?,
+)

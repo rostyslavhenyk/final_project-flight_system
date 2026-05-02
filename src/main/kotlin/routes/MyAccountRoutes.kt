@@ -17,7 +17,7 @@ fun Route.myAccountRoutes() {
 }
 
 private suspend fun ApplicationCall.handleMyAccountLoad() {
-    timed("T0_my_account", jsMode()) {
+    timed("T2_account_load", jsMode()) {
         val loggedState = loggedIn()
 
         if (!loggedState.loggedIn || loggedState.session == null) {

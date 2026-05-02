@@ -13,6 +13,8 @@ object AllTables {
             Passengers,
             BoardingPasses,
             LoyaltyUsers,
+            Tickets,
+            TicketImages,
             Purchases,
             Payments,
         )

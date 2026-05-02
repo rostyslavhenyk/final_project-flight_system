@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Purchases : Table("purchases") {
@@ -28,13 +29,40 @@ data class Purchase(
 )
 
 object PurchaseRepository {
-    private fun ResultRow.toPurchase() =
+    internal fun ResultRow.toPurchase() =
         Purchase(
             purchaseID = this[Purchases.id],
             userID = this[Purchases.userID],
             amount = this[Purchases.amount],
             createdAt = this[Purchases.createdAt],
         )
+
+    fun all(): List<Purchase> =
+        transaction {
+            Purchases.selectAll().map { it.toPurchase() }
+        }
+
+    fun allFull(): List<PurchaseFull> =
+        transaction {
+            val paymentsByPurchase =
+                Payments
+                    .selectAll()
+                    .map { PaymentRepository.run { it.toPayment() } }
+                    .groupBy { it.purchaseID }
+
+            Purchases
+                .innerJoin(Users, { Purchases.userID }, { Users.id })
+                .selectAll()
+                .map {
+                    val purchase = it.toPurchase()
+
+                    PurchaseFull(
+                        purchase = purchase,
+                        user = UserRepository.run { it.toUser() },
+                        payments = paymentsByPurchase[purchase.purchaseID].orEmpty(),
+                    )
+                }
+        }
 
     fun create(
         userID: Int,
@@ -66,3 +94,9 @@ object PurchaseRepository {
             Purchases.deleteWhere { Purchases.id eq id } > 0
         }
 }
+
+data class PurchaseFull(
+    val purchase: Purchase,
+    val user: User,
+    val payments: List<Payment>,
+)

@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object BoardingPasses : Table("boarding_passes") {
@@ -33,7 +34,7 @@ data class BoardingPass(
 )
 
 object BoardingPassRepository {
-    private fun ResultRow.toBoardingPass() =
+    internal fun ResultRow.toBoardingPass() =
         BoardingPass(
             id = this[BoardingPasses.id],
             bookingID = this[BoardingPasses.bookingID],
@@ -60,6 +61,19 @@ object BoardingPassRepository {
             BoardingPass(id, bookingID, gate, boardingTime, issuedAt)
         }
 
+    fun allFull(): List<BoardingPassFull> =
+        transaction {
+            BoardingPasses
+                .innerJoin(Bookings, { BoardingPasses.bookingID }, { Bookings.id })
+                .selectAll()
+                .map {
+                    BoardingPassFull(
+                        boardingPass = it.toBoardingPass(),
+                        booking = BookingRepository.run { it.toBooking() },
+                    )
+                }
+        }
+
     fun getByBooking(bookingID: Int): BoardingPass? =
         transaction {
             BoardingPasses
@@ -74,3 +88,8 @@ object BoardingPassRepository {
             BoardingPasses.deleteWhere { BoardingPasses.id eq id } > 0
         }
 }
+
+data class BoardingPassFull(
+    val boardingPass: BoardingPass,
+    val booking: Booking,
+)

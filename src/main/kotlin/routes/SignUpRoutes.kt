@@ -22,7 +22,7 @@ fun ApplicationCall.createSignUpStatus(message: String): String =
     """<div id="sign-up-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
-    timed("T0_sign_up", jsMode()) {
+    timed("T1_signup_load", jsMode()) {
         if (sessions.get<UserSession>() != null) {
             respondRedirect("/")
             return@timed
@@ -41,7 +41,7 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
 }
 
 private suspend fun ApplicationCall.handleSignUpPost() {
-    timed("T1_sign_up_post", jsMode()) {
+    timed("T1_signup_submit", jsMode()) {
         val params = receiveParameters()
 
         val firstname = params["firstname"]

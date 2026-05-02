@@ -23,7 +23,7 @@ fun ApplicationCall.createLoginStatus(message: String): String =
     """<div id="log-in-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
 private suspend fun ApplicationCall.handleLogInLoad() {
-    timed("T0_log_in", jsMode()) {
+    timed("T1_login_load", jsMode()) {
         if (sessions.get<UserSession>() != null) {
             respondRedirect("/")
             return@timed
@@ -42,7 +42,7 @@ private suspend fun ApplicationCall.handleLogInLoad() {
 }
 
 private suspend fun ApplicationCall.handleLogInPost() {
-    timed("T1_log_in_post", jsMode()) {
+    timed("T1_login_submit", jsMode()) {
         val params = receiveParameters()
         val email = params["email"]
         val password = params["password"]
@@ -84,7 +84,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
 }
 
 private suspend fun ApplicationCall.handleLogOut() {
-    timed("T2_log_out", jsMode()) {
+    timed("T1_logout", jsMode()) {
         sessions.clear<UserSession>()
         respondRedirect("/")
     }
