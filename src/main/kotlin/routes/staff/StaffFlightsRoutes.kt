@@ -7,6 +7,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import routes.pebbleEngine
 import utils.baseModel
+import utils.jsMode
+import utils.timed
 import java.io.StringWriter
 
 fun Route.staffFlightsRoutes() {
@@ -14,18 +16,20 @@ fun Route.staffFlightsRoutes() {
 }
 
 private suspend fun ApplicationCall.handleStaffFlights() {
-    val model =
-        baseModel(
-            mapOf(
-                "title" to "Staff Flights",
-                "flights" to FlightRepository.allFull(),
-            ),
-        )
+    timed("T4_staff_flights_list", jsMode()) {
+        val model =
+            baseModel(
+                mapOf(
+                    "title" to "Staff Flights",
+                    "flights" to FlightRepository.allFull(),
+                ),
+            )
 
-    val template = pebbleEngine.getTemplate("staff/flights/index.peb")
-    val writer = StringWriter()
+        val template = pebbleEngine.getTemplate("staff/flights/index.peb")
+        val writer = StringWriter()
 
-    template.evaluate(writer, model)
+        template.evaluate(writer, model)
 
-    respondText(writer.toString(), ContentType.Text.Html)
+        respondText(writer.toString(), ContentType.Text.Html)
+    }
 }

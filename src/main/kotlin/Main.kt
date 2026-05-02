@@ -10,8 +10,14 @@ import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
-import routes.*
 import routes.configureHealthCheck
+import routes.flightsRoutes
+import routes.helpRoutes
+import routes.homepageRoutes
+import routes.logInRoutes
+import routes.membershipRoutes
+import routes.myAccountRoutes
+import routes.signUpRoutes
 import routes.staff.staffRoutes
 import utils.DatabaseFactory
 import utils.SessionUtils

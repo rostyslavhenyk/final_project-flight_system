@@ -7,6 +7,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import routes.pebbleEngine
 import utils.baseModel
+import utils.jsMode
+import utils.timed
 import java.io.StringWriter
 
 fun Route.staffUsersRoutes() {
@@ -14,18 +16,20 @@ fun Route.staffUsersRoutes() {
 }
 
 private suspend fun ApplicationCall.handleStaffUsers() {
-    val model =
-        baseModel(
-            mapOf(
-                "title" to "Staff Users",
-                "users" to UserRepository.all(),
-            ),
-        )
+    timed("T4_staff_users_list", jsMode()) {
+        val model =
+            baseModel(
+                mapOf(
+                    "title" to "Staff Users",
+                    "users" to UserRepository.allFull(),
+                ),
+            )
 
-    val template = pebbleEngine.getTemplate("staff/users/index.peb")
-    val writer = StringWriter()
+        val template = pebbleEngine.getTemplate("staff/users/index.peb")
+        val writer = StringWriter()
 
-    template.evaluate(writer, model)
+        template.evaluate(writer, model)
 
-    respondText(writer.toString(), ContentType.Text.Html)
+        respondText(writer.toString(), ContentType.Text.Html)
+    }
 }

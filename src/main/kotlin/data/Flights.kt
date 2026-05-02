@@ -38,7 +38,7 @@ data class Flight(
 )
 
 object FlightRepository {
-    private fun ResultRow.toFlight(): Flight =
+    internal fun ResultRow.toFlight(): Flight =
         Flight(
             flightID = this[Flights.id],
             routeID = this[Flights.routeId],

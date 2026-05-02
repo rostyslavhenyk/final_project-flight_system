@@ -10,19 +10,23 @@
             <th>Name</th>
             <th>Email</th>
             <th>Role</th>
+            <th>Loyalty tier</th>
+            <th>Points</th>
         </tr>
     </thead>
     <tbody>
         {% for account in users %}
             <tr>
-                <td>{{ account.id }}</td>
-                <td>{{ account.firstname }} {{ account.lastname }}</td>
-                <td>{{ account.email }}</td>
-                <td>{% if account.roleId == 1 %}Staff{% else %}Customer{% endif %}</td>
+                <td>{{ account.user.id }}</td>
+                <td>{{ account.user.firstname }} {{ account.user.lastname }}</td>
+                <td>{{ account.user.email }}</td>
+                <td>{% if account.user.roleId == 1 %}Staff{% else %}Customer{% endif %}</td>
+                <td>{% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</td>
+                <td>{% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %}</td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">No users found.</td>
+                <td colspan="6">No users found.</td>
             </tr>
         {% endfor %}
     </tbody>

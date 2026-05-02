@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter
  *
  * @property sessionId Session identifier
  * @property requestId Request identifier
- * @property taskCode Task code (e.g., T0_list, T3_add)
+ * @property taskCode Task-family code (e.g., T0_homepage_load, T5_staff_ticket_create)
  * @property step Processing step (e.g., success, validation_error, server_error)
  * @property outcome Outcome description
  * @property durationMs Request duration in milliseconds
@@ -43,56 +43,6 @@ object Logger {
         out.appendText(
             "$ts,${entry.sessionId},${entry.requestId},${entry.taskCode},${entry.step}," +
                 "${entry.outcome},${entry.durationMs},${entry.statusCode},${entry.jsMode}\n",
-        )
-    }
-
-    @Deprecated(
-        "Use write(LogEntry) instead",
-        ReplaceWith("write(LogEntry(sessionId, requestId, taskCode, step, outcome, durationMs, statusCode, jsMode))"),
-    )
-    @Synchronized
-    fun write(
-        sessionId: String,
-        requestId: String,
-        taskCode: String,
-        step: String,
-        outcome: String,
-        durationMs: Long,
-        statusCode: Int,
-        jsMode: String,
-    ) {
-        write(
-            LogEntry(
-                sessionId = sessionId,
-                requestId = requestId,
-                taskCode = taskCode,
-                step = step,
-                outcome = outcome,
-                durationMs = durationMs,
-                statusCode = statusCode,
-                jsMode = jsMode,
-            ),
-        )
-    }
-
-    fun validationError(
-        sessionId: String,
-        requestId: String,
-        taskCode: String,
-        outcome: String,
-        jsMode: String,
-    ) {
-        write(
-            LogEntry(
-                sessionId,
-                requestId,
-                taskCode,
-                "validation_error",
-                outcome,
-                0,
-                HttpStatusCode.BadRequest.value,
-                jsMode,
-            ),
         )
     }
 

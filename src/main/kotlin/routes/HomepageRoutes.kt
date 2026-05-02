@@ -14,7 +14,7 @@ fun Route.homepageRoutes() {
 }
 
 private suspend fun ApplicationCall.handleLoadPage() {
-    timed("T1_homepage_load", jsMode()) {
+    timed("T0_homepage_load", jsMode()) {
         if (isStaff()) {
             respondRedirect("/staff")
             return@timed

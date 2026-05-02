@@ -1,0 +1,104 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block styles %}
+    <link rel="stylesheet" href="/static/css/staff/tickets.css">
+{% endblock %}
+
+{% block content %}
+<section class="ticket-board">
+    <div class="ticket-toolbar">
+        <div class="ticket-toolbar-actions">
+            <a href="/staff/tickets?tab=requested{% if query %}&q={{ query }}{% endif %}{% if statusFilter %}&status={{ statusFilter }}{% endif %}" class="ticket-mode-button {% if activeTab == "requested" %}active{% endif %}">User Tickets</a>
+            <a href="/staff/tickets?tab=created{% if query %}&q={{ query }}{% endif %}{% if statusFilter %}&status={{ statusFilter }}{% endif %}" class="ticket-mode-button {% if activeTab == "created" or activeTab == "create" %}active{% endif %}">Staff Tickets</a>
+        </div>
+
+        <form method="get" action="/staff/tickets" class="ticket-search" role="search">
+            <input type="hidden" name="tab" value="{{ activeTab }}">
+            <label for="ticketSearch" class="sr-only">Search tickets</label>
+            <input id="ticketSearch" name="q" type="search" value="{{ query }}" placeholder="Search tickets">
+            <button type="submit" aria-label="Search tickets">Search</button>
+        </form>
+    </div>
+
+    <details class="ticket-filter"{% if statusFilter %} open{% endif %}>
+        <summary>Filter</summary>
+        <div class="ticket-filter-options">
+            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}" class="{% if not statusFilter %}active{% endif %}">All</a>
+            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=OPEN" class="{% if statusFilter == "OPEN" %}active{% endif %}">Open</a>
+            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=IN_PROGRESS" class="{% if statusFilter == "IN_PROGRESS" %}active{% endif %}">In progress</a>
+            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=RESOLVED" class="{% if statusFilter == "RESOLVED" %}active{% endif %}">Resolved</a>
+            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=URGENT" class="{% if statusFilter == "URGENT" %}active{% endif %}">Urgent</a>
+        </div>
+    </details>
+
+    {% if created %}
+        <p class="staff-notice">Ticket created.</p>
+    {% endif %}
+
+    {% if error == "missing" %}
+        <p class="staff-error">Enter a subject and message.</p>
+    {% endif %}
+
+    {% if error == "image" %}
+        <p class="staff-error">Images must be image files, 2 MB or smaller. You can attach up to 3 images.</p>
+    {% endif %}
+
+    {% if activeTab == "create" %}
+        <div class="staff-ticket-actions">
+            <a href="/staff/tickets?tab=created" class="staff-secondary-button">Back to created tickets</a>
+        </div>
+
+        <form method="post" action="/staff/tickets" class="staff-ticket-form" enctype="multipart/form-data">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="NORMAL">Normal</option>
+                        <option value="HIGH">High</option>
+                        <option value="URGENT">Urgent</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="create-ticket-status">Status</label>
+                    <select id="create-ticket-status" name="status">
+                        <option value="OPEN">Open</option>
+                        <option value="IN_PROGRESS">In progress</option>
+                        <option value="RESOLVED">Resolved</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="subject">Subject</label>
+                <input id="subject" name="subject" type="text" maxlength="160" required>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" rows="6" maxlength="2000" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="ticket-images">Images (Optional)</label>
+                <input id="ticket-images" name="images" type="file" accept="image/*" multiple>
+                <span class="form-hint">Optional. Up to 3 images, 2 MB each.</span>
+            </div>
+
+            <button type="submit" class="staff-action-button">Create Ticket</button>
+        </form>
+    {% elseif activeTab == "created" %}
+        <div class="staff-ticket-actions">
+            <a href="/staff/tickets?tab=create" class="staff-action-link">Create New Ticket</a>
+        </div>
+
+        {% set tickets = staffTickets %}
+        {% set emptyMessage = "No staff-created tickets found." %}
+        {% include "staff/tickets/table.peb" %}
+    {% else %}
+        {% set tickets = requestedTickets %}
+        {% set emptyMessage = "No user-requested tickets found." %}
+        {% include "staff/tickets/table.peb" %}
+    {% endif %}
+</section>
+{% endblock %}

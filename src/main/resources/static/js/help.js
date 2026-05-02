@@ -56,12 +56,12 @@ function toggleChat() {
     if (chatBody.hidden) {
         chatBody.hidden = false
         chatHeader.setAttribute('aria-expanded', 'true')
-        chevron.textContent = '▼'
+        chevron.textContent = 'v'
         document.getElementById('chatInput').focus()
     } else {
         chatBody.hidden = true
         chatHeader.setAttribute('aria-expanded', 'false')
-        chevron.textContent = '▲'
+        chevron.textContent = '^'
     }
 }
 
@@ -113,6 +113,7 @@ function submitRefund(event) {
 }
 
 function submitContact(event) {
-    event.preventDefault()
-    document.getElementById('contactResult').innerHTML = '<p class="form-success">Message sent! We will get back to you within 24 hours.</p>'
+    if (!event.currentTarget.checkValidity()) return
+
+    document.getElementById('contactResult').innerHTML = '<p class="form-success">Sending...</p>'
 }
