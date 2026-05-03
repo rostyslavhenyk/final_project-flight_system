@@ -18,7 +18,7 @@ fun Route.signUpRoutes() {
     post("/signup") { call.handleSignUpPost() }
 }
 
-fun ApplicationCall.createSignUpStatus(message: String): String =
+fun createSignUpStatus(message: String): String =
     """<div id="sign-up-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
@@ -96,8 +96,8 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val u = UserRepository.add(firstname, lastname, 0, email, password)
-        sessions.set(UserSession(u.id, firstname))
+        val createdUser = UserRepository.add(firstname, lastname, 0, email, password)
+        sessions.set(UserSession(createdUser.id, createdUser.firstname))
         response.headers.append("HX-Redirect", "/")
         respond(HttpStatusCode.OK)
     }

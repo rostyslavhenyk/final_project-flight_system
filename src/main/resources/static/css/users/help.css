@@ -21,35 +21,7 @@
 }
 
 .hero-search {
-    display: flex;
-    align-items: center;
-    max-width: 300px;
     margin: 0 auto;
-    border: 1.5px solid var(--primary-border-color);
-    border-radius: 6px;
-    background: var(--page-white);
-    overflow: hidden;
-}
-
-.hero-search input {
-    min-width: 0;
-    width: 100%;
-    border: 0;
-    padding: 12px;
-    background: var(--page-white);
-}
-
-.hero-search button {
-    margin: 0;
-    border: 0;
-    padding: 12px 14px;
-    background: var(--primary-color);
-    color: var(--page-white);
-    cursor: pointer;
-}
-
-.hero-search button:hover {
-    background-color: var(--primary-color-hover);
 }
 
 .help-quick-links {
@@ -210,81 +182,20 @@
     gap: 14px;
 }
 
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.form-group label {
-    font-size: 0.87rem;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    padding: 9px 12px;
-    border: 1.5px solid var(--primary-border-color);
-    border-radius: 6px;
-    font-size: 0.91rem;
-    font-family: inherit;
-    color: #1a1a1a;
-    background: var(--page-white);
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    border-color: var(--primary-color);
-}
-
 .form-hint {
     font-size: 0.8rem;
     color: #666;
 }
 
 .btn-help {
-    background-color: var(--primary-color);
-    color: var(--page-white);
-    border: none;
-    padding: 10px 24px;
-    border-radius: 6px;
     font-size: 0.92rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
     align-self: flex-start;
-    transition: background-color 0.2s;
-    margin-bottom: 0;
-}
-
-.btn-help:hover {
-    background-color: var(--primary-color-hover);
 }
 
 .btn-help-outline {
-    background: transparent;
-    color: var(--primary-color);
-    border: 1.5px solid var(--primary-color);
     padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
     font-size: 0.87rem;
-    font-family: inherit;
-    cursor: pointer;
     margin-top: 6px;
-    transition: all 0.2s;
-    margin-bottom: 0;
 }
 
 .btn-help-outline:hover {
@@ -456,10 +367,6 @@
 
     .help-quick-links {
         padding: 16px;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
     }
 
     .contact-wrapper {

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Flight System{% endblock %}</title>
 
-    <link rel="stylesheet" href="/static/css/custom.css">
     <link rel="stylesheet" href="/static/css/base.css">
     {% block styles %}{% endblock %}
+    {% block extra_head %}{% endblock %}
     <script src="/static/js/htmx-1.9.12.min.js" defer></script>
 </head>
 <body>
@@ -16,24 +16,50 @@
     <div id="status"></div>
 
     <header id="navbar">
+        <div class="brand">
+            <a href="/" class="brand-link">Glide Airways</a>
+        </div>
         <nav>
-            <a href="/">Homepage</a>
-            <a href="/flights">Flights</a>
-            <a href="/membership">Membership</a>
-            <a href="/help">Help</a>
-
-            {% if loggedIn %}
-                <a href="/my-account">My Account</a>
-                <a href="/logout">Log Out</a>
-            {% else %}
-                <a href="/signup">Sign Up</a>
-                <a href="/login">Log In</a>
-            {% endif %}
+            <ul class="main-links">
+                <li><a href="/flights">Flights</a></li>
+                <li><a href="/membership">Membership</a></li>
+                <li><a href="/help">Help</a></li>
+            </ul>
+            <ul class="auth-links">
+                {% if loggedIn %}
+                    <li><a href="/my-account">My Account</a></li>
+                    <li><a href="/logout">Log Out</a></li>
+                {% else %}
+                    <li><a href="/signup">Sign Up</a></li>
+                    <li><a href="/login">Log In</a></li>
+                {% endif %}
+            </ul>
         </nav>
     </header>
 
     <main id="main" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-top">
+                <a href="/commitment">Our commitment to you</a>
+                <span class="footer-sep" aria-hidden="true">|</span>
+                <a href="/help">Contact us</a>
+                <span class="footer-sep" aria-hidden="true">|</span>
+                <a href="/legal">Legal and Privacy</a>
+            </div>
+            <div class="footer-links">
+                <p id="connect_with_us">Connect with us</p>
+                <div class="social-icons">
+                    <span class="icon-circle"><img src="/static/images/facebook_icon.svg" alt="Facebook"></span>
+                    <span class="icon-circle"><img src="/static/images/instagram_icon.svg" alt="Instagram"></span>
+                    <span class="icon-circle"><img src="/static/images/x_icon.svg" alt="X"></span>
+                </div>
+                <p id="credits">Visual design references modern airline booking websites.</p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

@@ -7,6 +7,8 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import java.util.Locale
 
 object Users : Table("users") {
     private const val NAME_LENGTH = 128
@@ -66,16 +68,19 @@ object UserRepository {
         password: String,
     ): User =
         transaction {
+            val normalizedFirstName = normalizePersonName(firstname)
+            val normalizedLastName = normalizePersonName(lastname)
+            val normalizedEmail = normalizeEmail(email)
             val id =
                 Users.insert {
-                    it[Users.firstname] = firstname
-                    it[Users.lastname] = lastname
+                    it[Users.firstname] = normalizedFirstName
+                    it[Users.lastname] = normalizedLastName
                     it[Users.roleId] = roleId
-                    it[Users.email] = email
+                    it[Users.email] = normalizedEmail
                     it[Users.password] = password
                 } get Users.id
 
-            User(id, firstname, lastname, roleId, email, password)
+            User(id, normalizedFirstName, normalizedLastName, roleId, normalizedEmail, password)
         }
 
     fun get(id: Int): User? =
@@ -91,10 +96,31 @@ object UserRepository {
         transaction {
             Users
                 .selectAll()
-                .where { Users.email eq email }
+                .where { Users.email eq normalizeEmail(email) }
                 .map { it.toUser() }
                 .singleOrNull()
         }
+
+    fun normalizeStoredNames() {
+        transaction {
+            Users.selectAll().forEach { row ->
+                val normalizedFirstName = normalizePersonName(row[Users.firstname])
+                val normalizedLastName = normalizePersonName(row[Users.lastname])
+                val normalizedEmail = normalizeEmail(row[Users.email])
+                if (
+                    normalizedFirstName != row[Users.firstname] ||
+                    normalizedLastName != row[Users.lastname] ||
+                    normalizedEmail != row[Users.email]
+                ) {
+                    Users.update({ Users.id eq row[Users.id] }) {
+                        it[firstname] = normalizedFirstName
+                        it[lastname] = normalizedLastName
+                        it[email] = normalizedEmail
+                    }
+                }
+            }
+        }
+    }
 
     fun delete(id: Int): Boolean =
         transaction {
@@ -110,6 +136,49 @@ object UserRepository {
             email = this[Users.email],
             password = this[Users.password],
         )
+}
+
+private fun normalizeEmail(value: String): String = value.trim().lowercase(Locale.UK)
+
+private fun normalizePersonName(value: String): String =
+    value
+        .trim()
+        .lowercase(Locale.UK)
+        .split(Regex("\\s+"))
+        .filter { part -> part.isNotBlank() }
+        .joinToString(" ") { part -> part.capitalizeNamePart() }
+
+private fun String.capitalizeNamePart(): String =
+    splitKeepingDelimiters(this, setOf('-', '\''))
+        .joinToString("") { token ->
+            if (token.length == 1 && token.first() in setOf('-', '\'')) {
+                token
+            } else {
+                token.replaceFirstChar { char -> char.uppercase(Locale.UK) }
+            }
+        }
+
+private fun splitKeepingDelimiters(
+    value: String,
+    delimiters: Set<Char>,
+): List<String> {
+    val tokens = mutableListOf<String>()
+    val current = StringBuilder()
+    value.forEach { char ->
+        if (char in delimiters) {
+            if (current.isNotEmpty()) {
+                tokens += current.toString()
+                current.clear()
+            }
+            tokens += char.toString()
+        } else {
+            current.append(char)
+        }
+    }
+    if (current.isNotEmpty()) {
+        tokens += current.toString()
+    }
+    return tokens
 }
 
 data class UserFull(

@@ -1,36 +1,80 @@
 {% extends "_layout/basestaff.peb" %}
 
 {% block content %}
-<h1>Manage Flights</h1>
+<section class="staff-shell">
+    <header class="staff-hero">
+        <p class="staff-hero__eyebrow">Operations</p>
+        <h1>Manage Flights</h1>
+        <p>Review scheduled services generated for the flight search and status pages.</p>
+    </header>
 
-<table>
-    <thead>
-        <tr>
-            <th>Flight</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Departure</th>
-            <th>Arrival</th>
-            <th>Price</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for flight in flights %}
+    <div class="staff-list-toolbar" aria-label="Flight list pagination controls">
+        <p class="staff-list-summary">
+            Showing {{ startItem }}-{{ endItem }} of {{ flightPage.total }} flights
+        </p>
+        <div class="staff-page-size" aria-label="Flights per page">
+            <span>Per page</span>
+            {% for option in pageSizeOptions %}
+                <a href="/staff/flights?page=1&pageSize={{ option }}" class="staff-page-size__link{% if option == flightPage.pageSize %} staff-page-size__link--active{% endif %}">{{ option }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="staff-table-wrap">
+        <table class="staff-table">
+            <thead>
             <tr>
-                <td>{{ flight.flight.flightID }}</td>
-                <td>{{ flight.departureAirport.code }} - {{ flight.departureAirport.city }}</td>
-                <td>{{ flight.arrivalAirport.code }} - {{ flight.arrivalAirport.city }}</td>
-                <td>{{ flight.flight.departureTime }}</td>
-                <td>{{ flight.flight.arrivalTime }}</td>
-                <td>{{ flight.flight.price }}</td>
-                <td>{{ flight.flight.status }}</td>
+                <th>Flight</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Departure</th>
+                <th>Arrival</th>
+                <th>Price</th>
+                <th>Status</th>
             </tr>
-        {% else %}
-            <tr>
-                <td colspan="7">No flights found.</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+            {% for flight in flights %}
+                <tr>
+                    <td><strong>{{ flight.flight.flightID }}</strong></td>
+                    <td>{{ flight.departureAirport.code }} <span>{{ flight.departureAirport.city }}</span></td>
+                    <td>{{ flight.arrivalAirport.code }} <span>{{ flight.arrivalAirport.city }}</span></td>
+                    <td>{{ flight.flight.departureTime }}</td>
+                    <td>{{ flight.flight.arrivalTime }}</td>
+                    <td>GBP {{ flight.flight.price }}</td>
+                    <td><span class="staff-status-pill">{{ flight.flight.status }}</span></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7">No flights found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if flightPage.pageCount > 1 %}
+        <nav class="staff-pagination" aria-label="Flights pages">
+            {% if previousPageHref %}
+                <a class="staff-pagination__link" href="{{ previousPageHref }}">Previous</a>
+            {% else %}
+                <span class="staff-pagination__link staff-pagination__link--disabled">Previous</span>
+            {% endif %}
+
+            {% for item in pageNumbers %}
+                {% if item.current %}
+                    <span class="staff-pagination__link staff-pagination__link--current" aria-current="page">{{ item.num }}</span>
+                {% else %}
+                    <a class="staff-pagination__link" href="{{ item.href }}">{{ item.num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if nextPageHref %}
+                <a class="staff-pagination__link" href="{{ nextPageHref }}">Next</a>
+            {% else %}
+                <span class="staff-pagination__link staff-pagination__link--disabled">Next</span>
+            {% endif %}
+        </nav>
+    {% endif %}
+</section>
 {% endblock %}

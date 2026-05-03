@@ -1,6 +1,29 @@
 {% extends "_layout/basestaff.peb" %}
 
 {% block content %}
-<h1>Staff Dashboard</h1>
-<p>Welcome {{ user.firstname }}</p>
+<section class="staff-shell">
+    <header class="staff-hero">
+        <p class="staff-hero__eyebrow">Staff panel</p>
+        <h1>Staff Dashboard</h1>
+        <p>Welcome {{ user.firstname }}. Choose a workspace below.</p>
+    </header>
+
+    <div class="staff-card-grid">
+        <a href="/staff/flights" class="staff-card">
+            <span class="staff-card__label">Flights</span>
+            <strong>Manage flight data</strong>
+            <span>Review generated services, timings, prices, and route details.</span>
+        </a>
+        <a href="/staff/users" class="staff-card">
+            <span class="staff-card__label">Users</span>
+            <strong>Manage users</strong>
+            <span>Check customer accounts, roles, loyalty tiers, and points.</span>
+        </a>
+        <a href="/staff/tickets" class="staff-card">
+            <span class="staff-card__label">Tickets</span>
+            <strong>Manage support</strong>
+            <span>Track user tickets, staff tickets, status updates, and images.</span>
+        </a>
+    </div>
+</section>
 {% endblock %}

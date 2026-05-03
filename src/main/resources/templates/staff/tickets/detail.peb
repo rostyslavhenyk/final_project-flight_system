@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block content %}
+<section class="ticket-detail-shell staff-shell">
 <a href="/staff/tickets?tab={% if ticketFull.ticket.source == "STAFF" %}created{% else %}requested{% endif %}" class="staff-back-link">Back to tickets</a>
 
 {% if updated %}
@@ -87,5 +88,6 @@
         <label for="reply">Reply...</label>
         <textarea id="reply" rows="3" placeholder="Reply..."></textarea>
     </section>
+</section>
 </section>
 {% endblock %}

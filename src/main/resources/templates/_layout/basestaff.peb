@@ -5,23 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Staff Panel{% endblock %}</title>
 
-    <link rel="stylesheet" href="/static/css/custom.css">
     <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/staff/panel.css">
     {% block styles %}{% endblock %}
+    <script src="/static/js/htmx-1.9.12.min.js" defer></script>
 </head>
 <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+
+    <div id="status"></div>
+
     <header id="navbar">
+        <div class="brand">
+            <a href="/staff" class="brand-link">Glide Staff</a>
+        </div>
         <nav>
-            <a href="/staff">Dashboard</a>
-            <a href="/staff/flights">Manage Flights</a>
-            <a href="/staff/users">Manage Users</a>
-            <a href="/staff/tickets">Manage Tickets</a>
-            <a href="/my-account">My Account</a>
-            <a href="/logout">Log Out</a>
+            <ul class="main-links">
+                <li><a href="/staff">Dashboard</a></li>
+                <li><a href="/staff/flights">Flights</a></li>
+                <li><a href="/staff/users">Users</a></li>
+                <li><a href="/staff/tickets">Tickets</a></li>
+            </ul>
+            <ul class="auth-links">
+                <li><a href="/my-account">My Account</a></li>
+                <li><a href="/logout">Log Out</a></li>
+            </ul>
         </nav>
     </header>
 
-    <main id="main">
+    <main id="main" tabindex="-1">
         {% block content %}{% endblock %}
     </main>
 </body>

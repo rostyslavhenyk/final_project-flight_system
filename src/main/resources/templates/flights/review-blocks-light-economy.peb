@@ -1,0 +1,50 @@
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-light-seat">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-seat"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-light-seat">Seat</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Seat selection: <strong>randomly</strong> assigned at check-in.</li>
+            <li>Seat reservation <strong>for a fee</strong>.</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-light-bag">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-baggage"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-light-bag">Baggage</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Carry-on baggage: <strong>1 piece, 7kg each</strong>.</li>
+            <li>Check-in Baggage: <strong>1 piece, 23kg each</strong>.</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-light-rewards">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-rewards"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-light-rewards">Glide Club</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Qualifying Glide Club points: <strong>25%</strong> of full fare.</li>
+            <li>Status bonus multipliers: <strong>not eligible</strong> on Light.</li>
+            <li>Mileage upgrades: <strong>not eligible</strong>.</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-light-flex">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-flex"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-light-flex">Fees &amp; flexibility</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Flight change: <strong>not permitted</strong>.</li>
+            <li>Cancellation fee: <strong>non-refundable</strong>.</li>
+            <li>No-show fee: <strong>GBP300</strong>.</li>
+        </ul>
+    </div>
+</section>

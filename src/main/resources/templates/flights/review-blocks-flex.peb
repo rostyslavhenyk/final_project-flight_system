@@ -1,0 +1,66 @@
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-flex-seat">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-seat"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-flex-seat">Seat</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>All seats are <strong>free of charge</strong>.</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-flex-bag">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-baggage"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-flex-bag">Baggage</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            {% if isFirstCabin %}
+            <li>Cabin baggage: <strong>1 piece, 15kg each</strong>.</li>
+            <li>Check-in baggage: <strong>3 pieces, 32kg each</strong>.</li>
+            {% else %}
+            <li>Carry-on baggage: <strong>1 piece, 10kg each</strong>.</li>
+            <li>Check-in baggage: <strong>2 pieces, 32kg each</strong>.</li>
+            {% endif %}
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-flex-rewards">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-rewards"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-flex-rewards">Glide Club</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            {% if isFirstCabin %}
+            <li>Qualifying Glide Club points: <strong>220%</strong> of miles flown.</li>
+            <li>Glide Points bonus: <strong>+400 points per long-haul segment</strong>.</li>
+            <li>Mileage upgrades: <strong>not required</strong> (already highest cabin).</li>
+            {% else %}
+            <li>Qualifying Glide Club points: <strong>175%</strong> of miles flown.</li>
+            <li>Glide Points bonus: <strong>+250 points per long-haul segment</strong>.</li>
+            <li>Mileage upgrades: <strong>eligible</strong> with <strong>priority waitlist</strong>.</li>
+            {% endif %}
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-flex-flex">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-flex"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-flex-flex">Fees &amp; flexibility</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            {% if isFirstCabin %}
+            <li>Flight change fee: <strong>free of charge</strong> + potential fare difference.</li>
+            <li>Cancellation fee: <strong>free of charge</strong>.</li>
+            <li>No-show fee: <strong>GBP120</strong>.</li>
+            {% else %}
+            <li>Flight change fee: <strong>GBP150</strong> + potential fare difference.</li>
+            <li>Cancellation fee: <strong>GBP150</strong>.</li>
+            <li>No-show fee: <strong>GBP200</strong>.</li>
+            {% endif %}
+        </ul>
+    </div>
+</section>

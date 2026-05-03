@@ -1,0 +1,67 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+<section class="info-page legal-page" aria-labelledby="legal-heading">
+    <header class="flights-hero">
+        <h1 id="legal-heading" class="flights-hero__title">Legal and Privacies</h1>
+    </header>
+
+    <div class="info-page__body">
+        <p>
+            Glide Airways is committed to clear, responsible, and secure booking experiences.
+            These legal and privacy notes explain how we collect and use your booking details,
+            passenger information, and communication preferences when you plan travel with us.
+        </p>
+
+        <h2>Data we collect for bookings</h2>
+        <p>
+            We collect only the information needed to search fares, confirm reservations, issue
+            tickets, and provide travel updates. This usually includes passenger names, contact
+            details, travel dates, selected flights, and payment confirmation metadata.
+        </p>
+
+        <h2>How your information is used</h2>
+        <p>
+            Your details are used to complete bookings, share important journey notifications, and
+            support requests through our Help team. We do not sell personal information and we
+            limit access to trained staff and trusted partners involved in delivering your trip.
+        </p>
+
+        <h2>Location and browser permissions</h2>
+        <p>
+            If enabled, location access is optional and used only to suggest convenient nearby
+            departure airports. You can always search manually and continue your booking without
+            granting location permissions.
+        </p>
+
+        <h2>Data retention and account records</h2>
+        <p>
+            Booking records are retained for operational, financial, and regulatory reasons,
+            including fare validation and customer support follow-up. Where possible, we apply
+            retention limits and remove or anonymize data that is no longer required.
+        </p>
+
+        <h2>Security and payment protection</h2>
+        <p>
+            We use technical and organizational controls designed to protect personal and booking
+            data, including secure transport, controlled system access, and monitoring for unusual
+            activity. Payment details are handled through trusted payment providers with industry
+            security standards.
+        </p>
+
+        <h2>Your choices and privacy requests</h2>
+        <p>
+            You may request updates to inaccurate personal details and ask questions about how your
+            information is used. For support with privacy-related requests, contact us through the
+            Help page and our team will guide you through the next steps.
+        </p>
+
+        <h2>Policy updates</h2>
+        <p>
+            We may update this notice as services evolve, routes expand, or legal obligations
+            change. Updated versions are published on this page so you can review the latest terms
+            before booking or managing your travel.
+        </p>
+    </div>
+</section>
+{% endblock %}

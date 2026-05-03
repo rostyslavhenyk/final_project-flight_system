@@ -24,7 +24,7 @@ data class TicketFormUpload(
     val error: String? = null,
 )
 
-data class PendingTicketImage(
+class PendingTicketImage(
     val filename: String,
     val contentType: String,
     val bytes: ByteArray,

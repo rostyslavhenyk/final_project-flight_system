@@ -1,27 +1,30 @@
 package routes
 
-import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.server.application.call
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Routing
+import io.ktor.server.routing.get
 
 /**
- * Health check endpoint for monitoring server status.
- *
- * **Use cases**:
- * - Codespaces port forwarding verification
- * - Load balancer health probes
- * - Smoke testing after deployment
- *
- * **Response**: JSON with status and timestamp
+ * Lightweight endpoints for deployment probes.
+ * Render can use `/healthz`; `/health` stays JSON for manual checks.
  */
 fun Routing.configureHealthCheck() {
+    get("/healthz") {
+        call.respondText("ok", ContentType.Text.Plain)
+    }
+
+    get("/healthcheck") {
+        call.respondText("ok", ContentType.Text.Plain)
+    }
+
     get("/health") {
         call.respondText(
             """
             {
               "status": "ok",
-              "service": "COMP2850 HCI Task Manager",
+              "service": "flight-system",
               "timestamp": "${System.currentTimeMillis()}",
               "version": "1.0-SNAPSHOT"
             }

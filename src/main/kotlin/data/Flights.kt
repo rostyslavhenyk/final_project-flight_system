@@ -2,6 +2,9 @@ package data
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.Alias
+import org.jetbrains.exposed.sql.Join
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.deleteWhere
@@ -87,54 +90,102 @@ object FlightRepository {
             Flights.deleteWhere { Flights.id eq id } > 0
         }
 
-    // to correctly take out the data for a specific flight:
     fun allFull(): List<FlightFull> =
         transaction {
-            val departureAirport = Airports.alias("departure")
-            val arrivalAirport = Airports.alias("arrival")
+            val fullQuery = fullFlightsQuery()
 
-            (
+            fullQuery.join
+                .selectAll()
+                .orderBy(Flights.id to SortOrder.ASC)
+                .map { it.toFlightFull(fullQuery) }
+        }
+
+    fun pagedFull(
+        page: Int,
+        pageSize: Int,
+    ): FlightPage =
+        transaction {
+            val total = Flights.selectAll().count()
+            val pageCount = ((total + pageSize - 1) / pageSize).toInt().coerceAtLeast(1)
+            val currentPage = page.coerceIn(1, pageCount)
+            val offset = ((currentPage - 1) * pageSize).toLong()
+
+            val flights =
+                fullFlightsQuery().let { fullQuery ->
+                    fullQuery.join
+                        .selectAll()
+                        .orderBy(Flights.id to SortOrder.ASC)
+                        .limit(pageSize, offset = offset)
+                        .map { it.toFlightFull(fullQuery) }
+                }
+
+            FlightPage(
+                flights = flights,
+                page = currentPage,
+                pageSize = pageSize,
+                total = total,
+                pageCount = pageCount,
+            )
+        }
+
+    private fun fullFlightsQuery(): FullFlightQuery {
+        val departureAirport = Airports.alias("departure")
+        val arrivalAirport = Airports.alias("arrival")
+
+        return FullFlightQuery(
+            join =
                 Flights
                     .innerJoin(Routes)
                     .innerJoin(departureAirport, { Routes.departureAirportId }, { departureAirport[Airports.id] })
-                    .innerJoin(arrivalAirport, { Routes.arrivalAirportId }, { arrivalAirport[Airports.id] })
-            ).selectAll()
-                .map {
-                    val flight = it.toFlight()
+                    .innerJoin(arrivalAirport, { Routes.arrivalAirportId }, { arrivalAirport[Airports.id] }),
+            departureAirport = departureAirport,
+            arrivalAirport = arrivalAirport,
+        )
+    }
 
-                    val route =
-                        Route(
-                            routeID = it[Routes.id],
-                            departureAirportID = it[Routes.departureAirportId],
-                            arrivalAirportID = it[Routes.arrivalAirportId],
-                        )
+    private fun ResultRow.toFlightFull(fullQuery: FullFlightQuery): FlightFull {
+        val departureAirport = fullQuery.departureAirport
+        val arrivalAirport = fullQuery.arrivalAirport
+        val flight = toFlight()
 
-                    val departure =
-                        Airport(
-                            airportID = it[departureAirport[Airports.id]],
-                            countryID = it[departureAirport[Airports.countryId]],
-                            city = it[departureAirport[Airports.city]],
-                            name = it[departureAirport[Airports.name]],
-                            code = it[departureAirport[Airports.code]],
-                        )
+        val route =
+            Route(
+                routeID = this[Routes.id],
+                departureAirportID = this[Routes.departureAirportId],
+                arrivalAirportID = this[Routes.arrivalAirportId],
+            )
 
-                    val arrival =
-                        Airport(
-                            airportID = it[arrivalAirport[Airports.id]],
-                            countryID = it[arrivalAirport[Airports.countryId]],
-                            city = it[arrivalAirport[Airports.city]],
-                            name = it[arrivalAirport[Airports.name]],
-                            code = it[arrivalAirport[Airports.code]],
-                        )
+        val departure =
+            Airport(
+                airportID = this[departureAirport[Airports.id]],
+                countryID = this[departureAirport[Airports.countryId]],
+                city = this[departureAirport[Airports.city]],
+                name = this[departureAirport[Airports.name]],
+                code = this[departureAirport[Airports.code]],
+            )
 
-                    FlightFull(
-                        flight = flight,
-                        route = route,
-                        departureAirport = departure,
-                        arrivalAirport = arrival,
-                    )
-                }
-        }
+        val arrival =
+            Airport(
+                airportID = this[arrivalAirport[Airports.id]],
+                countryID = this[arrivalAirport[Airports.countryId]],
+                city = this[arrivalAirport[Airports.city]],
+                name = this[arrivalAirport[Airports.name]],
+                code = this[arrivalAirport[Airports.code]],
+            )
+
+        return FlightFull(
+            flight = flight,
+            route = route,
+            departureAirport = departure,
+            arrivalAirport = arrival,
+        )
+    }
+
+    private data class FullFlightQuery(
+        val join: Join,
+        val departureAirport: Alias<Airports>,
+        val arrivalAirport: Alias<Airports>,
+    )
 }
 
 data class FlightFull(
@@ -142,4 +193,12 @@ data class FlightFull(
     val route: Route,
     val departureAirport: Airport,
     val arrivalAirport: Airport,
+)
+
+data class FlightPage(
+    val flights: List<FlightFull>,
+    val page: Int,
+    val pageSize: Int,
+    val total: Long,
+    val pageCount: Int,
 )

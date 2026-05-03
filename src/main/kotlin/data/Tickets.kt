@@ -45,20 +45,9 @@ data class Ticket(
     val updatedAt: Long,
 )
 
-object TicketRepository {
-    private fun ResultRow.toTicket() =
-        Ticket(
-            ticketID = this[Tickets.id],
-            userID = this[Tickets.userID],
-            subject = this[Tickets.subject],
-            message = this[Tickets.message],
-            status = this[Tickets.status],
-            priority = this[Tickets.priority],
-            source = this[Tickets.ticketSource],
-            createdAt = this[Tickets.createdAt],
-            updatedAt = this[Tickets.updatedAt],
-        )
+private const val UNKNOWN_STATUS_ORDER = 4
 
+object TicketRepository {
     fun all(): List<Ticket> =
         transaction {
             Tickets.selectAll().map { it.toTicket() }
@@ -90,6 +79,15 @@ object TicketRepository {
                     )
                 }
         }
+
+    fun searchFullBySource(
+        source: String,
+        query: String,
+        status: String,
+    ): List<TicketFull> =
+        allFullBySource(source)
+            .filterTickets(query, status)
+            .orderTickets()
 
     fun getFull(id: Int): TicketFull? =
         transaction {
@@ -156,6 +154,58 @@ object TicketRepository {
             Tickets.deleteWhere { Tickets.id eq id } > 0
         }
 }
+
+private fun ResultRow.toTicket() =
+    Ticket(
+        ticketID = this[Tickets.id],
+        userID = this[Tickets.userID],
+        subject = this[Tickets.subject],
+        message = this[Tickets.message],
+        status = this[Tickets.status],
+        priority = this[Tickets.priority],
+        source = this[Tickets.ticketSource],
+        createdAt = this[Tickets.createdAt],
+        updatedAt = this[Tickets.updatedAt],
+    )
+
+private fun List<TicketFull>.filterTickets(
+    query: String,
+    status: String,
+): List<TicketFull> =
+    filter {
+        val matchesQuery =
+            query.isBlank() ||
+                it.ticket.ticketID
+                    .toString()
+                    .contains(query, ignoreCase = true) ||
+                it.ticket.subject.contains(query, ignoreCase = true) ||
+                it.ticket.priority.contains(query, ignoreCase = true) ||
+                it.user.firstname.contains(query, ignoreCase = true) ||
+                it.user.lastname.contains(query, ignoreCase = true) ||
+                it.user.email.contains(query, ignoreCase = true)
+
+        val matchesStatus =
+            status.isBlank() ||
+                it.ticket.status.equals(status, ignoreCase = true) ||
+                it.ticket.priority.equals(status, ignoreCase = true)
+
+        matchesQuery && matchesStatus
+    }
+
+private fun List<TicketFull>.orderTickets(): List<TicketFull> =
+    sortedWith(
+        compareBy<TicketFull> { it.ticket.status.statusOrder() }
+            .thenByDescending { it.ticket.updatedAt },
+    )
+
+private fun String.statusOrder(): Int =
+    when (uppercase()) {
+        "OPEN" -> 0
+        "IN_PROGRESS" -> 1
+        "RESOLVED" -> 2
+        "CLOSED" -> 3
+        else -> UNKNOWN_STATUS_ORDER
+    }
 
 data class TicketFull(
     val ticket: Ticket,

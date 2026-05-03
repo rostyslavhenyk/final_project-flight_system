@@ -26,8 +26,6 @@ import utils.timed
 import java.io.File
 import java.io.StringWriter
 
-private const val UNKNOWN_STATUS_ORDER = 4
-
 fun Route.staffTicketsRoutes() {
     get("/tickets") { call.handleStaffTickets() }
     post("/tickets") { call.handleCreateStaffTicket() }
@@ -38,75 +36,15 @@ fun Route.staffTicketsRoutes() {
 
 private suspend fun ApplicationCall.handleStaffTickets() {
     timed("T5_staff_tickets_list", jsMode()) {
-        val activeTab = request.queryParameters["tab"] ?: "requested"
-        val created = request.queryParameters["created"] == "1"
-        val error = request.queryParameters["error"]
-        val query = request.queryParameters["q"]?.trim().orEmpty()
-        val status = request.queryParameters["status"]?.trim().orEmpty()
-        val staffTickets = TicketRepository.allFullBySource("STAFF").filterTickets(query, status).orderTickets()
-        val requestedTickets = TicketRepository.allFullBySource("USER").filterTickets(query, status).orderTickets()
-
-        val model =
-            baseModel(
-                mapOf(
-                    "title" to "Staff Tickets",
-                    "activeTab" to activeTab,
-                    "created" to created,
-                    "error" to error,
-                    "query" to query,
-                    "statusFilter" to status,
-                    "staffTickets" to staffTickets,
-                    "requestedTickets" to requestedTickets,
-                ),
-            )
-
-        val template = pebbleEngine.getTemplate("staff/tickets/index.peb")
-        val writer = StringWriter()
-
-        template.evaluate(writer, model)
-
-        respondText(writer.toString(), ContentType.Text.Html)
+        respondStaffTicketsPage(
+            activeTab = request.queryParameters["tab"] ?: "requested",
+            created = request.queryParameters["created"] == "1",
+            error = request.queryParameters["error"],
+            query = request.queryParameters["q"]?.trim().orEmpty(),
+            status = request.queryParameters["status"]?.trim().orEmpty(),
+        )
     }
 }
-
-private fun List<data.TicketFull>.filterTickets(
-    query: String,
-    status: String,
-): List<data.TicketFull> =
-    filter {
-        val matchesQuery =
-            query.isBlank() ||
-                it.ticket.ticketID
-                    .toString()
-                    .contains(query, ignoreCase = true) ||
-                it.ticket.subject.contains(query, ignoreCase = true) ||
-                it.ticket.priority.contains(query, ignoreCase = true) ||
-                it.user.firstname.contains(query, ignoreCase = true) ||
-                it.user.lastname.contains(query, ignoreCase = true) ||
-                it.user.email.contains(query, ignoreCase = true)
-
-        val matchesStatus =
-            status.isBlank() ||
-                it.ticket.status.equals(status, ignoreCase = true) ||
-                it.ticket.priority.equals(status, ignoreCase = true)
-
-        matchesQuery && matchesStatus
-    }
-
-private fun List<data.TicketFull>.orderTickets(): List<data.TicketFull> =
-    sortedWith(
-        compareBy<data.TicketFull> { it.ticket.status.statusOrder() }
-            .thenByDescending { it.ticket.updatedAt },
-    )
-
-private fun String.statusOrder(): Int =
-    when (uppercase()) {
-        "OPEN" -> 0
-        "IN_PROGRESS" -> 1
-        "RESOLVED" -> 2
-        "CLOSED" -> 3
-        else -> UNKNOWN_STATUS_ORDER
-    }
 
 private suspend fun ApplicationCall.handleCreateStaffTicket() {
     timed("T5_staff_ticket_create", jsMode()) {
@@ -119,12 +57,12 @@ private suspend fun ApplicationCall.handleCreateStaffTicket() {
         val status = form["status"]?.trim().orEmpty().ifBlank { "OPEN" }
 
         if (formUpload.error != null) {
-            respondRedirect("/staff/tickets?tab=create&error=image")
+            respondStaffTicketsPage(activeTab = "create", error = "image", ticketForm = form)
             return@timed
         }
 
         if (staffUserID == null || subject.isBlank() || message.isBlank()) {
-            respondRedirect("/staff/tickets?tab=create&error=missing")
+            respondStaffTicketsPage(activeTab = "create", error = "missing", ticketForm = form)
             return@timed
         }
 
@@ -142,6 +80,40 @@ private suspend fun ApplicationCall.handleCreateStaffTicket() {
 
         respondRedirect("/staff/tickets?tab=created&created=1")
     }
+}
+
+private suspend fun ApplicationCall.respondStaffTicketsPage(
+    activeTab: String = "requested",
+    created: Boolean = false,
+    error: String? = null,
+    query: String = "",
+    status: String = "",
+    ticketForm: Map<String, String> = emptyMap(),
+) {
+    val staffTickets = TicketRepository.searchFullBySource("STAFF", query, status)
+    val requestedTickets = TicketRepository.searchFullBySource("USER", query, status)
+
+    val model =
+        baseModel(
+            mapOf(
+                "title" to "Staff Tickets",
+                "activeTab" to activeTab,
+                "created" to created,
+                "error" to error,
+                "query" to query,
+                "statusFilter" to status,
+                "staffTickets" to staffTickets,
+                "requestedTickets" to requestedTickets,
+                "ticketForm" to ticketForm,
+            ),
+        )
+
+    val template = pebbleEngine.getTemplate("staff/tickets/index.peb")
+    val writer = StringWriter()
+
+    template.evaluate(writer, model)
+
+    respondText(writer.toString(), ContentType.Text.Html)
 }
 
 private suspend fun ApplicationCall.handleTicketDetails() {
