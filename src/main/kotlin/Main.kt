@@ -1,5 +1,7 @@
 import auth.UserSession
 import data.AllTables
+import data.UserRepository
+import data.flight.FlightScheduleGenerator
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.http.content.*
@@ -11,9 +13,11 @@ import io.ktor.server.sessions.*
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import routes.configureHealthCheck
+import routes.commitmentRoutes
 import routes.flightsRoutes
 import routes.helpRoutes
 import routes.homepageRoutes
+import routes.legalRoutes
 import routes.logInRoutes
 import routes.membershipRoutes
 import routes.myAccountRoutes
@@ -36,12 +40,14 @@ fun main() {
 }
 
 @Suppress("SpreadOperator")
-fun Application.configureDatabase() {
+fun configureDatabase() {
     DatabaseFactory.init()
 
     transaction {
         SchemaUtils.create(*AllTables.all())
+        FlightScheduleGenerator.ensureSeedData()
     }
+    UserRepository.normalizeStoredNames()
 }
 
 fun Application.configureLogging() {
@@ -85,6 +91,8 @@ fun Application.configureRouting() {
         configureHealthCheck()
 
         homepageRoutes()
+        commitmentRoutes()
+        legalRoutes()
         flightsRoutes()
         membershipRoutes()
         helpRoutes()

@@ -1,0 +1,49 @@
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-ess-seat">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-seat"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-ess-seat">Seat</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>All seats are <strong>free of charge</strong>.</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-ess-bag">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-baggage"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-ess-bag">Baggage</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Carry-on baggage: <strong>1 piece, 10kg each</strong>.</li>
+            <li>Check-in Baggage: <strong>2 pieces, 28kg each</strong>.</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-ess-rewards">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-rewards"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-ess-rewards">Glide Club</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Qualifying Glide Club points: <strong>100%</strong> of miles flown.</li>
+            <li>Status credits: <strong>standard accrual</strong>.</li>
+            <li>Mileage upgrades: <strong>eligible</strong> (subject to availability).</li>
+        </ul>
+    </div>
+</section>
+<section class="fare-block" aria-labelledby="rv-{{ card.id }}-ess-flex">
+    <div class="fare-block__head">
+        <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-flex"/></svg>
+        <h4 class="fare-block__title" id="rv-{{ card.id }}-ess-flex">Fees &amp; flexibility</h4>
+    </div>
+    <div class="fare-block__text">
+        <ul class="fare-block__list">
+            <li>Flight change fee: <strong>GBP200</strong> + potential fare difference.</li>
+            <li>Cancellation fee: <strong>GBP200</strong>.</li>
+            <li>No-show fee: <strong>GBP250</strong>.</li>
+        </ul>
+    </div>
+</section>

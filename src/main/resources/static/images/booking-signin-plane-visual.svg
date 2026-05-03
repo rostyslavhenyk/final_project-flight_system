@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Active passenger sign-in visual: zoomed plane icon on teal gradient. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Plane icon on teal gradient">
+  <defs>
+    <linearGradient id="bpActiveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a4d5e"/>
+      <stop offset="45%" stop-color="#2a7a8c"/>
+      <stop offset="100%" stop-color="#367878"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bpActiveGrad)"/>
+  <path
+    fill="#ffffff"
+    d="M18 113 L86 100 L142 47 L162 47 L122 101 L182 89 L190 101 L122 114 L162 154 L142 154 L86 121 L18 134 L12 124 Z"
+    transform="rotate(-10 100 100)"
+  />
+</svg>

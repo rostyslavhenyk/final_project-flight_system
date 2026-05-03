@@ -21,18 +21,10 @@ fun Route.helpRoutes() {
 
 private suspend fun ApplicationCall.handleHelpLoad() {
     timed("T0_help_load", jsMode()) {
-        val model =
-            baseModel(
-                mapOf(
-                    "title" to "Help",
-                    "ticketCreated" to (request.queryParameters["ticket"] == "created"),
-                    "ticketError" to request.queryParameters["error"],
-                ),
-            )
-        val template = pebbleEngine.getTemplate("user/help/index.peb")
-        val writer = StringWriter()
-        template.evaluate(writer, model)
-        respondText(writer.toString(), ContentType.Text.Html)
+        respondHelpPage(
+            ticketCreated = request.queryParameters["ticket"] == "created",
+            ticketError = request.queryParameters["error"],
+        )
     }
 }
 
@@ -47,17 +39,17 @@ private suspend fun ApplicationCall.handleCreateHelpTicket() {
         val user = session?.let { UserRepository.get(it.id) } ?: UserRepository.getByEmail(email)
 
         if (formUpload.error != null) {
-            respondRedirect("/help?error=image#contact")
+            respondHelpPage(ticketError = "image", ticketForm = form)
             return@timed
         }
 
         if (user == null) {
-            respondRedirect("/help?error=account#contact")
+            respondHelpPage(ticketError = "account", ticketForm = form)
             return@timed
         }
 
         if (subject.isBlank() || message.isBlank()) {
-            respondRedirect("/help?error=missing#contact")
+            respondHelpPage(ticketError = "missing", ticketForm = form)
             return@timed
         }
 
@@ -75,4 +67,24 @@ private suspend fun ApplicationCall.handleCreateHelpTicket() {
 
         respondRedirect("/help?ticket=created#contact")
     }
+}
+
+private suspend fun ApplicationCall.respondHelpPage(
+    ticketCreated: Boolean = false,
+    ticketError: String? = null,
+    ticketForm: Map<String, String> = emptyMap(),
+) {
+    val model =
+        baseModel(
+            mapOf(
+                "title" to "Help",
+                "ticketCreated" to ticketCreated,
+                "ticketError" to ticketError,
+                "ticketForm" to ticketForm,
+            ),
+        )
+    val template = pebbleEngine.getTemplate("user/help/index.peb")
+    val writer = StringWriter()
+    template.evaluate(writer, model)
+    respondText(writer.toString(), ContentType.Text.Html)
 }

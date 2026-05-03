@@ -1,10 +1,10 @@
 // FAQ accordion
-var faqButtons = document.querySelectorAll('.faq-question')
+const faqButtons = document.querySelectorAll('.faq-question')
 
-for (var i = 0; i < faqButtons.length; i++) {
+for (let i = 0; i < faqButtons.length; i++) {
     faqButtons[i].addEventListener('click', function() {
-        var answerId = this.getAttribute('aria-controls')
-        var answer = document.getElementById(answerId)
+        const answerId = this.getAttribute('aria-controls')
+        const answer = document.getElementById(answerId)
 
         if (answer.hidden) {
             answer.hidden = false
@@ -17,7 +17,7 @@ for (var i = 0; i < faqButtons.length; i++) {
 }
 
 // Refund tabs
-function switchTab(tabName) {
+window.switchTab = function(tabName) {
     document.getElementById('track').hidden = true
     document.getElementById('request').hidden = true
 
@@ -33,11 +33,11 @@ function switchTab(tabName) {
 
 // FAQ search
 document.getElementById('faqSearch').addEventListener('input', function() {
-    var typed = this.value.toLowerCase()
-    var allItems = document.querySelectorAll('.faq-item')
+    const typed = this.value.toLowerCase()
+    const allItems = document.querySelectorAll('.faq-item')
 
-    for (var i = 0; i < allItems.length; i++) {
-        var questionText = allItems[i].querySelector('.faq-question').textContent.toLowerCase()
+    for (let i = 0; i < allItems.length; i++) {
+        const questionText = allItems[i].querySelector('.faq-question').textContent.toLowerCase()
 
         if (questionText.includes(typed)) {
             allItems[i].style.display = 'block'
@@ -48,10 +48,10 @@ document.getElementById('faqSearch').addEventListener('input', function() {
 })
 
 // Chat toggle
-function toggleChat() {
-    var chatBody = document.getElementById('chatBody')
-    var chatHeader = document.querySelector('.chat-header')
-    var chevron = document.getElementById('chatChevron')
+window.toggleChat = function() {
+    const chatBody = document.getElementById('chatBody')
+    const chatHeader = document.querySelector('.chat-header')
+    const chevron = document.getElementById('chatChevron')
 
     if (chatBody.hidden) {
         chatBody.hidden = false
@@ -65,21 +65,21 @@ function toggleChat() {
     }
 }
 
-function openChat() {
-    var chatBody = document.getElementById('chatBody')
+window.openChat = function() {
+    const chatBody = document.getElementById('chatBody')
     if (chatBody.hidden) {
-        toggleChat()
+        window.toggleChat()
     }
 }
 
-function sendChat() {
-    var input = document.getElementById('chatInput')
-    var messages = document.getElementById('chatMessages')
-    var text = input.value.trim()
+window.sendChat = function() {
+    const input = document.getElementById('chatInput')
+    const messages = document.getElementById('chatMessages')
+    const text = input.value.trim()
 
     if (text === '') return
 
-    var userMsg = document.createElement('div')
+    const userMsg = document.createElement('div')
     userMsg.classList.add('chat-msg', 'user')
     userMsg.textContent = text
     messages.appendChild(userMsg)
@@ -87,7 +87,7 @@ function sendChat() {
     messages.scrollTop = messages.scrollHeight
 
     setTimeout(function() {
-        var botMsg = document.createElement('div')
+        const botMsg = document.createElement('div')
         botMsg.classList.add('chat-msg', 'bot')
         botMsg.textContent = 'Thanks for your message! A member of our team will be with you shortly.'
         messages.appendChild(botMsg)
@@ -95,24 +95,24 @@ function sendChat() {
     }, 800)
 }
 
-function handleChatKey(event) {
+window.handleChatKey = function(event) {
     if (event.key === 'Enter') {
-        sendChat()
+        window.sendChat()
     }
 }
 
 // Form placeholders
-function trackRefund(event) {
+window.trackRefund = function(event) {
     event.preventDefault()
     document.getElementById('trackResult').innerHTML = '<p class="form-success">Your refund is being processed and should arrive within 3-5 business days.</p>'
 }
 
-function submitRefund(event) {
+window.submitRefund = function(event) {
     event.preventDefault()
     document.getElementById('requestResult').innerHTML = '<p class="form-success">Your request has been submitted. You will receive a confirmation email shortly.</p>'
 }
 
-function submitContact(event) {
+window.submitContact = function(event) {
     if (!event.currentTarget.checkValidity()) return
 
     document.getElementById('contactResult').innerHTML = '<p class="form-success">Sending...</p>'

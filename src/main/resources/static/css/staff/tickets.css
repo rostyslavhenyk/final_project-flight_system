@@ -4,7 +4,6 @@
 
 .ticket-board {
   max-width: 100%;
-  padding: 34px 40px;
 }
 
 .ticket-toolbar {
@@ -46,35 +45,7 @@
 }
 
 .ticket-search {
-  display: flex;
-  align-items: center;
-  max-width: 300px;
   margin-left: auto;
-  border: 1.5px solid var(--primary-border-color);
-  border-radius: 6px;
-  background: var(--page-white);
-  overflow: hidden;
-}
-
-.ticket-search input {
-  min-width: 0;
-  width: 100%;
-  border: 0;
-  padding: 12px;
-  background: var(--page-white);
-}
-
-.ticket-search input:focus {
-  outline: none;
-}
-
-.ticket-search button {
-  margin: 0;
-  border: 0;
-  padding: 12px 14px;
-  background: var(--primary-color);
-  color: var(--page-white);
-  cursor: pointer;
 }
 
 .ticket-filter {
@@ -122,31 +93,6 @@
   border-radius: 8px;
 }
 
-.staff-ticket-form .form-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  gap: 14px;
-}
-
-.staff-ticket-form .form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.staff-ticket-form .form-group select,
-.staff-ticket-form .form-group input,
-.staff-ticket-form .form-group textarea {
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.staff-ticket-form .form-group select {
-  min-height: 40px;
-  line-height: 1.2;
-}
-
 .staff-ticket-actions {
   display: flex;
   justify-content: flex-start;
@@ -156,8 +102,8 @@
 
 .staff-notice,
 .staff-error {
-  max-width: 95%;
-  margin: 0 auto 14px;
+  max-width: 100%;
+  margin: 0 0 14px;
   padding: 10px 12px;
   border-radius: 6px;
   font-weight: 600;
@@ -181,9 +127,11 @@
 }
 
 .staff-back-link {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: max-content;
-  margin: 0 0 14px 40px;
+  margin: 0 0 14px;
   padding: 10px 18px;
   border: 1.5px solid var(--primary-color);
   border-radius: 6px;
@@ -201,7 +149,7 @@
 .ticket-button-list {
   display: grid;
   gap: 12px;
-  max-width: 980px;
+  max-width: none;
 }
 
 .ticket-button {
@@ -256,9 +204,9 @@
 .ticket-detail-tags span {
   display: inline-flex;
   justify-content: center;
-    align-items: center;
+  align-items: center;
   min-width: 48px;
-    height: 48px;
+  height: 48px;
   padding: 7px 10px;
   background: var(--primary-soft-color);
   color: var(--primary-color);
@@ -280,9 +228,9 @@
 }
 
 .ticket-detail {
-  max-width: 95%;
-align-content: center;
-  margin: 18px 40px 40px;
+  max-width: none;
+  align-content: center;
+  margin: 18px 0 40px;
   padding: 0;
   background: var(--page-white);
   border: 1px solid var(--primary-border-color);
@@ -422,28 +370,9 @@ align-content: center;
   background: var(--page-white);
 }
 
-.ticket-status-form select:focus,
-.staff-ticket-form input:focus,
-.staff-ticket-form select:focus,
-.staff-ticket-form textarea:focus {
+.ticket-status-form select:focus {
   border-color: var(--primary-color);
   outline: none;
-}
-
-.staff-action-button {
-  background-color: var(--primary-color);
-  color: var(--page-white);
-  border: none;
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  margin-bottom: 0;
-}
-
-.staff-action-button:hover {
-  background-color: var(--primary-color-hover);
 }
 
 .staff-action-link,
@@ -465,12 +394,6 @@ align-content: center;
 .staff-action-link:hover {
   background-color: var(--primary-color-hover);
   text-decoration: none;
-}
-
-.staff-secondary-button {
-  background-color: var(--page-white);
-  color: var(--primary-color);
-  border: 1.5px solid var(--primary-color);
 }
 
 .staff-secondary-button:hover {
@@ -500,7 +423,7 @@ align-content: center;
 
 @media (max-width: 760px) {
   .ticket-board {
-    padding: 20px;
+    padding-top: 1.25rem;
   }
 
   .ticket-toolbar {
@@ -539,15 +462,7 @@ align-content: center;
     grid-template-columns: 1fr;
   }
 
-  .staff-ticket-form .form-row {
-    grid-template-columns: 1fr;
-  }
-
   .ticket-detail {
-    margin: 18px 20px 30px;
-  }
-
-  .staff-back-link {
-    margin-left: 20px;
+    margin: 18px 0 30px;
   }
 }
