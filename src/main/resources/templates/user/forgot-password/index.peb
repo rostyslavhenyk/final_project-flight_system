@@ -1,4 +1,4 @@
-{% extends "layout/base.peb" %}
+{% extends "_layout/base.peb" %}
 
 {% block content %}
 

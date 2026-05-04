@@ -9,8 +9,8 @@ import jakarta.mail.internet.InternetAddress
 import jakarta.mail.internet.MimeMessage
 import java.util.Properties
 
-// handles sending emails using gmail smtp
-// replace senderEmail and senderPassword with real credentials before testing
+// sends emails via gmail smtp
+// replace senderEmail and senderPassword before testing
 object EmailService {
 
     private val senderEmail = "yourapp@gmail.com"

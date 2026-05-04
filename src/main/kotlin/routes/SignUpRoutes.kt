@@ -12,7 +12,9 @@ import utils.timed
 import data.UserRepository
 import auth.UserSession
 import utils.baseModel
+import org.mindrot.jbcrypt.BCrypt
 
+// signup routes
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
     post("/signup") { call.handleSignUpPost() }
@@ -28,11 +30,7 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
             return@timed
         }
 
-        val model =
-            baseModel(
-                mapOf("title" to "Sign Up"),
-            )
-
+        val model = baseModel(mapOf("title" to "Sign Up"))
         val template = pebbleEngine.getTemplate("user/sign-up/index.peb")
         val writer = StringWriter()
         template.evaluate(writer, model)
@@ -40,6 +38,7 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
     }
 }
 
+// validates fields then creates the user
 private suspend fun ApplicationCall.handleSignUpPost() {
     timed("T1_sign_up_post", jsMode()) {
         val params = receiveParameters()
@@ -96,7 +95,8 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val u = UserRepository.add(firstname, lastname, 0, email, password)
+        val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+        val u = UserRepository.add(firstname, lastname, 0, email, hashedPassword)
         sessions.set(UserSession(u.id, firstname))
         response.headers.append("HX-Redirect", "/")
         respond(HttpStatusCode.OK)

@@ -13,8 +13,9 @@ import utils.EmailService
 import utils.SmsService
 import utils.VerificationStore
 import data.UserRepository
+import org.mindrot.jbcrypt.BCrypt
 
-// handles all routes related to verification and password reset
+// verification and password reset routes
 fun Route.verificationRoutes() {
     get("/forgot-password") { call.handleForgotPasswordLoad() }
     post("/forgot-password/send") { call.handleForgotPasswordSend() }
@@ -39,6 +40,7 @@ private suspend fun ApplicationCall.handleForgotPasswordLoad() {
     }
 }
 
+// sends reset code to email or phone
 private suspend fun ApplicationCall.handleForgotPasswordSend() {
     timed("T1_forgot_password_send", jsMode()) {
         val params = receiveParameters()
@@ -124,6 +126,7 @@ private suspend fun ApplicationCall.handleForgotPasswordVerify() {
     }
 }
 
+// resets password after code is verified
 private suspend fun ApplicationCall.handlePasswordReset() {
     timed("T3_password_reset", jsMode()) {
         val params = receiveParameters()
@@ -168,7 +171,8 @@ private suspend fun ApplicationCall.handlePasswordReset() {
             return@timed
         }
 
-        UserRepository.updatePassword(user.id, newPassword)
+        val hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt())
+        UserRepository.updatePassword(user.id, hashedPassword)
         VerificationStore.removeCode(key)
 
         response.headers.append("HX-Redirect", "/login")

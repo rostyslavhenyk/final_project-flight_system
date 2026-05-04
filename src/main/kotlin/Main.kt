@@ -29,6 +29,7 @@ fun main() {
     }.start(wait = true)
 }
 
+// sets up the database and creates tables
 @Suppress("SpreadOperator")
 fun Application.configureDatabase() {
     DatabaseFactory.init()
@@ -58,6 +59,7 @@ fun Application.configureTemplating() {
 
 fun ApplicationCall.isHtmxRequest(): Boolean = request.headers["HX-Request"] == "true"
 
+// sets up session cookies
 fun Application.configureSessions() {
     install(Sessions) {
         cookie<SessionUtils>("SESSION") {
@@ -72,6 +74,7 @@ fun Application.configureSessions() {
     }
 }
 
+// registers all routes
 fun Application.configureRouting() {
     routing {
         staticResources("/static", "static")

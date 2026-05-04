@@ -12,7 +12,9 @@ import utils.timed
 import data.UserRepository
 import auth.UserSession
 import utils.baseModel
+import org.mindrot.jbcrypt.BCrypt
 
+// login and logout routes
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
     post("/login") { call.handleLogInPost() }
@@ -29,11 +31,7 @@ private suspend fun ApplicationCall.handleLogInLoad() {
             return@timed
         }
 
-        val model =
-            baseModel(
-                mapOf("title" to "Log In"),
-            )
-
+        val model = baseModel(mapOf("title" to "Log In"))
         val template = pebbleEngine.getTemplate("user/log-in/index.peb")
         val writer = StringWriter()
         template.evaluate(writer, model)
@@ -41,13 +39,14 @@ private suspend fun ApplicationCall.handleLogInLoad() {
     }
 }
 
+// checks email and password then logs user in
 private suspend fun ApplicationCall.handleLogInPost() {
     timed("T1_log_in_post", jsMode()) {
         val params = receiveParameters()
         val email = params["email"]
         val password = params["password"]
 
-        if (email == null) {
+        if (email == null || password == null) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,
@@ -67,7 +66,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        if (usr.password != password) {
+        if (!BCrypt.checkpw(password, usr.password)) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,

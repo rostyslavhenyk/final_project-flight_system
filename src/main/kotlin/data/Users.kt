@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 
+// users table definition
 object Users : Table("users") {
     private const val NAME_LENGTH = 128
     private const val EMAIL_LENGTH = 256
@@ -26,6 +27,7 @@ object Users : Table("users") {
     override val primaryKey = PrimaryKey(id)
 }
 
+// user data class
 data class User(
     val id: Int,
     val firstname: String,
@@ -36,7 +38,9 @@ data class User(
     val phone: String = "",
 )
 
+// handles all database queries for users
 object UserRepository {
+
     fun all(): List<User> =
         transaction {
             Users.selectAll().map { it.toUser() }
