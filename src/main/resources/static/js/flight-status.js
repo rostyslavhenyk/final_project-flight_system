@@ -1,76 +1,10 @@
-/* global flatpickr */
+/* global flatpickr, attachForceSelectAll */
+/* FLIGHT-SYSTEM-TWEAKS: flight-number autocomplete (GA digits, 7-day suggest), shared force-select, status UX */
 (function() {
   'use strict';
 
-  /** Milliseconds after focus: keep re-selecting all text (match homepage “force select” window; user asked for 1s). */
+  /** Milliseconds for [attachForceSelectAll] on this page (shared script: `/static/js/input-force-select.js`). */
   let FORCE_SELECT_MS = 1000;
-
-  function attachForceSelectAll(input) {
-    if (!input || input.getAttribute('data-status-force-select') === '0') {
-      return;
-    }
-    let forceSelectUntil = 0;
-    let forceSelectIntervalId = null;
-
-    function clearForceSelectAllWindow() {
-      forceSelectUntil = 0;
-      if (forceSelectIntervalId !== null) {
-        clearInterval(forceSelectIntervalId);
-        forceSelectIntervalId = null;
-      }
-    }
-
-    function selectAll() {
-      let len = (input.value || '').length;
-      try {
-        input.setSelectionRange(0, len);
-      } catch (e) {
-        try {
-          input.select();
-        } catch (e2) {
-          /* e.g. hidden */
-        }
-      }
-    }
-
-    function startForceSelectAllWindow() {
-      clearForceSelectAllWindow();
-      forceSelectUntil = Date.now() + FORCE_SELECT_MS;
-      forceSelectIntervalId = setInterval(function() {
-        if (Date.now() < forceSelectUntil) {
-          selectAll();
-        } else {
-          clearForceSelectAllWindow();
-        }
-      }, 40);
-    }
-
-    function selectAllAfterPaint() {
-      selectAll();
-    }
-
-    input.addEventListener('focus', function() {
-      if (!input.value || input.value.length === 0) {
-        return;
-      }
-      startForceSelectAllWindow();
-      if (typeof window.requestAnimationFrame === 'function') {
-        window.requestAnimationFrame(function() {
-          window.requestAnimationFrame(selectAllAfterPaint);
-        });
-      } else {
-        setTimeout(selectAllAfterPaint, 0);
-      }
-    });
-    input.addEventListener('mouseup', function(e) {
-      if (Date.now() < forceSelectUntil) {
-        e.preventDefault();
-      }
-    });
-    input.addEventListener('blur', function() {
-      clearForceSelectAllWindow();
-    });
-  }
 
   function initAutocomplete(inputId, listId) {
     let input = document.getElementById(inputId);
@@ -116,7 +50,9 @@
         choose(el.getAttribute('data-value'));
       });
     });
-    attachForceSelectAll(input);
+    if (typeof window.attachForceSelectAll === 'function') {
+      window.attachForceSelectAll(input, { forceSelectMs: FORCE_SELECT_MS });
+    }
   }
 
   function initStatusDatePickers() {
@@ -140,8 +76,14 @@
     /** Bumped on pick or new query so a stale fetch cannot reopen the dropdown. */
     let suggestSeq = 0;
 
+    let maxFlightDigits =
+      parseInt(input.getAttribute('data-max-flight-digits') || '6', 10);
+    if (isNaN(maxFlightDigits) || maxFlightDigits < 1) {
+      maxFlightDigits = 6;
+    }
+
     function onlyDigits() {
-      let d = (input.value || '').replace(/\D/g, '').slice(0, 4);
+      let d = (input.value || '').replace(/\D/g, '').slice(0, maxFlightDigits);
       if (input.value !== d) {
         input.value = d;
       }
@@ -245,7 +187,9 @@
       }, 150);
     });
     onlyDigits();
-    attachForceSelectAll(input);
+    if (typeof window.attachForceSelectAll === 'function') {
+      window.attachForceSelectAll(input, { forceSelectMs: FORCE_SELECT_MS });
+    }
   }
 
   function initAnyDateToggle() {
@@ -275,7 +219,11 @@
     initAutocomplete('status-from', 'status-from-list');
     initAutocomplete('status-to', 'status-to-list');
     initAnyDateToggle();
-    document.querySelectorAll('.status-page .status-form .status-input--date').forEach(attachForceSelectAll);
+    document.querySelectorAll('.status-page .status-form .status-input--date').forEach(function(el) {
+      if (typeof window.attachForceSelectAll === 'function') {
+        window.attachForceSelectAll(el, { forceSelectMs: FORCE_SELECT_MS });
+      }
+    });
   }
 
   if (document.readyState === 'loading') {

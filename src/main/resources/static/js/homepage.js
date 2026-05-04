@@ -1,8 +1,9 @@
+/* global attachForceSelectAll */
 /**
  * Homepage behaviour (everything runs in the browser after HTML/CSS load).
  *
  * Contents (see each function’s block comment below):
- * - Airport autocomplete (“Leaving from” / “Going to”) + no-match message + forced select-all window
+ * - Airport autocomplete (“Leaving from” / “Going to”) + no-match message + forced select-all (via `/static/js/input-force-select.js`, same as flight-status)
  * - Trip type + cabin class custom dropdowns
  * - Cabin / passengers modal
  * - Flatpickr date pickers (depart / return)
@@ -36,36 +37,6 @@
 
     /* Snapshot of all real options once; the empty-state `<p>` is NOT role="option" so it is not in this list. */
     let options = list.querySelectorAll('[role="option"]');
-
-    /* Timestamp (ms since page load) until which we force “select all” on every tick; see startForceSelectAllWindow. */
-    let forceSelectUntil = 0;
-    /* ID returned by setInterval so we can clearInterval on blur. */
-    let forceSelectIntervalId = null;
-
-    function clearForceSelectAllWindow() {
-      forceSelectUntil = 0;
-      if (forceSelectIntervalId !== null) {
-        clearInterval(forceSelectIntervalId);
-        forceSelectIntervalId = null;
-      }
-    }
-
-    /**
-     * For FORCE_SELECT_MS after focus, we repeatedly call selectAll() on a short interval.
-     * That way if the user slightly drags and the browser moves the caret, the next tick selects the whole value again.
-     * After the window ends, normal caret behaviour returns (user can place the cursor for editing).
-     */
-    function startForceSelectAllWindow() {
-      clearForceSelectAllWindow();
-      forceSelectUntil = Date.now() + FORCE_SELECT_MS;
-      forceSelectIntervalId = setInterval(function() {
-        if (Date.now() < forceSelectUntil) {
-          selectAll();
-        } else {
-          clearForceSelectAllWindow();
-        }
-      }, 40);
-    }
 
     /**
      * Reads the input value, filters options, sorts matches, toggles the “no match” line, opens the dropdown.
@@ -112,47 +83,13 @@
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    /** Selects characters 0..length in the text control (or falls back to input.select()). */
-    function selectAll() {
-      let len = (input.value || '').length;
-      try {
-        input.setSelectionRange(0, len);
-      } catch (e) {
-        try {
-          input.select();
-        } catch (e2) {}
-      }
+    /* FLIGHT-SYSTEM-TWEAKS: force-select-all on focus when non-empty; shared with flight-status via input-force-select.js */
+    input.addEventListener('focus', filter);
+    if (typeof window.attachForceSelectAll === 'function') {
+      window.attachForceSelectAll(input, { forceSelectMs: FORCE_SELECT_MS });
     }
-
-    function selectAllAfterPaint() {
-      selectAll();
-    }
-
-    input.addEventListener('focus', function() {
-      startForceSelectAllWindow();
-      filter();
-      if (typeof window.requestAnimationFrame === 'function') {
-        window.requestAnimationFrame(function() {
-          window.requestAnimationFrame(selectAllAfterPaint);
-        });
-      } else {
-        setTimeout(selectAllAfterPaint, 0);
-      }
-    });
-
-    /**
-     * During the force window, preventDefault() on mouseup stops the browser from placing the caret after a click,
-     * which would cancel a full selection. After the window, we allow default so the user can position the caret.
-     * preventDefault() cancels the browser’s default action for that event; it does not stop propagation to other handlers.
-     */
-    input.addEventListener('mouseup', function(e) {
-      if (Date.now() < forceSelectUntil) {
-        e.preventDefault();
-      }
-    });
     input.addEventListener('input', filter);
     input.addEventListener('blur', function() {
-      clearForceSelectAllWindow();
       setTimeout(hide, 150);
     });
 
@@ -222,8 +159,7 @@
 
   let CABIN_CLASS_LABELS = {
     'economy': 'Economy',
-    'business': 'Business',
-    'first': 'First Class'
+    'business': 'Business'
   };
 
   /** Builds the single-line summary on the cabin trigger button, e.g. "Economy, 1 adult". */
@@ -296,9 +232,61 @@
       btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        if (btn.disabled) return;
         setModalCabin(btn.getAttribute('data-value'));
       });
     });
+
+    let fromEl = document.getElementById('from');
+    let toEl = document.getElementById('to');
+
+    /* Codes used to restrict business cabin on intra-regional UK/EU routes (calls `/api/homepage-cabin-constraints`). */
+    function syncBusinessAvailability() {
+      if (!fromEl || !toEl) return;
+      let businessBtn = cabinClassList.querySelector('[data-value="business"]');
+      if (!businessBtn) return;
+      let q =
+        'from=' +
+        encodeURIComponent(fromEl.value || '') +
+        '&to=' +
+        encodeURIComponent(toEl.value || '');
+      fetch('/api/homepage-cabin-constraints?' + q)
+        .then(function(r) {
+          return r.json();
+        })
+        .then(function(data) {
+          let selectable = !data || data.businessSelectable !== false;
+          if (selectable) {
+            businessBtn.disabled = false;
+            businessBtn.removeAttribute('aria-disabled');
+            businessBtn.classList.remove('trip-option--disabled');
+          } else {
+            businessBtn.disabled = true;
+            businessBtn.setAttribute('aria-disabled', 'true');
+            businessBtn.classList.add('trip-option--disabled');
+            if (
+              (cabinHidden.value || '') === 'business' ||
+              (cabinModalClassHidden && cabinModalClassHidden.value === 'business')
+            ) {
+              setModalCabin('economy');
+              cabinHidden.value = 'economy';
+              adults = parseInt(adultsHidden.value, 10) || 1;
+              children = parseInt(childrenHidden.value, 10) || 0;
+              trigger.textContent = cabinSummaryText('economy', adults, children);
+            }
+          }
+        })
+        .catch(function() {
+          businessBtn.disabled = false;
+          businessBtn.removeAttribute('aria-disabled');
+          businessBtn.classList.remove('trip-option--disabled');
+        });
+    }
+
+    if (fromEl && toEl) {
+      fromEl.addEventListener('change', syncBusinessAvailability);
+      toEl.addEventListener('change', syncBusinessAvailability);
+    }
 
     document.addEventListener('click', function(e) {
       if (!cabinClassTrigger.contains(e.target) && !cabinClassList.contains(e.target)) {
@@ -349,6 +337,7 @@
       cabinClassTrigger.textContent = CABIN_CLASS_LABELS[cv] || cv;
       hideCabinClassList();
       syncDisplays();
+      syncBusinessAvailability();
       modal.removeAttribute('hidden');
       trigger.setAttribute('aria-expanded', 'true');
     }
@@ -383,6 +372,7 @@
 
     trigger.textContent = cabinSummaryText(cabinHidden.value || 'economy', adults, children);
     syncDisplays();
+    syncBusinessAvailability();
   }
 
   /**

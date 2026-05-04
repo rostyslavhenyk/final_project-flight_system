@@ -12,6 +12,10 @@ import java.util.Locale
 
 private const val BOOKING_SEARCH_PAGE_SIZE = 400
 
+/*
+ * Codes used to cancel first class feature and to restrict business cabin on intra-regional UK/EU routes:
+ * [CabinNormalization] runs when preserving `cabinClass` across `/book/...` steps and when rebuilding search URLs.
+ */
 private val bookingQueryKeys =
     listOf(
         "from",
@@ -48,6 +52,9 @@ internal fun bookingParamsMap(queryParams: Parameters): LinkedHashMap<String, St
         queryParams[queryKey]?.takeIf { it.isNotBlank() }?.let { preservedValue ->
             preservedParams[queryKey] = preservedValue
         }
+    }
+    if (queryParams["from"].orEmpty().isNotBlank() && queryParams["to"].orEmpty().isNotBlank()) {
+        preservedParams["cabinClass"] = CabinNormalization.normalizedCabinForBookingQuery(queryParams)
     }
     return preservedParams
 }
@@ -127,7 +134,7 @@ private fun flightDomId(row: FlightScheduleRecord): String =
         ).joinToString("-"),
     )
 
-/** Human label e.g. `Economy Light`, `First Flex`. */
+/** Human label e.g. `Economy Light`, `Business Flex`. */
 internal fun farePackageDisplayName(
     tierRaw: String,
     cabinRaw: String,
@@ -148,7 +155,6 @@ private fun cabinFareName(
 ): String =
     when (cabin) {
         "business" -> "Business $tierName"
-        "first" -> "First $tierName"
         else -> "Economy $tierName"
     }
 
@@ -159,7 +165,8 @@ internal fun backToFlightSearchHref(queryParams: Parameters): String {
     return if (isInboundBookingLeg(queryParams, fromRaw, toRaw)) {
         inboundBookingSearchHref(queryParams, fromRaw, toRaw, departRaw)
     } else {
-        flightsHref(buildBaseParams(queryParams, fromRaw, toRaw, departRaw) + mapOf("page" to "1"))
+        val cabinEff = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
+        flightsHref(buildBaseParams(queryParams, fromRaw, toRaw, departRaw, cabinEff) + mapOf("page" to "1"))
     }
 }
 
@@ -191,7 +198,8 @@ private fun inboundBookingSearchHref(
     toRaw: String,
     departRaw: String,
 ): String {
-    val outboundParams = LinkedHashMap(buildBaseParams(queryParams, fromRaw, toRaw, departRaw))
+    val cabinEff = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
+    val outboundParams = LinkedHashMap(buildBaseParams(queryParams, fromRaw, toRaw, departRaw, cabinEff))
     outboundParams["page"] = "1"
     if (!queryParams["leg"].equals("inbound", ignoreCase = true)) {
         outboundParams["leg"] = "inbound"
@@ -202,9 +210,12 @@ private fun inboundBookingSearchHref(
 /** Inbound flight list with the chosen outbound flight + fare preserved. */
 internal fun inboundSearchResultsHref(queryParams: Parameters): String {
     val inboundParams = LinkedHashMap<String, String>()
-    listOf("from", "to", "depart", "cabinClass", "adults", "children").forEach { queryKey ->
+    listOf("from", "to", "depart", "adults", "children").forEach { queryKey ->
         queryParams[queryKey]?.takeIf { it.isNotBlank() }?.let { inboundParams[queryKey] = it }
     }
+    val fromRaw = queryParams["from"].orEmpty()
+    val toRaw = queryParams["to"].orEmpty()
+    inboundParams["cabinClass"] = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
     inboundParams["trip"] = "return"
     inboundParams["return"] = ""
     inboundParams["leg"] = "inbound"
@@ -217,16 +228,9 @@ internal fun inboundSearchResultsHref(queryParams: Parameters): String {
     return flightsHref(inboundParams)
 }
 
-internal fun effectiveFareTier(
-    tierRaw: String,
-    cabinRaw: String,
-): String {
+internal fun effectiveFareTier(tierRaw: String): String {
     val normalizedTier = tierRaw.lowercase(Locale.UK).trim()
-    return when {
-        cabinRaw == "first" -> "flex"
-        normalizedTier.isBlank() -> "flex"
-        else -> normalizedTier
-    }
+    return if (normalizedTier.isBlank()) "flex" else normalizedTier
 }
 
 internal fun moneyForTier(

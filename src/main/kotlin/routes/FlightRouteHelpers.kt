@@ -41,6 +41,24 @@ internal fun FlightSortOption.toParam(): String =
         FlightSortOption.Stops -> "stops"
     }
 
+// Includes `flight`: inbound results URL carries the chosen outbound flight + tier alongside the route.
+private val SEARCH_QUERY_PARAM_KEYS =
+    listOf(
+        "adults",
+        "children",
+        "return",
+        "leg",
+        "obFrom",
+        "obTo",
+        "obDepart",
+        "flight",
+        "fare",
+        "obFlight",
+        "obFare",
+        "outboundPrice",
+        "dateStart",
+    )
+
 /**
  * Preserves search fields when building sort/date/pager links.
  * Uses raw `from`/`to` strings so the browser round-trips exactly what the user submitted.
@@ -50,27 +68,21 @@ internal fun buildBaseParams(
     fromRaw: String,
     toRaw: String,
     departRaw: String,
+    cabinOverride: String? = null,
 ): Map<String, String> {
     val preservedParams = LinkedHashMap<String, String>()
     if (fromRaw.isNotBlank()) preservedParams["from"] = fromRaw
     if (toRaw.isNotBlank()) preservedParams["to"] = toRaw
     if (departRaw.isNotBlank()) preservedParams["depart"] = departRaw
     queryParams["trip"]?.takeIf { it.isNotBlank() }?.let { preservedParams["trip"] = it }
-    queryParams["cabinClass"]?.takeIf { it.isNotBlank() }?.let { preservedParams["cabinClass"] = it }
-    queryParams["adults"]?.takeIf { it.isNotBlank() }?.let { preservedParams["adults"] = it }
-    queryParams["children"]?.takeIf { it.isNotBlank() }?.let { preservedParams["children"] = it }
-    queryParams["return"]?.takeIf { it.isNotBlank() }?.let { preservedParams["return"] = it }
-    queryParams["leg"]?.takeIf { it.isNotBlank() }?.let { preservedParams["leg"] = it }
-    queryParams["obFrom"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obFrom"] = it }
-    queryParams["obTo"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obTo"] = it }
-    queryParams["obDepart"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obDepart"] = it }
-    /** Inbound results URL carries the chosen outbound flight + tier alongside the inbound route. */
-    queryParams["flight"]?.takeIf { it.isNotBlank() }?.let { preservedParams["flight"] = it }
-    queryParams["fare"]?.takeIf { it.isNotBlank() }?.let { preservedParams["fare"] = it }
-    queryParams["obFlight"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obFlight"] = it }
-    queryParams["obFare"]?.takeIf { it.isNotBlank() }?.let { preservedParams["obFare"] = it }
-    queryParams["outboundPrice"]?.takeIf { it.isNotBlank() }?.let { preservedParams["outboundPrice"] = it }
-    queryParams["dateStart"]?.takeIf { it.isNotBlank() }?.let { preservedParams["dateStart"] = it }
+    if (cabinOverride != null) {
+        preservedParams["cabinClass"] = cabinOverride
+    } else {
+        queryParams["cabinClass"]?.takeIf { it.isNotBlank() }?.let { preservedParams["cabinClass"] = it }
+    }
+    for (key in SEARCH_QUERY_PARAM_KEYS) {
+        queryParams[key]?.takeIf { it.isNotBlank() }?.let { value -> preservedParams[key] = value }
+    }
     return preservedParams
 }
 
@@ -102,7 +114,14 @@ internal fun buildOutboundLegSearchParams(queryParams: Parameters): Map<String, 
     if (obDepart.isNotBlank()) outboundParams["depart"] = obDepart
     if (returnDate.isNotBlank()) outboundParams["return"] = returnDate
     outboundParams["trip"] = "return"
-    queryParams["cabinClass"]?.takeIf { it.isNotBlank() }?.let { outboundParams["cabinClass"] = it }
+    // Codes used to cancel first class feature and to restrict business cabin on intra-regional UK/EU routes.
+    val cabinEff =
+        CabinNormalization.normalizedCabinForSearch(
+            queryParams["cabinClass"].orEmpty(),
+            FlightSearchRepository.resolveAirportCode(obFrom),
+            FlightSearchRepository.resolveAirportCode(obTo),
+        )
+    outboundParams["cabinClass"] = cabinEff
     queryParams["adults"]?.takeIf { it.isNotBlank() }?.let { outboundParams["adults"] = it }
     queryParams["children"]?.takeIf { it.isNotBlank() }?.let { outboundParams["children"] = it }
     outboundParams["page"] = "1"
@@ -148,7 +167,7 @@ internal fun formatMoney(gbp: BigDecimal): String = gbp.setScale(2, RoundingMode
 /** Always `HH:mm` (e.g. `00:15`, `08:20`) for consistent display. */
 internal fun formatTime(time: LocalTime): String = String.format(Locale.UK, "%02d:%02d", time.hour, time.minute)
 
-/** Economy / business / first tier prices for a schedule row (before column invariants). */
+/** Economy / business tier prices for a schedule row (before column invariants). */
 internal fun cabinFareSet(
     row: FlightScheduleRecord,
     cabinRaw: String,
@@ -168,15 +187,6 @@ internal fun cabinFareSet(
                     "light" to businessEssential,
                     "essential" to businessEssential,
                     "flex" to businessFlex,
-                )
-            }
-            "first" -> {
-                val firstFlex = (economyLight * BigDecimal("8.00")).setScale(2, RoundingMode.HALF_UP)
-                mapOf(
-                    "from" to firstFlex,
-                    "light" to firstFlex,
-                    "essential" to firstFlex,
-                    "flex" to firstFlex,
                 )
             }
             else ->
@@ -201,7 +211,6 @@ internal fun enforceFareInvariants(
     val fixedFlex = if (flex <= fixedEssential) fixedEssential + BigDecimal("1.00") else flex
     val from =
         when (cabinRaw) {
-            "first" -> fixedFlex
             "business" -> fixedEssential
             else -> light
         }

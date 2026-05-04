@@ -1,5 +1,6 @@
 package data.flight
 
+import data.FlightFull
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Duration
@@ -41,16 +42,23 @@ internal object FlightConnectionBuilder {
             "DXB" to "HKG",
         )
 
+    /*
+     * FLIGHT-SYSTEM-TWEAKS + codes used to speed up loading time: [allFlights] is loaded once by the search route; we
+     * only slice it by date in memory for connection lookahead (below), instead of opening a new DB query per day.
+     */
     fun recordsForDate(
         originCode: String,
         destCode: String,
         depart: LocalDate,
-        recordsForDate: (LocalDate) -> List<FlightSearchRepository.FlightScheduleRecord>,
+        allFlights: List<FlightFull>,
     ): List<FlightSearchRepository.FlightScheduleRecord> {
         val origin = originCode.uppercase(Locale.UK)
         val destination = destCode.uppercase(Locale.UK)
         val rowsByDate =
-            (0..MAX_LOOKAHEAD_DAYS).associateWith { dayOffset -> recordsForDate(depart.plusDays(dayOffset.toLong())) }
+            (0..MAX_LOOKAHEAD_DAYS).associateWith { dayOffset ->
+                val d = depart.plusDays(dayOffset.toLong())
+                FlightRecordMapper.recordsForDate(d, allFlights)
+            }
         val rowsByRoute =
             rowsByDate
                 .values

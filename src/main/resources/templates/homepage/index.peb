@@ -1,10 +1,11 @@
 {% extends "_layout/base.peb" %}
 
 {% block extra_head %}
-{# Homepage-only stylesheet and scripts #}
+{# Homepage-only stylesheet and scripts; FLIGHT-SYSTEM-TWEAKS: input-force-select.js before homepage.js #}
 <link rel="stylesheet" href="/static/css/homepage.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="/static/js/input-force-select.js" defer></script>
 <script src="/static/js/homepage.js" defer></script>
 {% endblock %}
 
@@ -77,7 +78,6 @@
                             <div id="cabin-class-list" class="autocomplete-dropdown trip-dropdown" role="listbox" aria-label="Cabin class">
                                 <button type="button" role="option" class="trip-option" data-value="economy">Economy</button>
                                 <button type="button" role="option" class="trip-option" data-value="business">Business</button>
-                                <button type="button" role="option" class="trip-option" data-value="first">First Class</button>
                             </div>
                         </div>
                         <p class="cabin-modal__note">Bookings of more than nine passengers are not available online. Please contact our reservations team.</p>

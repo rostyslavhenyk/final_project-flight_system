@@ -300,7 +300,7 @@
                         <button type="button" class="fare-plan__cta" data-fare-select data-fare-tier="light" data-fare-price="{{ card.priceLight }}">Select Light</button>
                     </div>
                     {% endif %}
-                    {# First class shows Flex only, so Essential is hidden. #}
+                    {# Codes used to cancel first class feature: legacy branch kept false server-side; Essential row stays for Economy/Business only. #}
                     {% if not isFirstCabin %}
                     {# Essential terms (Economy and Business). #}
                     {# Flex is always shown; label changes by cabin. #}

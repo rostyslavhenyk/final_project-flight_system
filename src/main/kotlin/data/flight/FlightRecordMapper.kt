@@ -17,10 +17,16 @@ private const val FLEX_FARE_INCREMENT = "75.00"
 private const val FLIGHT_NUMBER_DIGITS = 4
 
 internal object FlightRecordMapper {
+    // FLIGHT-SYSTEM-TWEAKS: callers that already loaded FlightRepository.allFull() pass the same list here
+    // so we filter/map in memory instead of querying the DB again.
     fun recordsForDate(depart: LocalDate): List<FlightSearchRepository.FlightScheduleRecord> =
-        FlightRepository
-            .allFull()
-            .mapNotNull { full -> full.toScheduleRecord(depart) }
+        recordsForDate(depart, FlightRepository.allFull())
+
+    fun recordsForDate(
+        depart: LocalDate,
+        allFlights: List<FlightFull>,
+    ): List<FlightSearchRepository.FlightScheduleRecord> =
+        allFlights.mapNotNull { full -> full.toScheduleRecord(depart) }
 
     fun statusRecord(row: FlightSearchRepository.FlightScheduleRecord): FlightSearchRepository.FlightStatusRecord =
         FlightSearchRepository.FlightStatusRecord(

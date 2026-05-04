@@ -1,6 +1,7 @@
 package data.flight
 
 import java.time.LocalTime
+import java.util.Locale
 import kotlin.math.absoluteValue
 
 internal object FlightScheduleRules {
@@ -94,4 +95,23 @@ internal object FlightScheduleRules {
         arrivalCode: String,
         routeIndex: Int,
     ): Int = "$departureCode-$arrivalCode-$routeIndex".hashCode().absoluteValue
+
+    /*
+     * Codes used to restrict business cabin on intra-regional UK/EU routes (pair detection only; coercion
+     * of `cabinClass` lives in [routes.CabinNormalization] and homepage UI).
+     */
+
+    /**
+     * UK/EU-style regional pair (both endpoints in [europeanCodes]): used to hide **Business** on the homepage
+     * and to coerce `cabinClass=business` to economy for search/review when the route is treated as
+     * short-haul regional.
+     */
+    fun isIntraRegionalBusinessRestrictedPair(
+        departureCode: String,
+        arrivalCode: String,
+    ): Boolean {
+        val d = departureCode.uppercase(Locale.UK)
+        val a = arrivalCode.uppercase(Locale.UK)
+        return d != a && d in europeanCodes && a in europeanCodes
+    }
 }

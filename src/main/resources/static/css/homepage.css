@@ -127,6 +127,13 @@
   color: var(--primary-color);
 }
 
+.trip-dropdown .trip-option.trip-option--disabled,
+.trip-dropdown .trip-option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Cabin / passengers modal (airline-style panel) */
 .cabin-modal {
   position: fixed;

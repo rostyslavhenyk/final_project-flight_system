@@ -1,9 +1,11 @@
 {% extends "_layout/base.peb" %}
 
 {% block extra_head %}
+{# FLIGHT-SYSTEM-TWEAKS: GA digit field (max 6), dynamic example + 7-day suggest title; input-force-select + flight-status.js #}
 <link rel="stylesheet" href="/static/css/flights/status.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="/static/js/input-force-select.js" defer></script>
 <script src="/static/js/flight-status.js" defer></script>
 {% endblock %}
 
@@ -53,7 +55,7 @@
             <div class="field--autocomplete status-airport-field status-flight-number-wrap">
             <div class="status-flight-input-wrap">
                 <span class="status-flight-prefix" aria-hidden="true">GA</span>
-                <input id="status-flight-digits" type="text" name="flightNumber" value="{{ flightDigits }}" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="e.g. 1285" class="status-input status-input--flight status-input--flight-digits" autocomplete="off" aria-autocomplete="list" aria-controls="status-flight-suggest-list" aria-expanded="false" role="combobox" title="Type up to 4 digits; matching GA flight numbers appear below.">
+                <input id="status-flight-digits" type="text" name="flightNumber" value="{{ flightDigits }}" inputmode="numeric" pattern="[0-9]*" maxlength="6" data-max-flight-digits="6" placeholder="e.g. {{ flightDigitsExample }}" class="status-input status-input--flight status-input--flight-digits" autocomplete="off" aria-autocomplete="list" aria-controls="status-flight-suggest-list" aria-expanded="false" role="combobox" title="Type up to 6 digits; matching GA flights in the next {{ flightStatusSuggestDays }} days appear below.">
             </div>
             <div id="status-flight-suggest-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Matching flight numbers"></div>
             </div>

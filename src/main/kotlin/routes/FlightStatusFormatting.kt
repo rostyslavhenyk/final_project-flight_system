@@ -1,5 +1,6 @@
 package routes
 
+import data.flight.FLIGHT_STATUS_UPCOMING_DAY_COUNT
 import data.flight.FlightSearchRepository
 import data.flight.FlightSearchRepository.FlightStatusRecord
 import java.time.LocalDate
@@ -15,7 +16,7 @@ internal fun hasFlightStatusQuery(query: FlightStatusQuery): Boolean =
 
 internal fun statusResultsLabel(query: FlightStatusQuery): String =
     if (query.anyDate) {
-        "Upcoming flights (next $STATUS_UPCOMING_DAY_COUNT days)"
+        "Upcoming flights (next $FLIGHT_STATUS_UPCOMING_DAY_COUNT days)"
     } else {
         "Departing on ${query.date.format(DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.UK))}"
     }
@@ -29,14 +30,14 @@ internal fun statusTotalFlightsLabel(totalRows: Int): String =
 
 internal fun noRouteStatusMessage(query: FlightStatusQuery): String =
     if (query.anyDate) {
-        "No scheduled flights are available for this route in the next $STATUS_UPCOMING_DAY_COUNT days."
+        "No scheduled flights are available for this route in the next $FLIGHT_STATUS_UPCOMING_DAY_COUNT days."
     } else {
         "No scheduled flights are available for this route on ${shortDate(query.date)}."
     }
 
 internal fun noFlightNumberStatusMessage(query: FlightStatusQuery): String =
     if (query.anyDate) {
-        "No flights found for GA${query.flightDigitsOnly} in the next $STATUS_UPCOMING_DAY_COUNT days."
+        "No flights found for GA${query.flightDigitsOnly} in the next $FLIGHT_STATUS_UPCOMING_DAY_COUNT days."
     } else {
         "No flights found for GA${query.flightDigitsOnly} on ${shortDate(query.date)}."
     }

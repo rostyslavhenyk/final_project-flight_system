@@ -13,7 +13,6 @@ import java.util.Locale
 import utils.jsMode
 import utils.timed
 
-internal const val STATUS_UPCOMING_DAY_COUNT = 7
 internal const val STATUS_RESULTS_PAGE_SIZE = 10
 private const val FLIGHT_NUMBER_SUGGESTION_LIMIT = 25
 private const val STATUS_TIME_FORMAT = "%02d:%02d"
@@ -58,6 +57,7 @@ internal suspend fun ApplicationCall.handleFlightStatusPage() {
     }
 }
 
+/** FLIGHT-SYSTEM-TWEAKS: JSON autocomplete for flight digits (server-side filtering in FlightSearchRepository). */
 internal suspend fun ApplicationCall.handleFlightNumberSuggest() {
     val typedDigits = request.queryParameters["q"].orEmpty()
     val suggestions = FlightSearchRepository.suggestFlightNumberDigits(typedDigits, FLIGHT_NUMBER_SUGGESTION_LIMIT)

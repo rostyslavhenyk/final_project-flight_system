@@ -1,5 +1,6 @@
 package routes
 
+import data.flight.FlightScheduleRules
 import data.flight.FlightSearchRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -10,11 +11,13 @@ import utils.isStaff
 import utils.jsMode
 import utils.timed
 import java.time.LocalDate
+import java.util.Locale
+import kotlin.random.Random
 
 fun Route.homepageRoutes() {
     get("/") { call.handleLoadPage() }
-    get("/api/nearest-airport") { call.handleNearestAirport() }
     get("/api/latest-offers") { call.handleLatestOffers() }
+    get("/api/homepage-cabin-constraints") { call.handleHomepageCabinConstraints() }
 }
 
 private suspend fun ApplicationCall.handleLoadPage() {
@@ -26,13 +29,15 @@ private suspend fun ApplicationCall.handleLoadPage() {
 
         val originCode = request.queryParameters["origin"]?.takeIf { it.isNotBlank() } ?: "MAN"
         val departDate = request.queryParameters.parseDepartDate()
-        val originLabel = FlightSearchRepository.cityForCode(originCode)
+        // Codes used to speed up loading time: single airport snapshot reused for labels + offer strip.
+        val airportsSnapshot = FlightSearchRepository.homepageAirportsSnapshot()
+        val originLabel = airportsSnapshot.cityForCode(originCode)
 
         val model =
             mapOf(
                 "title" to "Homepage",
-                "airports" to FlightSearchRepository.airportLabels(),
-                "offerCards" to offerCardsFor(originCode, departDate),
+                "airports" to airportsSnapshot.dropdownLabels,
+                "offerCards" to offerCardsFor(originCode, departDate, airportsSnapshot),
                 "originCode" to originCode,
                 "originName" to "$originLabel ($originCode)",
                 "originLabel" to originLabel,
@@ -42,23 +47,30 @@ private suspend fun ApplicationCall.handleLoadPage() {
     }
 }
 
-private suspend fun ApplicationCall.handleNearestAirport() {
-    val firstLabel = FlightSearchRepository.airportLabels().firstOrNull() ?: "Manchester (MAN)"
-    val code = FlightSearchRepository.resolveAirportCode(firstLabel) ?: "MAN"
-    val name = FlightSearchRepository.cityForCode(code)
-    respondText(
-        """{"code":"${escapeJson(code)}","name":"${escapeJson("$name ($code)")}"}""",
-        ContentType.Application.Json,
-    )
+// Codes used to restrict business cabin on intra-regional UK/EU routes: JSON for the homepage modal so
+// Business can be disabled when both airports are in the UK/EU regional set.
+private suspend fun ApplicationCall.handleHomepageCabinConstraints() {
+    val from = request.queryParameters["from"].orEmpty()
+    val to = request.queryParameters["to"].orEmpty()
+    val origin = FlightSearchRepository.resolveAirportCode(from)
+    val dest = FlightSearchRepository.resolveAirportCode(to)
+    val businessSelectable =
+        when {
+            origin == null || dest == null -> true
+            else -> !FlightScheduleRules.isIntraRegionalBusinessRestrictedPair(origin, dest)
+        }
+    respondText("""{"businessSelectable":$businessSelectable}""", ContentType.Application.Json)
 }
 
 private suspend fun ApplicationCall.handleLatestOffers() {
     val origin = request.queryParameters["origin"]?.takeIf { it.isNotBlank() } ?: "MAN"
     val departDate = request.queryParameters.parseDepartDate()
+    // Codes used to speed up loading time: one airport snapshot for labels (same pattern as handleLoadPage).
+    val airportsSnapshot = FlightSearchRepository.homepageAirportsSnapshot()
     val originLabel =
-        request.queryParameters["originLabel"]?.takeIf { it.isNotBlank() } ?: FlightSearchRepository.cityForCode(origin)
+        request.queryParameters["originLabel"]?.takeIf { it.isNotBlank() } ?: airportsSnapshot.cityForCode(origin)
     val cards =
-        offerCardsFor(origin, departDate).joinToString(",") { card ->
+        offerCardsFor(origin, departDate, airportsSnapshot).joinToString(",") { card ->
             val images = card.imageUrls.joinToString(",") { "\"${escapeJson(it)}\"" }
             """{"destinationKey":"${escapeJson(
                 card.destinationKey,
@@ -78,29 +90,125 @@ private data class OfferCard(
     val bookAirport: String,
     val priceGbp: Int,
     val imageUrls: List<String>,
-)
+) {
+    /**
+     * Same delimiter as [homepage.js] `IMG_JOIN` / `parseImagesFromStack` for `data-images` on SSR cards;
+     * links the lightbox with the offer pictures.
+     */
+    val imageUrlsJoined: String get() = imageUrls.joinToString("|||GLIDE|||")
+}
 
+// FLIGHT-SYSTEM-TWEAKS + codes used to speed up loading time: one fare map for all cards via
+// lowestLightFaresByDestinationForOrigin, plus airports snapshot for city names (avoids per-card DB round-trips).
+
+/**
+ * Builds the featured-offer strip. Loads **one** day’s flight rows and reuses [airports] for names, so we
+ * do not call [FlightSearchRepository.lowestLightFare] per card (that would reload every flight each time).
+ */
 private fun offerCardsFor(
     originCode: String,
     departDate: LocalDate,
-): List<OfferCard> =
-    FlightSearchRepository
-        .latestOfferDestinations(originCode, departDate)
-        .map { offer ->
-            OfferCard(
-                destinationKey =
-                    "${offer.destinationCity}-${offer.destinationCode}"
-                        .lowercase()
-                        .replace(
-                            Regex("[^a-z0-9]+"),
-                            "-",
-                        ).trim('-'),
-                destinationName = offer.destinationCity,
-                bookAirport = "${offer.destinationCity} (${offer.destinationCode})",
-                priceGbp = offer.lowestPrice.toInt(),
-                imageUrls = destinationImageUrls(offer.destinationCode),
-            )
+    airports: FlightSearchRepository.HomepageAirportsSnapshot,
+): List<OfferCard> {
+    val origin = originCode.uppercase(Locale.UK)
+
+    val cheapestLightByDestination =
+        FlightSearchRepository.lowestLightFaresByDestinationForOrigin(originCode, departDate)
+
+    val usedEffectiveDestinations = mutableSetOf<String>()
+
+    return orderedHomepagePrimarySlots().mapNotNull { slot ->
+        var effectiveDest =
+            when {
+                slot.destCode == origin -> {
+                    if (HOMEPAGE_CONFLICT_REPLACEMENT == origin) return@mapNotNull null
+                    HOMEPAGE_CONFLICT_REPLACEMENT
+                }
+                else -> slot.destCode
+            }
+        if (effectiveDest in usedEffectiveDestinations) {
+            effectiveDest =
+                HOMEPAGE_DISTINCT_FALLBACK_HUBS.firstOrNull { hub ->
+                    hub != origin &&
+                        hub !in usedEffectiveDestinations &&
+                        cheapestLightByDestination[hub.uppercase(Locale.UK)] != null
+                } ?: return@mapNotNull null
         }
+        val city = airports.cityForCode(effectiveDest)
+        val priceKey = effectiveDest.uppercase(Locale.UK)
+        val price =
+            cheapestLightByDestination[priceKey]?.toInt()
+                ?: return@mapNotNull null
+        usedEffectiveDestinations.add(effectiveDest)
+        OfferCard(
+            destinationKey = destinationSlug(city, effectiveDest),
+            destinationName = city,
+            bookAirport = "$city ($effectiveDest)",
+            priceGbp = price,
+            imageUrls = destinationImageUrls(effectiveDest),
+        )
+    }
+}
+
+private const val HOMEPAGE_OFFER_ORDER_SEED = 0x4F46465253485546L
+
+/** When “Leaving from” equals that primary card’s airport, every such card uses this IATA instead (fare + images). */
+private const val HOMEPAGE_CONFLICT_REPLACEMENT = "AMS"
+
+/**
+ * If two cards would ever resolve to the same IATA (misconfiguration or future data change), pick the first
+ * hub here that is not [origin], not already used on this strip, and has a fare — keeps the carousel distinct.
+ */
+private val HOMEPAGE_DISTINCT_FALLBACK_HUBS =
+    listOf("AMS", "AUH", "DXB", "FRA", "MUC", "DEL", "KUL", "DPS", "LHR", "CPH")
+
+private data class HomepagePrimarySlot(
+    val destinationKey: String,
+    val destinationName: String,
+    val bookAirport: String,
+    val destCode: String,
+)
+
+/** Twelve featured destinations (Istanbul and Seoul are not in this strip). */
+private val HOMEPAGE_PRIMARY_OFFERS =
+    listOf(
+        HomepagePrimarySlot("hong_kong", "Hong Kong", "Hong Kong (HKG)", "HKG"),
+        HomepagePrimarySlot("bangkok", "Bangkok", "Bangkok (BKK)", "BKK"),
+        HomepagePrimarySlot("singapore", "Singapore", "Singapore (SIN)", "SIN"),
+        HomepagePrimarySlot("tokyo", "Tokyo", "Tokyo (NRT)", "NRT"),
+        HomepagePrimarySlot("dubai", "Dubai", "Dubai (DXB)", "DXB"),
+        HomepagePrimarySlot("sydney", "Sydney", "Sydney (SYD)", "SYD"),
+        HomepagePrimarySlot("los_angeles", "Los Angeles", "Los Angeles (LAX)", "LAX"),
+        HomepagePrimarySlot("new_york", "New York", "New York (JFK)", "JFK"),
+        HomepagePrimarySlot("paris", "Paris", "Paris (CDG)", "CDG"),
+        HomepagePrimarySlot("barcelona", "Barcelona", "Barcelona (BCN)", "BCN"),
+        HomepagePrimarySlot("vancouver", "Vancouver", "Vancouver (YVR)", "YVR"),
+        HomepagePrimarySlot("rome", "Rome", "Rome (FCO)", "FCO"),
+    )
+
+/**
+ * Carousel order: **Hong Kong is always first** (legacy promo strip). The other 11 cities follow in a
+ * **deterministic pseudo-random order** from [HOMEPAGE_OFFER_ORDER_SEED], so order stays the same across
+ * page loads. Order only affects left-to-right display, not prices.
+ */
+private fun orderedHomepagePrimarySlots(): List<HomepagePrimarySlot> {
+    val destCodes = HOMEPAGE_PRIMARY_OFFERS.map { it.destCode }
+    check(destCodes.size == destCodes.toSet().size) {
+        "HOMEPAGE_PRIMARY_OFFERS must have unique destCode values (got duplicates: $destCodes)"
+    }
+    val hk = HOMEPAGE_PRIMARY_OFFERS.first { it.destCode == "HKG" }
+    val others = HOMEPAGE_PRIMARY_OFFERS.filter { it.destCode != "HKG" }
+    return listOf(hk) + others.shuffled(Random(HOMEPAGE_OFFER_ORDER_SEED))
+}
+
+private fun destinationSlug(
+    city: String,
+    code: String,
+): String =
+    "$city-$code"
+        .lowercase(Locale.UK)
+        .replace(Regex("[^a-z0-9]+"), "-")
+        .trim('-')
 
 private const val DEFAULT_OFFER_DEPARTURE_OFFSET_DAYS = 14
 
@@ -110,6 +218,10 @@ private fun Parameters.parseDepartDate(): LocalDate =
         ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         ?: LocalDate.now().plusDays(DEFAULT_OFFER_DEPARTURE_OFFSET_DAYS.toLong())
 
+/**
+ * Gallery URLs for IATA codes that can appear on the offer strip: the 12 primaries plus
+ * [HOMEPAGE_CONFLICT_REPLACEMENT].
+ */
 private fun destinationImageUrls(destinationCode: String): List<String> =
     destinationImagesByCode[destinationCode.uppercase()] ?: fallbackDestinationImages
 
@@ -117,78 +229,81 @@ private val destinationImagesByCode =
     mapOf(
         "AMS" to
             listOf(
-                "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?w=960&q=80",
-                "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=960&q=80",
+                "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?w=1200&q=80",
+                "https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=1200&q=80",
+                "https://plus.unsplash.com/premium_photo-1661887237533-b38811c27add?w=1200&q=80",
             ),
         "BCN" to
             listOf(
-                "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=960&q=80",
-                "https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=960&q=80",
+                "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1200&q=80",
+                "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=1200&q=80",
+                "https://images.unsplash.com/photo-1722545358667-aed031bf982a?w=1200&q=80",
+            ),
+        "BKK" to
+            listOf(
+                "https://images.unsplash.com/photo-1704390529135-742324e6b8f1?w=1200&q=80",
+                "https://images.unsplash.com/photo-1523731407965-2430cd12f5e4?w=1200&q=80",
+                "https://images.unsplash.com/photo-1532079563951-0c8a7dacddb3?w=1200&q=80",
             ),
         "CDG" to
             listOf(
-                "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=960&q=80",
-                "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=960&q=80",
-            ),
-        "DUB" to
-            listOf(
-                "https://images.unsplash.com/photo-1549918864-48ac978761a4?w=960&q=80",
-                "https://images.unsplash.com/photo-1569263979104-865ab7cd8d13?w=960&q=80",
+                "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200&q=80",
+                "https://images.unsplash.com/photo-1565099824688-e93eb20fe622?w=1200&q=80",
+                "https://images.unsplash.com/photo-1507666664345-c49223375e33?w=1200&q=80",
             ),
         "DXB" to
             listOf(
-                "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=960&q=80",
-                "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=960&q=80",
-            ),
-        "EDI" to
-            listOf(
-                "https://images.unsplash.com/photo-1575470522418-b88b692b8084?w=960&q=80",
-                "https://images.unsplash.com/photo-1506377585622-bedcbb027afc?w=960&q=80",
+                "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80",
+                "https://images.unsplash.com/photo-1634148551170-d37d021e0cc9?w=1200&q=80",
+                "https://images.unsplash.com/photo-1527288012656-13ea8f91bd63?w=1200&q=80",
             ),
         "FCO" to
             listOf(
-                "https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=960&q=80",
-                "https://images.unsplash.com/photo-1529260830199-42c24126f198?w=960&q=80",
-            ),
-        "FRA" to
-            listOf(
-                "https://images.unsplash.com/photo-1574906292564-37d7e592cb47?w=960&q=80",
-                "https://images.unsplash.com/photo-1599946347371-68eb71b16afc?w=960&q=80",
+                "https://images.unsplash.com/photo-1763935841627-2caf65b9736d?w=1200&q=80",
+                "https://images.unsplash.com/photo-1525874684015-58379d421a52?w=1200&q=80",
+                "https://images.unsplash.com/photo-1531572753322-ad063cecc140?w=1200&q=80",
             ),
         "HKG" to
             listOf(
-                "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=960&q=80",
-                "https://images.unsplash.com/photo-1506970845246-18f21d533b20?w=960&q=80",
+                "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=1200&q=80",
+                "https://images.unsplash.com/photo-1619796404374-aff912b43cd2?w=1200&q=80",
+                "https://images.unsplash.com/photo-1577871598838-a543ee47cd79?w=1200&q=80",
             ),
         "JFK" to
             listOf(
-                "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=960&q=80",
-                "https://images.unsplash.com/photo-1538970272646-f61fabb3a8a2?w=960&q=80",
+                "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200&q=80",
+                "https://images.unsplash.com/photo-1518391846015-55a9cc003b25?w=1200&q=80",
+                "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1200&q=80",
             ),
-        "LHR" to
+        "LAX" to
             listOf(
-                "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=960&q=80",
-                "https://images.unsplash.com/photo-1486299267070-83823f5448dd?w=960&q=80",
+                "https://images.unsplash.com/photo-1580655653885-65763b2597d0?w=1200&q=80",
+                "https://images.unsplash.com/photo-1444723121867-7a241cacace9?w=1200&q=80",
+                "https://images.unsplash.com/photo-1597982087634-9884f03198ce?w=1200&q=80",
             ),
-        "LIS" to
+        "NRT" to
             listOf(
-                "https://images.unsplash.com/photo-1500990702037-7620ccb6a60a?w=960&q=80",
-                "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=960&q=80",
+                "https://images.unsplash.com/photo-1604928141064-207cea6f571f?w=1200&q=80",
+                "https://images.unsplash.com/photo-1549693578-d683be217e58?w=1200&q=80",
+                "https://images.unsplash.com/photo-1557409518-691ebcd96038?w=1200&q=80",
             ),
-        "MAD" to
+        "SIN" to
             listOf(
-                "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=960&q=80",
-                "https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=960&q=80",
+                "https://images.unsplash.com/photo-1565967511849-76a60a516170?w=1200&q=80",
+                "https://images.unsplash.com/photo-1441805983468-f5a1a9f985fb?w=1200&q=80",
+                "https://images.unsplash.com/photo-1555650645-ff8cf7397d9a?w=1200&q=80",
             ),
-        "MAN" to
+        "SYD" to
             listOf(
-                "https://images.unsplash.com/photo-1515586838455-8f8f940d6853?w=960&q=80",
-                "https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?w=960&q=80",
+                "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1200&q=80",
+                "https://images.unsplash.com/photo-1467803738586-46b7eb7b16a1?w=1200&q=80",
+                "https://images.unsplash.com/photo-1624138784614-87fd1b6528f8?w=1200&q=80",
             ),
-        "NCE" to
+        "YVR" to
             listOf(
-                "https://images.unsplash.com/photo-1533614767277-878f1b53f9f7?w=960&q=80",
-                "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=960&q=80",
+                "https://images.unsplash.com/photo-1559511260-66a654ae982a?w=1200&q=80",
+                "https://images.unsplash.com/photo-1606962849307-a6eae721a075?w=1200&q=80",
+                "https://images.unsplash.com/photo-1502228362178-086346ac6862?w=1200&q=80",
             ),
     )
 

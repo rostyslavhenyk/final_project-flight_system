@@ -11,6 +11,10 @@ private const val MAX_ADULT_PASSENGERS = 9
 private const val MAX_CHILD_PASSENGERS = 8
 private const val MEMBER_NUMBER_FORMAT = "GA%06d"
 
+/*
+ * Codes used to cancel first class feature and to restrict business cabin on intra-regional UK/EU routes:
+ * every `cabinEff` / `cabinClass` below goes through [CabinNormalization] so hand-off URLs stay valid.
+ */
 internal fun bookPassengersModel(
     queryParams: Parameters,
     currentUri: String,
@@ -23,6 +27,7 @@ internal fun bookPassengersModel(
     val children = queryParams["children"]?.toIntOrNull()?.coerceIn(0, MAX_CHILD_PASSENGERS) ?: 0
     val session = logged.session
     val segment = passengerSegmentSnapshot(queryParams)
+    val cabinEff = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
     return mapOf(
         "title" to "Passenger details",
         "fromRaw" to fromRaw,
@@ -30,7 +35,7 @@ internal fun bookPassengersModel(
         "departRaw" to departRaw,
         "returnRaw" to queryParams["return"].orEmpty(),
         "trip" to queryParams["trip"].orEmpty(),
-        "cabinClass" to queryParams["cabinClass"].orEmpty(),
+        "cabinClass" to cabinEff,
         "adults" to adults.toString(),
         "children" to children.toString(),
         "fare" to queryParams["fare"].orEmpty(),
@@ -88,12 +93,14 @@ private fun backToChooseFlightsHref(
     fromRaw: String,
     toRaw: String,
     departRaw: String,
-): String =
-    if (isInboundPassengerLeg(queryParams, fromRaw, toRaw)) {
+): String {
+    val cabinEff = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
+    return if (isInboundPassengerLeg(queryParams, fromRaw, toRaw)) {
         inboundPassengerSearchHref(queryParams, fromRaw, toRaw, departRaw)
     } else {
-        flightsHref(buildBaseParams(queryParams, fromRaw, toRaw, departRaw) + mapOf("page" to "1"))
+        flightsHref(buildBaseParams(queryParams, fromRaw, toRaw, departRaw, cabinEff) + mapOf("page" to "1"))
     }
+}
 
 private fun isInboundPassengerLeg(
     queryParams: Parameters,
@@ -123,7 +130,8 @@ private fun inboundPassengerSearchHref(
     toRaw: String,
     departRaw: String,
 ): String {
-    val returnSearchParams = LinkedHashMap(buildBaseParams(queryParams, fromRaw, toRaw, departRaw))
+    val cabinEff = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
+    val returnSearchParams = LinkedHashMap(buildBaseParams(queryParams, fromRaw, toRaw, departRaw, cabinEff))
     returnSearchParams["page"] = "1"
     if (!queryParams["leg"].equals("inbound", ignoreCase = true)) {
         returnSearchParams["leg"] = "inbound"

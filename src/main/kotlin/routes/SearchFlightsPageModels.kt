@@ -20,13 +20,13 @@ private data class SearchFlightInputs(
     val departDate: LocalDate?,
     val sortOption: FlightSortOption,
     val ascending: Boolean,
-    val cabinRaw: String,
+    val effectiveCabin: String,
     val page: Int,
 )
 
 internal fun searchFlightsModel(queryParams: Parameters): Map<String, Any?> {
     val input = searchFlightInputs(queryParams)
-    val baseParams = buildBaseParams(queryParams, input.fromRaw, input.toRaw, input.departRaw)
+    val baseParams = buildBaseParams(queryParams, input.fromRaw, input.toRaw, input.departRaw, input.effectiveCabin)
     val paged = searchPagedFlights(input)
     val sortLinks = buildSortLinks(baseParams, input.sortOption, input.ascending)
     val carousel = searchCarousel(input, baseParams)
@@ -41,17 +41,21 @@ private fun searchFlightInputs(queryParams: Parameters): SearchFlightInputs {
     val toRaw = queryParams["to"].orEmpty()
     val departRaw = queryParams["depart"].orEmpty()
     val sortOption = parseFlightSortOption(queryParams["sort"])
+    val originCode = FlightSearchRepository.resolveAirportCode(fromRaw)
+    val destCode = FlightSearchRepository.resolveAirportCode(toRaw)
+    val cabinQueryRaw = queryParams["cabinClass"].orEmpty().lowercase(Locale.UK).trim()
     return SearchFlightInputs(
         queryParams = queryParams,
         fromRaw = fromRaw,
         toRaw = toRaw,
         departRaw = departRaw,
-        originCode = FlightSearchRepository.resolveAirportCode(fromRaw),
-        destCode = FlightSearchRepository.resolveAirportCode(toRaw),
+        originCode = originCode,
+        destCode = destCode,
         departDate = departRaw.takeIf { it.isNotBlank() }?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
         sortOption = sortOption,
         ascending = sortOption == FlightSortOption.Recommended || queryParams["order"] != "desc",
-        cabinRaw = queryParams["cabinClass"].orEmpty().lowercase(Locale.UK).trim(),
+        // Codes used to cancel first class feature and to restrict business cabin on intra-regional UK/EU routes.
+        effectiveCabin = CabinNormalization.normalizedCabinForSearch(cabinQueryRaw, originCode, destCode),
         page = queryParams["page"]?.toIntOrNull()?.coerceAtLeast(1) ?: 1,
     )
 }
@@ -247,8 +251,8 @@ private fun searchFlightsBaseModel(
     paged: FlightSearchRepository.PagedResult,
     leg: SearchLegState,
 ): Map<String, Any?> {
-    val isFirstCabin = input.cabinRaw == "first"
-    val isBusinessCabin = input.cabinRaw == "business"
+    val isFirstCabin = false
+    val isBusinessCabin = input.effectiveCabin == "business"
     return mapOf(
         "title" to "Search flights",
         "hasSearch" to hasCompleteSearch(input),
@@ -258,7 +262,7 @@ private fun searchFlightsBaseModel(
         "toRaw" to input.toRaw,
         "departRaw" to input.departRaw,
         "trip" to input.queryParams["trip"].orEmpty(),
-        "cabinClass" to input.queryParams["cabinClass"].orEmpty(),
+        "cabinClass" to input.effectiveCabin,
         "adults" to input.queryParams["adults"].orEmpty(),
         "children" to input.queryParams["children"].orEmpty(),
         "returnRaw" to input.queryParams["return"].orEmpty(),
@@ -273,8 +277,8 @@ private fun searchFlightsBaseModel(
         "outboundSummaryLine" to leg.outboundSummaryLine,
         "backToOutboundHref" to leg.backToOutboundHref,
         "totalResults" to paged.totalCount,
-        "flightCards" to paged.rows.map { row -> flightCardMap(row, input.cabinRaw) },
-        "cabinLabel" to cabinLabel(input.cabinRaw),
+        "flightCards" to paged.rows.map { row -> flightCardMap(row, input.effectiveCabin) },
+        "cabinLabel" to cabinLabel(input.effectiveCabin),
         "cabinBannerIsFirst" to isFirstCabin,
         "isEconomyCabin" to (!isFirstCabin && !isBusinessCabin),
         "isBusinessCabin" to isBusinessCabin,
@@ -315,7 +319,6 @@ private fun searchFlightsNavigationModel(
 
 private fun cabinLabel(cabinRaw: String): String =
     when (cabinRaw) {
-        "first" -> "First class"
         "business" -> "Business"
         else -> "Economy"
     }
