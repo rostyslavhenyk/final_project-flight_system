@@ -72,6 +72,21 @@ internal fun bookingHref(
     return "$path?$queryString"
 }
 
+/**
+ * When `cabinClass` is non-blank but not canonical (e.g. `first`, or `business` where it is coerced to economy),
+ * returns [path] with a normalized query string from [bookingHref]. Otherwise null (no redirect).
+ */
+internal fun bookPathRedirectIfCanonicalCabinNeeded(
+    path: String,
+    queryParams: Parameters,
+): String? {
+    val raw = queryParams["cabinClass"]?.trim().orEmpty()
+    if (raw.isBlank()) return null
+    val eff = CabinNormalization.normalizedCabinForBookingQuery(queryParams)
+    if (raw.equals(eff, ignoreCase = true)) return null
+    return bookingHref(path, queryParams)
+}
+
 internal fun findRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
     findRecordForRouteAndFlightId(
         fromRaw = queryParams["from"].orEmpty(),

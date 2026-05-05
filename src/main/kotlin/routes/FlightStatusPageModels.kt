@@ -1,5 +1,6 @@
 package routes
 
+import data.flight.FLIGHT_STATUS_UPCOMING_DAY_COUNT
 import data.flight.FlightSearchRepository
 import data.flight.FlightSearchRepository.FlightStatusRecord
 import io.ktor.http.Parameters
@@ -83,7 +84,7 @@ private fun parseFlightStatusQuery(parameters: Parameters): FlightStatusQuery {
 private fun statusRowsByDate(query: FlightStatusQuery): List<Pair<LocalDate, FlightStatusRecord>> {
     val searchDates =
         if (query.anyDate) {
-            (0 until STATUS_UPCOMING_DAY_COUNT).map { query.today.plusDays(it.toLong()) }
+            (0 until FLIGHT_STATUS_UPCOMING_DAY_COUNT).map { query.today.plusDays(it.toLong()) }
         } else {
             listOf(query.date)
         }
@@ -93,14 +94,13 @@ private fun statusRowsByDate(query: FlightStatusQuery): List<Pair<LocalDate, Fli
     }
 }
 
+// Codes used to speed up loading time: one [FlightRepository.allFull] per status search (not one per calendar day).
 private fun routeStatusRows(
     searchDates: List<LocalDate>,
     query: FlightStatusQuery,
 ): List<Pair<LocalDate, FlightStatusRecord>> =
-    if (query.fromCode != null && query.toCode != null) {
-        searchDates.flatMap { searchDate ->
-            FlightSearchRepository.statusByRoute(query.fromCode, query.toCode, searchDate).map { searchDate to it }
-        }
+    if (query.fromCode != null && query.toCode != null && searchDates.isNotEmpty()) {
+        FlightSearchRepository.statusByRouteAcrossDates(query.fromCode, query.toCode, searchDates)
     } else {
         emptyList()
     }
@@ -109,10 +109,8 @@ private fun flightNumberStatusRows(
     searchDates: List<LocalDate>,
     query: FlightStatusQuery,
 ): List<Pair<LocalDate, FlightStatusRecord>> =
-    if (query.flightNumber.isNotBlank()) {
-        searchDates.flatMap { searchDate ->
-            FlightSearchRepository.statusByFlightNumber(query.flightNumber, searchDate).map { searchDate to it }
-        }
+    if (query.flightNumber.isNotBlank() && searchDates.isNotEmpty()) {
+        FlightSearchRepository.statusByFlightNumberAcrossDates(query.flightNumber, searchDates)
     } else {
         emptyList()
     }

@@ -11,10 +11,13 @@
     <script src="/static/js/htmx-1.9.12.min.js" defer></script>
 </head>
 <body>
+    {# Skip link: first focusable element for keyboard / screen reader users #}
     <a class="skip-link" href="#main">Skip to main content</a>
 
-    <div id="status"></div>
+    {# HTMX / app status messages (polite so assistive tech does not interrupt mid-task) #}
+    <div id="status" role="status" aria-live="polite"></div>
 
+    {# Global top navigation #}
     <header id="navbar">
         <div class="brand">
             <a href="/" class="brand-link">Glide Airways</a>
@@ -38,6 +41,7 @@
     </header>
 
     <main id="main" tabindex="-1">
+        {# Main page content (overridden by each template) #}
         {% block content %}{% endblock %}
     </main>
 

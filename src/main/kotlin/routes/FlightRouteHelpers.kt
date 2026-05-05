@@ -144,6 +144,30 @@ internal fun flightsHref(params: Map<String, String>): String {
     return "/search-flights?$queryString"
 }
 
+/**
+ * When a non-blank `cabinClass` is not already canonical (e.g. `first` → economy, `business` on a restricted
+ * regional pair → economy), returns `/search-flights?…` with the normalized cabin so the browser URL matches
+ * the cabin used on the page. Otherwise null (no redirect).
+ */
+internal fun searchFlightsRedirectIfCanonicalCabinNeeded(queryParams: Parameters): String? {
+    val raw = queryParams["cabinClass"]?.trim().orEmpty()
+    if (raw.isBlank()) return null
+    val eff =
+        CabinNormalization.normalizedCabinForSearch(
+            raw.lowercase(Locale.UK),
+            FlightSearchRepository.resolveAirportCode(queryParams["from"].orEmpty()),
+            FlightSearchRepository.resolveAirportCode(queryParams["to"].orEmpty()),
+        )
+    if (raw.equals(eff, ignoreCase = true)) return null
+    val params = LinkedHashMap<String, String>()
+    for (name in queryParams.names()) {
+        queryParams[name]?.takeIf { it.isNotBlank() }?.let { value ->
+            params[name] = if (name == "cabinClass") eff else value
+        }
+    }
+    return flightsHref(params)
+}
+
 /** `742` → `"12h 22m"` (total journey / card summary). */
 internal fun formatDurationMinutes(min: Int): String {
     val hours = min / MINUTES_PER_HOUR
