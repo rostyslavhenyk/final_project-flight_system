@@ -15,5 +15,6 @@ object AllTables {
             LoyaltyUsers,
             Purchases,
             Payments,
+            ChatMessages,
         )
 }

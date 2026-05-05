@@ -65,13 +65,6 @@ function toggleChat() {
     }
 }
 
-function openChat() {
-    var chatBody = document.getElementById('chatBody')
-    if (chatBody.hidden) {
-        toggleChat()
-    }
-}
-
 // keyword based bot replies
 function getBotReply(text) {
     var msg = text.toLowerCase()
@@ -138,6 +131,14 @@ function sendChat() {
     input.value = ''
     messages.scrollTop = messages.scrollHeight
 
+    fetch('/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'message=' + encodeURIComponent(text)
+    }).catch(function () {
+        // not logged in, just show bot reply
+    })
+
     var typing = document.createElement('div')
     typing.classList.add('chat-msg', 'bot', 'typing-indicator')
     typing.textContent = '...'
@@ -153,6 +154,43 @@ function sendChat() {
         messages.appendChild(botMsg)
         messages.scrollTop = messages.scrollHeight
     }, 1000)
+}
+
+// loads staff replies from backend
+function loadReplies() {
+    fetch('/chat/messages')
+        .then(function (response) {
+            if (!response.ok) return
+            return response.json()
+        })
+        .then(function (data) {
+            if (!data) return
+
+            var messages = document.getElementById('chatMessages')
+            messages.innerHTML = ''
+
+            for (var i = 0; i < data.length; i++) {
+                var msg = document.createElement('div')
+                msg.classList.add('chat-msg')
+                msg.classList.add(data[i].isStaff ? 'bot' : 'user')
+                msg.textContent = data[i].message
+                messages.appendChild(msg)
+            }
+
+            messages.scrollTop = messages.scrollHeight
+        })
+        .catch(function () {
+            // not logged in, just ignore
+        })
+}
+
+// load replies when chat opens
+function openChat() {
+    var chatBody = document.getElementById('chatBody')
+    if (chatBody.hidden) {
+        toggleChat()
+    }
+    loadReplies()
 }
 
 function handleChatKey(event) {

@@ -1,6 +1,12 @@
 {% extends "_layout/basestaff.peb" %}
 
 {% block content %}
+
 <h1>Staff Dashboard</h1>
 <p>Welcome {{ user.firstname }}</p>
+
+<div style="margin-top: 20px;">
+    <a href="/staff/chat">View Customer Messages</a>
+</div>
+
 {% endblock %}

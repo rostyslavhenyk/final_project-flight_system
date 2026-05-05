@@ -13,9 +13,9 @@ fun Route.staffRoutes() {
                 finish()
             }
         }
-
         staffDashboardRoutes()
         staffFlightsRoutes()
         staffUsersRoutes()
+        staffChatRoutes()
     }
 }

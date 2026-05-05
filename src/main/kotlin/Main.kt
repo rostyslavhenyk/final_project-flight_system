@@ -90,5 +90,6 @@ fun Application.configureRouting() {
         myAccountRoutes()
         staffRoutes()
         verificationRoutes()
+        chatRoutes()
     }
 }
