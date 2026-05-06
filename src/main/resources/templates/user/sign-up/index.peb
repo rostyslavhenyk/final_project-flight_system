@@ -1,42 +1,20 @@
 {% extends "_layout/base.peb" %}
 
 {% block content %}
-<section class="page-shell page-shell--narrow" aria-labelledby="signup-heading">
-    <header class="page-header">
-        <p class="page-header__eyebrow">Account</p>
-        <h1 id="signup-heading" class="page-header__title">Sign up</h1>
-        <p class="page-header__text">Create an account to manage bookings and Glide Club membership.</p>
-    </header>
+<h1 style="text-align: center;">Sign Up</h1>
 
-    <div class="surface-card auth-card">
-        <form class="auth-form"
-            method="post"
-            action="/signup"
-            hx-post="/signup"
-            hx-target="#sign-up-status"
-            hx-swap="innerHTML">
+<form class="login-form"
+    method="post"
+    action="/signup"
+    hx-post="/signup"
+    hx-target="#sign-up-status"
+    hx-swap="innerHTML">
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="signup-firstname">First name</label>
-                    <input id="signup-firstname" name="firstname" autocomplete="given-name">
-                </div>
-                <div class="form-group">
-                    <label for="signup-lastname">Last name</label>
-                    <input id="signup-lastname" name="lastname" autocomplete="family-name">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="signup-email">Email</label>
-                <input id="signup-email" name="email" type="email" autocomplete="email">
-            </div>
-            <div class="form-group">
-                <label for="signup-password">Password</label>
-                <input id="signup-password" name="password" type="password" autocomplete="new-password">
-            </div>
-            <button type="submit">Sign up</button>
-            <div id="sign-up-status" role="status" aria-live="polite" aria-atomic="true"></div>
-        </form>
-    </div>
-</section>
+    <input name="firstname" placeholder="First Name">
+    <input name="lastname" placeholder="Last Name">
+    <input name="email" placeholder="Email">
+    <input name="password" type="password" placeholder="Password">
+    <button type="submit">Sign Up</button>
+    <div id="sign-up-status" role="status" aria-live="polite" aria-atomic="true"></div>
+</form>
 {% endblock %}
