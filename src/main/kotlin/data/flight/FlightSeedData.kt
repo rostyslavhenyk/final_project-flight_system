@@ -86,6 +86,39 @@ internal object FlightSeedData {
             ),
             SeedAirport(countryIdsByName.getValue("India"), "Delhi", "Indira Gandhi International Airport", "DEL"),
         )
+
+    fun airportCoordinates(): Map<String, SeedAirportCoordinate> =
+        mapOf(
+            "MAN" to SeedAirportCoordinate("53.365", "-2.272"),
+            "LBA" to SeedAirportCoordinate("53.865", "-1.661"),
+            "LHR" to SeedAirportCoordinate("51.470", "-0.454"),
+            "LGW" to SeedAirportCoordinate("51.153", "-0.182"),
+            "EDI" to SeedAirportCoordinate("55.950", "-3.372"),
+            "CDG" to SeedAirportCoordinate("49.009", "2.548"),
+            "BCN" to SeedAirportCoordinate("41.297", "2.083"),
+            "FCO" to SeedAirportCoordinate("41.800", "12.238"),
+            "AMS" to SeedAirportCoordinate("52.310", "4.768"),
+            "FRA" to SeedAirportCoordinate("50.037", "8.562"),
+            "MUC" to SeedAirportCoordinate("48.354", "11.786"),
+            "ZRH" to SeedAirportCoordinate("47.458", "8.555"),
+            "CPH" to SeedAirportCoordinate("55.618", "12.656"),
+            "DXB" to SeedAirportCoordinate("25.253", "55.365"),
+            "AUH" to SeedAirportCoordinate("24.433", "54.651"),
+            "JFK" to SeedAirportCoordinate("40.641", "-73.778"),
+            "LAX" to SeedAirportCoordinate("33.942", "-118.408"),
+            "YVR" to SeedAirportCoordinate("49.196", "-123.181"),
+            "HKG" to SeedAirportCoordinate("22.308", "113.918"),
+            "BKK" to SeedAirportCoordinate("13.690", "100.750"),
+            "DPS" to SeedAirportCoordinate("-8.748", "115.167"),
+            "SIN" to SeedAirportCoordinate("1.364", "103.991"),
+            "NRT" to SeedAirportCoordinate("35.772", "140.393"),
+            "SYD" to SeedAirportCoordinate("-33.939", "151.175"),
+            "ICN" to SeedAirportCoordinate("37.460", "126.440"),
+            "IST" to SeedAirportCoordinate("41.275", "28.751"),
+            "DOH" to SeedAirportCoordinate("25.273", "51.608"),
+            "KUL" to SeedAirportCoordinate("2.746", "101.710"),
+            "DEL" to SeedAirportCoordinate("28.556", "77.100"),
+        )
 }
 
 internal data class SeedCountry(
@@ -99,3 +132,11 @@ internal data class SeedAirport(
     val name: String,
     val code: String,
 )
+
+internal data class SeedAirportCoordinate(
+    private val latitudeRaw: String,
+    private val longitudeRaw: String,
+) {
+    val latitude: Double = latitudeRaw.toDouble()
+    val longitude: Double = longitudeRaw.toDouble()
+}

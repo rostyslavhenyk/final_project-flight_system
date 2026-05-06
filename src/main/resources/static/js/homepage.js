@@ -1,56 +1,26 @@
 /* global attachForceSelectAll */
-/**
- * Homepage behaviour (everything runs in the browser after HTML/CSS load).
- *
- * Contents (see each function’s block comment below):
- * - Airport autocomplete (“Leaving from” / “Going to”) + no-match message + forced select-all (via `/static/js/input-force-select.js`, same as flight-status)
- * - Trip type + cabin class custom dropdowns
- * - Cabin / passengers modal
- * - Flatpickr date pickers (depart / return)
- * - Form validation before submit
- * - Latest offers: refetch from API, carousel scroll, image hover, lightbox
- *
- * The outer wrapper is an IIFE (Immediately Invoked Function Expression): (function() { ... })();
- * That creates a private scope so names like `input` or `list` do not become global `window` variables
- * and cannot clash with other scripts. `'use strict'` turns on stricter JavaScript rules (e.g. must declare variables).
- */
 (function() {
   'use strict';
-
-  /** Milliseconds after focus during which we keep re-selecting all text (user can still drag; selection snaps back). */
   let FORCE_SELECT_MS = 800;
-
-  /**
-   * Wires one airport text field (`#from` or `#to`) to its dropdown list (`#from-list` / `#to-list`).
-   * HTML already contains every airport as `<div role="option" data-value="...">` from the server — there is no second request.
-   *
-   * Prefix match: an option is shown if the airport string (lowercase) starts with what the user typed.
-   * So "h" matches "Hong Kong (HKG)"; "hi" matches nothing → we show the empty-state paragraph.
-   *
-   * `document.getElementById(id)` returns the first element with that id, or null if missing.
-   * Early `return` avoids errors if the template changed and an id is wrong.
-   */
-  function initAutocomplete(inputId, listId) {
+  /** Airport autocomplete with same-airport exclusion. */
+  function initAutocomplete(inputId, listId, otherInputId) {
     let input = document.getElementById(inputId);
     let list = document.getElementById(listId);
+    let otherInput = otherInputId ? document.getElementById(otherInputId) : null;
     if (!input || !list) return;
-
-    /* Snapshot of all real options once; the empty-state `<p>` is NOT role="option" so it is not in this list. */
     let options = list.querySelectorAll('[role="option"]');
-
-    /**
-     * Reads the input value, filters options, sorts matches, toggles the “no match” line, opens the dropdown.
-     * `classList.add('is-open')` adds a CSS class; homepage.css uses `.autocomplete-dropdown.is-open { display: block }`.
-     */
     function filter() {
       let queryText = (input.value || '').trim().toLowerCase();
+      let unavailableValue = (otherInput && otherInput.value || '').trim().toLowerCase();
       let matched = [];
       let emptyEl = list.querySelector('.autocomplete-dropdown__empty');
       options.forEach(function(el) {
         let value = (el.getAttribute('data-value') || '').trim();
         let valueLower = value.toLowerCase();
-        let match = !queryText || valueLower.indexOf(queryText) === 0;
+        let sameAsOtherAirport = !!unavailableValue && valueLower === unavailableValue;
+        let match = !sameAsOtherAirport && (!queryText || valueLower.indexOf(queryText) === 0);
         el.style.display = match ? 'block' : 'none';
+        el.setAttribute('aria-disabled', sameAsOtherAirport ? 'true' : 'false');
         if (match) matched.push(el);
       });
       matched
@@ -65,7 +35,6 @@
       if (emptyEl) {
         list.appendChild(emptyEl);
         let showNoMatch = queryText.length > 0 && matched.length === 0;
-        /* `hidden` is a boolean HTML attribute: hidden=false removes it so the message is visible. */
         emptyEl.hidden = !showNoMatch;
       }
       list.classList.add('is-open');
@@ -83,7 +52,14 @@
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    /* FLIGHT-SYSTEM-TWEAKS: force-select-all on focus when non-empty; shared with flight-status via input-force-select.js */
+    function clearIfSameAsOther() {
+      if (!otherInput) return;
+      let ownValue = (input.value || '').trim();
+      let otherValue = (otherInput.value || '').trim();
+      if (!ownValue || !otherValue || ownValue !== otherValue) return;
+      input.value = '';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
     input.addEventListener('focus', filter);
     if (typeof window.attachForceSelectAll === 'function') {
       window.attachForceSelectAll(input, { forceSelectMs: FORCE_SELECT_MS });
@@ -92,27 +68,19 @@
     input.addEventListener('blur', function() {
       setTimeout(hide, 150);
     });
-
-    /**
-     * mousedown (not click) on an option: default mousedown blurs the input before click fires; preventDefault keeps focus
-     * so the option handler can run and set the value reliably.
-     */
     list.querySelectorAll('[role="option"]').forEach(function(el) {
       el.addEventListener('mousedown', function(e) {
         e.preventDefault();
+        if (el.getAttribute('aria-disabled') === 'true') return;
         choose(el.getAttribute('data-value'));
       });
     });
+
+    input.addEventListener('change', clearIfSameAsOther);
+    if (otherInput) otherInput.addEventListener('change', clearIfSameAsOther);
   }
-
-  /** Maps internal trip values (form / server) to the label shown on the button. */
   let TRIP_LABELS = { 'one-way': 'One way', 'return': 'Return' };
-
-  /**
-   * Trip type is not a native `<select>`: a hidden input `#trip` holds `one-way` or `return`, and `#trip-trigger` toggles `#trip-list`.
-   * `classList.contains('is-open')` returns true if that class is present on the element (boolean).
-   * `element.contains(otherNode)` returns true if otherNode is inside element (used to detect “click outside” to close).
-   */
+  /** Custom trip selector. */
   function initTripCombobox() {
     let tripInput = document.getElementById('trip');
     let trigger = document.getElementById('trip-trigger');
@@ -161,8 +129,6 @@
     'economy': 'Economy',
     'business': 'Business'
   };
-
-  /** Builds the single-line summary on the cabin trigger button, e.g. "Economy, 1 adult". */
   function cabinSummaryText(cabinVal, adults, children) {
     let cls = CABIN_CLASS_LABELS[cabinVal] || cabinVal;
     let parts = [];
@@ -172,13 +138,7 @@
     }
     return cls + ', ' + parts.join(', ');
   }
-
-  /**
-   * Cabin + passengers live in a modal (`#cabin-modal` with `[hidden]` until opened).
-   * `stopPropagation()` on the class dropdown click stops the event bubbling to `document`, which would otherwise
-   * think the user clicked “outside” the cabin list and close it immediately.
-   * Stepper buttons adjust `adults` / `children` variables and update the visible numbers; “Done” copies into hidden inputs.
-   */
+  /** Cabin and passenger modal. */
   function initCabinModal() {
     let trigger = document.getElementById('cabin-trigger');
     let modal = document.getElementById('cabin-modal');
@@ -240,7 +200,7 @@
     let fromEl = document.getElementById('from');
     let toEl = document.getElementById('to');
 
-    /* Codes used to restrict business cabin on intra-regional UK/EU routes (calls `/api/homepage-cabin-constraints`). */
+  /* Business is disabled on restricted regional routes. */
     function syncBusinessAvailability() {
       if (!fromEl || !toEl) return;
       let businessBtn = cabinClassList.querySelector('[data-value="business"]');
@@ -375,11 +335,7 @@
     syncBusinessAvailability();
   }
 
-  /**
-   * Date fields use Flatpickr (loaded from CDN in index.peb before this file). `flatpickr(button, options)` attaches a calendar popup.
-   * We store ISO dates `YYYY-MM-DD` in hidden inputs `#depart` / `#return` for the GET form; the visible labels are formatted in en-GB.
-   * `fpReturn.set('minDate', date)` ensures return is not before departure. `setReturnEnabled(false)` disables return for one-way trips.
-   */
+  /** Flatpickr date controls with ISO hidden values. */
   function initDatePickers() {
     let flatpickrFactory = window['flatpickr'];
     if (typeof flatpickrFactory !== 'function') return;
@@ -457,10 +413,7 @@
     setReturnEnabled(trip && trip.value === 'return');
   }
 
-  /**
-   * Intercepts form submit. `e.preventDefault()` stops the browser from navigating away if validation fails.
-   * `fail()` shows `#flight-search-error` and focuses it for screen readers. Airport strings must exactly match a `data-value` from the list.
-   */
+  /** Validates the homepage flight search before submit. */
   function initFlightSearchValidation() {
     let form = document.querySelector('.flight-search-form');
     let err = document.getElementById('flight-search-error');
@@ -528,7 +481,7 @@
     });
   }
 
-  /** Builds a lookup object { "Manchester (MAN)": true, ... } from `[role="option"]` nodes for validation. */
+  /** Builds the valid airport lookup from dropdown options. */
   function airportValuesFromList(listId) {
     let list = document.getElementById(listId);
     if (!list) return {};
@@ -540,7 +493,7 @@
     return set;
   }
 
-  /** Separator that cannot appear in URLs; used in `data-images` and split in the lightbox. */
+  /** Separator used in `data-images`. */
   let IMG_JOIN = '|||GLIDE|||';
 
   function parseImagesFromStack(stack) {
@@ -549,12 +502,7 @@
     return raw.split(IMG_JOIN).filter(Boolean);
   }
 
-  /**
-   * Each offer card has stacked `.offer-card-slide` divs (background images). CSS hides non-active slides with opacity.
-   * On mouseenter we `setInterval` every 3000 ms and call `setActive` to advance `idx`; `classList.toggle('is-active', condition)` sets the class only when true.
-   * `% slides.length` wraps the index (after last image, back to first). `matchMedia('(prefers-reduced-motion: reduce)')` skips animation if the user asked for reduced motion.
-   * `dataset.hoverWired = '1'` is a guard so we do not attach duplicate listeners if `renderOffersFromJson` runs again.
-   */
+  /** Wires hover image stacks on offer cards. */
   function wireOfferCardImageStacks(root) {
     if (!root) return;
     let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -565,6 +513,16 @@
       if (slides.length < 2 || reduceMotion) return;
       let timer = null;
       let idx = 0;
+      function loadDeferredSlides() {
+        slides.forEach(function(slide) {
+          let bg = slide.getAttribute('data-bg');
+          if (!bg) return;
+          slide.style.backgroundImage = 'url("' + bg.replace(/"/g, '') + '")';
+          slide.style.backgroundSize = 'cover';
+          slide.style.backgroundPosition = 'center';
+          slide.removeAttribute('data-bg');
+        });
+      }
       function setActive(nextIndex) {
         idx = nextIndex % slides.length;
         slides.forEach(function(s, j) {
@@ -574,8 +532,8 @@
       setActive(0);
       stack.addEventListener('mouseenter', function() {
         clearInterval(timer);
+        loadDeferredSlides();
         setActive(0);
-        /* Every 3s move to next slide: setActive(idx+1) bumps idx inside setActive via modulo. */
         timer = setInterval(function() {
           setActive(idx + 1);
         }, 3000);
@@ -589,24 +547,30 @@
     });
   }
 
-  /**
-   * @typedef {Object} OfferCardData
-   * @property {string=} destinationName
-   * @property {string=} imageUrl
-   * @property {string[]=} imageUrls
-   * @property {number|string=} priceGbp
-   * @property {string=} bookAirport
-   *
-   * @typedef {Object} OffersResponse
-   * @property {string=} originLabel
-   * @property {string=} originCode
-   * @property {OfferCardData[]=} cards
-   */
+  function loadDeferredOfferImages(root) {
+    if (!root) return;
+    root.querySelectorAll('.offer-card-slide[data-bg]').forEach(function(slide) {
+      let bg = slide.getAttribute('data-bg');
+      if (!bg) return;
+      slide.style.backgroundImage = 'url("' + bg.replace(/"/g, '') + '")';
+      slide.style.backgroundSize = 'cover';
+      slide.style.backgroundPosition = 'center';
+      slide.removeAttribute('data-bg');
+    });
+  }
 
-  /**
-   * Replaces `#offers-cards` inner HTML from `/api/latest-offers` JSON; then wires hover + lightbox on new nodes.
-   * @param {OffersResponse} data
-   */
+  function scheduleOfferImagePreload(root) {
+    if (!root) return;
+    let load = function() {
+      loadDeferredOfferImages(root);
+    };
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(load, { timeout: 1500 });
+    } else {
+      window.setTimeout(load, 700);
+    }
+  }
+  /** Renders latest offers returned by the API. */
   function renderOffersFromJson(data) {
     let label = document.getElementById('offers-origin-label');
     if (label) label.textContent = data.originLabel || '';
@@ -617,7 +581,6 @@
     ul.innerHTML = '';
     const offerDataCards = data.cards || [];
     offerDataCards.forEach(function(c) {
-      /* Build the same structure as Pebble SSR: li > image stack + h3 + meta + book button. */
       let li = document.createElement('li');
       li.className = 'offer-card';
       let urls = c.imageUrls && c.imageUrls.length ? c.imageUrls : (c.imageUrl ? [c.imageUrl] : []);
@@ -634,9 +597,13 @@
       urls.forEach(function(u, idx) {
         let slide = document.createElement('div');
         slide.className = 'offer-card-slide' + (idx === 0 ? ' is-active' : '');
-        slide.style.backgroundImage = 'url("' + String(u).replace(/"/g, '') + '")';
-        slide.style.backgroundSize = 'cover';
-        slide.style.backgroundPosition = 'center';
+        if (idx === 0) {
+          slide.style.backgroundImage = 'url("' + String(u).replace(/"/g, '') + '")';
+          slide.style.backgroundSize = 'cover';
+          slide.style.backgroundPosition = 'center';
+        } else {
+          slide.setAttribute('data-bg', String(u));
+        }
         slide.setAttribute('aria-hidden', 'true');
         stack.appendChild(slide);
       });
@@ -668,12 +635,9 @@
       ul.appendChild(li);
     }
     wireOfferCardImageStacks(ul);
+    scheduleOfferImagePreload(ul);
   }
-
-  /**
-   * When “Leaving from” contains a full airport string ending in `(XXX)`, we fetch new offers for that IATA code.
-   * `lastOfferFetchKey` avoids refetching the same origin. `encodeURIComponent` makes the URL safe. `fetch` returns a Promise; `.then` runs when JSON arrives.
-   */
+  /** Refreshes offers when the origin changes. */
   function initOffersFromLeavingFrom() {
     let fromInput = document.getElementById('from');
     let departInput = document.getElementById('depart');
@@ -746,11 +710,7 @@
 
     if ((fromInput.value || '').trim()) sync();
   }
-
-  /**
-   * Delegated click on `#offers-cards`: if the click target is inside `.offer-card-cta`, `closest` finds that button.
-   * We copy `data-book-airport` into `#to`, then submit the search when the rest of the form is ready.
-   */
+  /** Uses an offer card as the destination search. */
   function initBookNowFromOffers() {
     let ul = document.getElementById('offers-cards');
     if (!ul) return;
@@ -798,12 +758,7 @@
       if (departTrigger) departTrigger.focus();
     });
   }
-
-  /**
-   * Full-screen gallery dialog `#offer-lightbox`. `state` holds the URL array and current index.
-   * Clicks on `.offer-card-image-stack` open it; clicks on `.offer-card-cta` return early so booking is not mistaken for gallery.
-   * `document.body.style.overflow = 'hidden'` stops background scrolling while open. Keydown Escape / arrows handled on `document`.
-   */
+  /** Offer image lightbox. */
   function initOfferLightbox() {
     let ul = document.getElementById('offers-cards');
     let lb = document.getElementById('offer-lightbox');
@@ -873,12 +828,7 @@
       openLb(stack);
     });
   }
-
-  /**
-   * Horizontal scroll area `#offers-scroll`. Arrow buttons call `jumpByCards`: find the card index nearest current `scrollLeft`,
-   * then `scrollTo` the card at index ±4 so each click moves one “page” of four cards. `offsetLeft` is relative to the offset parent.
-   * Wheel listener uses `preventDefault` only in some cases (needs `{ passive: false }` so preventDefault is allowed).
-   */
+  /** Offer carousel controls. */
   function initOffersCarousel() {
     let scrollEl = document.getElementById('offers-scroll');
     let prev = document.getElementById('offers-prev');
@@ -941,22 +891,22 @@
     }
   }
 
-  /** Runs all initialisers once the DOM is ready. */
   function onReady() {
-    initAutocomplete('from', 'from-list');
-    initAutocomplete('to', 'to-list');
+    initAutocomplete('from', 'from-list', 'to');
+    initAutocomplete('to', 'to-list', 'from');
     initTripCombobox();
     initCabinModal();
     initOffersCarousel();
     initOffersFromLeavingFrom();
     initBookNowFromOffers();
-    wireOfferCardImageStacks(document.getElementById('offers-cards'));
+    let offersCards = document.getElementById('offers-cards');
+    wireOfferCardImageStacks(offersCards);
+    scheduleOfferImagePreload(offersCards);
     initOfferLightbox();
     initDatePickers();
     initFlightSearchValidation();
   }
 
-  /* If the script runs after parse (e.g. defer), DOM may already be ready; otherwise wait for DOMContentLoaded. */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', onReady);
   } else {

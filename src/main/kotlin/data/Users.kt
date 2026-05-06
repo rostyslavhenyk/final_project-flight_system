@@ -45,7 +45,7 @@ object UserRepository {
             val loyaltyByUser =
                 LoyaltyUsers
                     .selectAll()
-                    .map { LoyaltyRepository.run { it.toLoyaltyUser() } }
+                    .map { LoyaltyUserRepository.run { it.toLoyaltyUser() } }
                     .associateBy { it.userID }
 
             Users

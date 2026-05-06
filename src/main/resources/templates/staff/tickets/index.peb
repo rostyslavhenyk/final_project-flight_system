@@ -7,9 +7,7 @@
 {% block content %}
 <section class="ticket-board staff-shell">
     <header class="staff-hero">
-        <p class="staff-hero__eyebrow">Staff tickets</p>
         <h1>Ticket management</h1>
-        <p>Review passenger requests, track staff-created tickets, and keep support work organised from one place.</p>
     </header>
 
     <div class="ticket-toolbar">
@@ -31,7 +29,7 @@
         <div class="ticket-filter-options">
             <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}" class="{% if not statusFilter %}active{% endif %}">All</a>
             <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=OPEN" class="{% if statusFilter == "OPEN" %}active{% endif %}">Open</a>
-            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=IN_PROGRESS" class="{% if statusFilter == "IN_PROGRESS" %}active{% endif %}">In progress</a>
+            <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=IN_PROGRESS" class="{% if statusFilter == "IN_PROGRESS" %}active{% endif %}">In Progress</a>
             <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=RESOLVED" class="{% if statusFilter == "RESOLVED" %}active{% endif %}">Resolved</a>
             <a href="/staff/tickets?tab={{ activeTab }}{% if query %}&q={{ query }}{% endif %}&status=URGENT" class="{% if statusFilter == "URGENT" %}active{% endif %}">Urgent</a>
         </div>
@@ -69,7 +67,7 @@
                     <label for="create-ticket-status">Status</label>
                     <select id="create-ticket-status" name="status">
                         <option value="OPEN" {% if ticketForm.status == "OPEN" or not ticketForm.status %}selected{% endif %}>Open</option>
-                        <option value="IN_PROGRESS" {% if ticketForm.status == "IN_PROGRESS" %}selected{% endif %}>In progress</option>
+                        <option value="IN_PROGRESS" {% if ticketForm.status == "IN_PROGRESS" %}selected{% endif %}>In Progress</option>
                         <option value="RESOLVED" {% if ticketForm.status == "RESOLVED" %}selected{% endif %}>Resolved</option>
                     </select>
                 </div>

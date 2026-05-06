@@ -1,9 +1,8 @@
 package routes.staff
 
 import auth.UserSession
-import data.TicketRepository
 import data.TicketImageRepository
-import io.ktor.http.ContentType
+import data.TicketRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
@@ -11,20 +10,15 @@ import io.ktor.server.response.respondFile
 import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondRedirect
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.sessions.get
 import io.ktor.server.sessions.sessions
-import routes.pebbleEngine
-import routes.receiveTicketFormUpload
-import routes.saveTicketImages
-import utils.baseModel
+import routes.renderTemplate
 import utils.jsMode
 import utils.timed
 import java.io.File
-import java.io.StringWriter
 
 fun Route.staffTicketsRoutes() {
     get("/tickets") { call.handleStaffTickets() }
@@ -93,27 +87,20 @@ private suspend fun ApplicationCall.respondStaffTicketsPage(
     val staffTickets = TicketRepository.searchFullBySource("STAFF", query, status)
     val requestedTickets = TicketRepository.searchFullBySource("USER", query, status)
 
-    val model =
-        baseModel(
-            mapOf(
-                "title" to "Staff Tickets",
-                "activeTab" to activeTab,
-                "created" to created,
-                "error" to error,
-                "query" to query,
-                "statusFilter" to status,
-                "staffTickets" to staffTickets,
-                "requestedTickets" to requestedTickets,
-                "ticketForm" to ticketForm,
-            ),
-        )
-
-    val template = pebbleEngine.getTemplate("staff/tickets/index.peb")
-    val writer = StringWriter()
-
-    template.evaluate(writer, model)
-
-    respondText(writer.toString(), ContentType.Text.Html)
+    renderTemplate(
+        "staff/tickets/index.peb",
+        mapOf(
+            "title" to "Staff Tickets",
+            "activeTab" to activeTab,
+            "created" to created,
+            "error" to error,
+            "query" to query,
+            "statusFilter" to status,
+            "staffTickets" to staffTickets,
+            "requestedTickets" to requestedTickets,
+            "ticketForm" to ticketForm,
+        ),
+    )
 }
 
 private suspend fun ApplicationCall.handleTicketDetails() {
@@ -126,22 +113,15 @@ private suspend fun ApplicationCall.handleTicketDetails() {
             return@timed
         }
 
-        val model =
-            baseModel(
-                mapOf(
-                    "title" to "Ticket ${ticket.ticket.ticketID}",
-                    "ticketFull" to ticket,
-                    "ticketImages" to TicketImageRepository.allForTicket(ticket.ticket.ticketID),
-                    "updated" to (request.queryParameters["updated"] == "1"),
-                ),
-            )
-
-        val template = pebbleEngine.getTemplate("staff/tickets/detail.peb")
-        val writer = StringWriter()
-
-        template.evaluate(writer, model)
-
-        respondText(writer.toString(), ContentType.Text.Html)
+        renderTemplate(
+            "staff/tickets/detail.peb",
+            mapOf(
+                "title" to "Ticket ${ticket.ticket.ticketID}",
+                "ticketFull" to ticket,
+                "ticketImages" to TicketImageRepository.allForTicket(ticket.ticket.ticketID),
+                "updated" to (request.queryParameters["updated"] == "1"),
+            ),
+        )
     }
 }
 

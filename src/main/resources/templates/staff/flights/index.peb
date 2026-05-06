@@ -3,9 +3,7 @@
 {% block content %}
 <section class="staff-shell">
     <header class="staff-hero">
-        <p class="staff-hero__eyebrow">Operations</p>
         <h1>Manage Flights</h1>
-        <p>Review scheduled services generated for the flight search and status pages.</p>
     </header>
 
     <div class="staff-list-toolbar" aria-label="Flight list pagination controls">

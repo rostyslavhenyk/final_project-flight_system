@@ -30,7 +30,7 @@ data class LoyaltyUser(
     val joinDate: Long,
 )
 
-object LoyaltyRepository {
+object LoyaltyUserRepository {
     internal fun ResultRow.toLoyaltyUser() =
         LoyaltyUser(
             id = this[LoyaltyUsers.id],

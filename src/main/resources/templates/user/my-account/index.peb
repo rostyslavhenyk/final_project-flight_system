@@ -1,21 +1,34 @@
 {% extends layout %}
 
 {% block content %}
-<h1 style="text-align: center;">My Account</h1>
-<br>
+<section class="page-shell" aria-labelledby="account-heading">
+    <header class="page-header">
+        <p class="page-header__eyebrow">Account</p>
+        <h1 id="account-heading" class="page-header__title">My account</h1>
+        <p class="page-header__text">{% if isStaff %}Staff profile and workspace access.{% else %}Your customer profile and travel details.{% endif %}</p>
+    </header>
 
-<section aria-labelledby="account-heading">
-    <h2 id="account-heading">{% if isStaff %}Staff Details{% else %}Account Details{% endif %}</h2>
-    <p><strong>Name:</strong> {{ account.firstname }} {{ account.lastname }}</p>
-    <p><strong>Email:</strong> {{ account.email }}</p>
-    <p><strong>Account type:</strong> {% if isStaff %}Staff{% else %}Customer{% endif %}</p>
-</section>
+    <section class="surface-card" aria-labelledby="details-heading">
+        <div class="surface-card__body">
+            <h2 id="details-heading">{% if isStaff %}Staff details{% else %}Account details{% endif %}</h2>
+            <dl class="detail-list">
+                <dt>Name</dt>
+                <dd>{{ account.firstname }} {{ account.lastname }}</dd>
+                <dt>Email</dt>
+                <dd>{{ account.email }}</dd>
+                <dt>Account type</dt>
+                <dd>{% if isStaff %}Staff{% else %}Customer{% endif %}</dd>
+            </dl>
+        </div>
+    </section>
 
-{% if not isStaff %}
-<br>
-<h2 style="text-align: center;">Booked Flights</h2>
-<br>
-<section aria-labelledby="list-heading">
+    {% if not isStaff %}
+    <section class="surface-card account-section" aria-labelledby="booked-flights-heading">
+        <div class="surface-card__body">
+            <h2 id="booked-flights-heading">Booked flights</h2>
+            <p class="empty-state">Booked flights will appear here after you complete a reservation.</p>
+        </div>
+    </section>
+    {% endif %}
 </section>
-{% endif %}
 {% endblock %}

@@ -29,7 +29,6 @@ private suspend fun ApplicationCall.handleLoadPage() {
 
         val originCode = request.queryParameters["origin"]?.takeIf { it.isNotBlank() } ?: "MAN"
         val departDate = request.queryParameters.parseDepartDate()
-        // Codes used to speed up loading time: single airport snapshot reused for labels + offer strip.
         val airportsSnapshot = FlightSearchRepository.homepageAirportsSnapshot()
         val originLabel = airportsSnapshot.cityForCode(originCode)
 
@@ -43,12 +42,10 @@ private suspend fun ApplicationCall.handleLoadPage() {
                 "originLabel" to originLabel,
             )
 
-        renderTemplate("homepage/index.peb", model)
+        renderTemplate("user/homepage/index.peb", model)
     }
 }
 
-// Codes used to restrict business cabin on intra-regional UK/EU routes: JSON for the homepage modal so
-// Business can be disabled when both airports are in the UK/EU regional set.
 private suspend fun ApplicationCall.handleHomepageCabinConstraints() {
     val from = request.queryParameters["from"].orEmpty()
     val to = request.queryParameters["to"].orEmpty()
@@ -65,7 +62,6 @@ private suspend fun ApplicationCall.handleHomepageCabinConstraints() {
 private suspend fun ApplicationCall.handleLatestOffers() {
     val origin = request.queryParameters["origin"]?.takeIf { it.isNotBlank() } ?: "MAN"
     val departDate = request.queryParameters.parseDepartDate()
-    // Codes used to speed up loading time: one airport snapshot for labels (same pattern as handleLoadPage).
     val airportsSnapshot = FlightSearchRepository.homepageAirportsSnapshot()
     val originLabel =
         request.queryParameters["originLabel"]?.takeIf { it.isNotBlank() } ?: airportsSnapshot.cityForCode(origin)
@@ -91,20 +87,10 @@ private data class OfferCard(
     val priceGbp: Int,
     val imageUrls: List<String>,
 ) {
-    /**
-     * Same delimiter as [homepage.js] `IMG_JOIN` / `parseImagesFromStack` for `data-images` on SSR cards;
-     * links the lightbox with the offer pictures.
-     */
     val imageUrlsJoined: String get() = imageUrls.joinToString("|||GLIDE|||")
 }
 
-// FLIGHT-SYSTEM-TWEAKS + codes used to speed up loading time: one fare map for all cards via
-// lowestLightFaresByDestinationForOrigin, plus airports snapshot for city names (avoids per-card DB round-trips).
-
-/**
- * Builds the featured-offer strip. Loads **one** day’s flight rows and reuses [airports] for names, so we
- * do not call [FlightSearchRepository.lowestLightFare] per card (that would reload every flight each time).
- */
+/** Builds featured offer cards from one fare lookup. */
 private fun offerCardsFor(
     originCode: String,
     departDate: LocalDate,
@@ -145,7 +131,7 @@ private fun offerCardsFor(
             destinationName = city,
             bookAirport = "$city ($effectiveDest)",
             priceGbp = price,
-            imageUrls = destinationImageUrls(effectiveDest),
+            imageUrls = destinationImagesByCode[effectiveDest.uppercase()] ?: fallbackDestinationImages,
         )
     }
 }
@@ -155,10 +141,6 @@ private const val HOMEPAGE_OFFER_ORDER_SEED = 0x4F46465253485546L
 /** When “Leaving from” equals that primary card’s airport, every such card uses this IATA instead (fare + images). */
 private const val HOMEPAGE_CONFLICT_REPLACEMENT = "AMS"
 
-/**
- * If two cards would ever resolve to the same IATA (misconfiguration or future data change), pick the first
- * hub here that is not [origin], not already used on this strip, and has a fare — keeps the carousel distinct.
- */
 private val HOMEPAGE_DISTINCT_FALLBACK_HUBS =
     listOf("AMS", "AUH", "DXB", "FRA", "MUC", "DEL", "KUL", "DPS", "LHR", "CPH")
 
@@ -186,11 +168,7 @@ private val HOMEPAGE_PRIMARY_OFFERS =
         HomepagePrimarySlot("rome", "Rome", "Rome (FCO)", "FCO"),
     )
 
-/**
- * Carousel order: **Hong Kong is always first** (legacy promo strip). The other 11 cities follow in a
- * **deterministic pseudo-random order** from [HOMEPAGE_OFFER_ORDER_SEED], so order stays the same across
- * page loads. Order only affects left-to-right display, not prices.
- */
+/** Stable carousel order with Hong Kong first. */
 private fun orderedHomepagePrimarySlots(): List<HomepagePrimarySlot> {
     val destCodes = HOMEPAGE_PRIMARY_OFFERS.map { it.destCode }
     check(destCodes.size == destCodes.toSet().size) {
@@ -217,13 +195,6 @@ private fun Parameters.parseDepartDate(): LocalDate =
         ?.takeIf { it.isNotBlank() }
         ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
         ?: LocalDate.now().plusDays(DEFAULT_OFFER_DEPARTURE_OFFSET_DAYS.toLong())
-
-/**
- * Gallery URLs for IATA codes that can appear on the offer strip: the 12 primaries plus
- * [HOMEPAGE_CONFLICT_REPLACEMENT].
- */
-private fun destinationImageUrls(destinationCode: String): List<String> =
-    destinationImagesByCode[destinationCode.uppercase()] ?: fallbackDestinationImages
 
 private val destinationImagesByCode =
     mapOf(
