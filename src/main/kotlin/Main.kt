@@ -46,7 +46,7 @@ fun configureDatabase() {
     DatabaseFactory.init()
 
     transaction {
-        SchemaUtils.create(*AllTables.all())
+        SchemaUtils.createMissingTablesAndColumns(*AllTables.all())
         FlightScheduleGenerator.ensureSeedData()
     }
     UserRepository.normalizeStoredNames()
