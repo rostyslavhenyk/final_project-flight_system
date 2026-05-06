@@ -43,7 +43,7 @@ internal object FlightScheduleRules {
     private const val LATE_MORNING_MINUTE = 45
     private const val EARLY_EVENING_MINUTE = 20
     private const val LATE_EVENING_MINUTE = 50
-    private const val EXTRA_DAILY_DEPARTURE_INTERVAL = 3
+    private const val EXTRA_DAILY_DEPARTURE_INTERVAL = 2
 
     private val morningHours = listOf(MORNING_HOUR_ONE, MORNING_HOUR_TWO, MORNING_HOUR_THREE)
     private val eveningHours = listOf(EVENING_HOUR_ONE, EVENING_HOUR_TWO, EVENING_HOUR_THREE)

@@ -1,6 +1,5 @@
 package data.flight
 
-import data.FlightNumberSqlQueries
 import data.FlightRepository
 import java.time.LocalDate
 import java.util.Locale
@@ -49,27 +48,27 @@ object FlightStatusSearchRepository {
         return when {
             prefix.isBlank() -> emptyList()
             prefix.all { it == '0' } ->
-                suggestDigitsAllZeroPrefix(prefix, limit, today, lastDay)
+                suggestZeroPrefix(prefix, limit, today, lastDay)
             else ->
-                suggestDigitsNonZeroSqlPrefix(prefix, limit, today, lastDay)
+                suggestSqlPrefix(prefix, limit, today, lastDay)
         }
     }
 
     fun flightNumberDigitsExampleForUpcomingWeek(): String {
         val today = LocalDate.now()
         val lastDay = today.plusDays((FLIGHT_STATUS_UPCOMING_DAY_COUNT - 1).toLong())
-        val id = FlightNumberSqlQueries.minFlightIdDepartingBetween(today, lastDay) ?: return "1"
+        val id = FlightNumberQueries.minIdBetween(today, lastDay) ?: return "1"
         return FlightRecordMapper.flightNumberFor(id).removePrefix("GA")
     }
 
-    private fun suggestDigitsAllZeroPrefix(
+    private fun suggestZeroPrefix(
         prefix: String,
         limit: Int,
         today: LocalDate,
         lastDay: LocalDate,
     ): List<String> =
-        FlightNumberSqlQueries
-            .idsDepartingOrderedInDateWindow(today, lastDay, maxRows = SUGGEST_LEADING_ZERO_ID_SCAN_CAP)
+        FlightNumberQueries
+            .idsInDateWindow(today, lastDay, maxRows = SUGGEST_LEADING_ZERO_ID_SCAN_CAP)
             .asSequence()
             .map { id -> FlightRecordMapper.flightNumberFor(id).removePrefix("GA") }
             .filter { digits -> digits.startsWith(prefix) }
@@ -78,7 +77,7 @@ object FlightStatusSearchRepository {
             .take(limit)
             .toList()
 
-    private fun suggestDigitsNonZeroSqlPrefix(
+    private fun suggestSqlPrefix(
         prefix: String,
         limit: Int,
         today: LocalDate,
@@ -87,8 +86,8 @@ object FlightStatusSearchRepository {
         val sqlDigitPrefix = prefix.trimStart('0').ifEmpty { "0" }
         val fetchCap =
             (limit * SUGGEST_PREFIX_FETCH_MULTIPLIER).coerceAtMost(SUGGEST_PREFIX_FETCH_CAP)
-        return FlightNumberSqlQueries
-            .idsWithFlightNumberDigitPrefixDepartingBetween(sqlDigitPrefix, fetchCap, today, lastDay)
+        return FlightNumberQueries
+            .idsWithDigitPrefix(sqlDigitPrefix, fetchCap, today, lastDay)
             .asSequence()
             .map { id -> FlightRecordMapper.flightNumberFor(id).removePrefix("GA") }
             .filter { digits -> digits.startsWith(prefix) }

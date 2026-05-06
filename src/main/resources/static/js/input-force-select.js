@@ -4,7 +4,7 @@
 
   global.attachForceSelectAll = function(input, opts) {
     opts = opts || {};
-    var forceSelectMs = opts.forceSelectMs != null ? opts.forceSelectMs : 800;
+    let forceSelectMs = opts.forceSelectMs != null ? opts.forceSelectMs : 800;
     if (
       !input ||
       input.getAttribute('data-force-select') === '0' ||
@@ -13,8 +13,8 @@
       return;
     }
 
-    var forceSelectUntil = 0;
-    var forceSelectIntervalId = null;
+    let forceSelectUntil = 0;
+    let forceSelectIntervalId = null;
 
     function clearForceSelectAllWindow() {
       forceSelectUntil = 0;
@@ -25,7 +25,7 @@
     }
 
     function selectAll() {
-      var len = (input.value || '').length;
+      let len = (input.value || '').length;
       try {
         input.setSelectionRange(0, len);
       } catch (e) {
@@ -77,4 +77,4 @@
       clearForceSelectAllWindow();
     });
   };
-})(typeof window !== 'undefined' ? window : this);
+})(window);

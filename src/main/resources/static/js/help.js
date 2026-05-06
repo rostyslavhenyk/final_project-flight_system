@@ -1,10 +1,10 @@
 // FAQ accordion
-const faqButtons = document.querySelectorAll('.faq-question')
+const FAQ_BUTTONS = document.querySelectorAll('.faq-question')
 
-for (let i = 0; i < faqButtons.length; i++) {
-    faqButtons[i].addEventListener('click', function() {
-        const answerId = this.getAttribute('aria-controls')
-        const answer = document.getElementById(answerId)
+for (let i = 0; i < FAQ_BUTTONS.length; i++) {
+    FAQ_BUTTONS[i].addEventListener('click', function() {
+        let answerId = this.getAttribute('aria-controls')
+        let answer = document.getElementById(answerId)
 
         if (answer.hidden) {
             answer.hidden = false
@@ -33,11 +33,11 @@ window.switchTab = function(tabName) {
 
 // FAQ search
 document.getElementById('faqSearch').addEventListener('input', function() {
-    const typed = this.value.toLowerCase()
-    const allItems = document.querySelectorAll('.faq-item')
+    let typed = this.value.toLowerCase()
+    let allItems = document.querySelectorAll('.faq-item')
 
     for (let i = 0; i < allItems.length; i++) {
-        const questionText = allItems[i].querySelector('.faq-question').textContent.toLowerCase()
+        let questionText = allItems[i].querySelector('.faq-question').textContent.toLowerCase()
 
         if (questionText.includes(typed)) {
             allItems[i].style.display = 'block'
@@ -49,9 +49,9 @@ document.getElementById('faqSearch').addEventListener('input', function() {
 
 // Chat toggle
 window.toggleChat = function() {
-    const chatBody = document.getElementById('chatBody')
-    const chatHeader = document.querySelector('.chat-header')
-    const chevron = document.getElementById('chatChevron')
+    let chatBody = document.getElementById('chatBody')
+    let chatHeader = document.querySelector('.chat-header')
+    let chevron = document.getElementById('chatChevron')
 
     if (chatBody.hidden) {
         chatBody.hidden = false
@@ -66,20 +66,20 @@ window.toggleChat = function() {
 }
 
 window.openChat = function() {
-    const chatBody = document.getElementById('chatBody')
+    let chatBody = document.getElementById('chatBody')
     if (chatBody.hidden) {
         window.toggleChat()
     }
 }
 
 window.sendChat = function() {
-    const input = document.getElementById('chatInput')
-    const messages = document.getElementById('chatMessages')
-    const text = input.value.trim()
+    let input = document.getElementById('chatInput')
+    let messages = document.getElementById('chatMessages')
+    let text = input.value.trim()
 
     if (text === '') return
 
-    const userMsg = document.createElement('div')
+    let userMsg = document.createElement('div')
     userMsg.classList.add('chat-msg', 'user')
     userMsg.textContent = text
     messages.appendChild(userMsg)
@@ -87,7 +87,7 @@ window.sendChat = function() {
     messages.scrollTop = messages.scrollHeight
 
     setTimeout(function() {
-        const botMsg = document.createElement('div')
+        let botMsg = document.createElement('div')
         botMsg.classList.add('chat-msg', 'bot')
         botMsg.textContent = 'Thanks for your message! A member of our team will be with you shortly.'
         messages.appendChild(botMsg)

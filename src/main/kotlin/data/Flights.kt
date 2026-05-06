@@ -50,7 +50,7 @@ data class Flight(
 internal fun departureLowerInclusive(firstDate: LocalDate): String =
     LocalDateTime.of(firstDate, LocalTime.MIN).toString()
 
-internal fun departureUpperExclusiveAfterLastDay(lastInclusive: LocalDate): String =
+internal fun departureEndExclusive(lastInclusive: LocalDate): String =
     LocalDateTime.of(lastInclusive.plusDays(1), LocalTime.MIN).toString()
 
 /** Normal flight CRUD plus full flight joins used across search/status and staff pages. */
@@ -115,7 +115,7 @@ object FlightRepository {
             val dateWindow =
                 if (firstDateInclusive != null && lastDateInclusive != null) {
                     val start = departureLowerInclusive(firstDateInclusive)
-                    val endExclusive = departureUpperExclusiveAfterLastDay(lastDateInclusive)
+                    val endExclusive = departureEndExclusive(lastDateInclusive)
                     (Flights.departureTime greaterEq start) and (Flights.departureTime less endExclusive)
                 } else {
                     null

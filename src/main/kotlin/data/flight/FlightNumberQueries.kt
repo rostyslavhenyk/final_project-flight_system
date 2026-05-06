@@ -1,5 +1,8 @@
-package data
+package data.flight
 
+import data.Flights
+import data.departureEndExclusive
+import data.departureLowerInclusive
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.greaterEq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
@@ -11,14 +14,13 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDate
 
-private const val FLIGHT_NUMBER_ID_MATCH_QUERY_CAP = 100
-private const val FLIGHT_IDS_IN_DATE_WINDOW_SCAN_CAP = 25_000
+private const val PREFIX_MATCH_CAP = 100
+private const val DATE_WINDOW_SCAN_CAP = 25_000
 
-/** Width for `CAST(flights.id AS VARCHAR)` in SQLite LIKE patterns (must fit stringified ids). */
-private const val FLIGHT_ID_CAST_VARCHAR_LENGTH = 32
+private const val ID_CAST_LENGTH = 32
 
-internal object FlightNumberSqlQueries {
-    fun idsWithFlightNumberDigitPrefixDepartingBetween(
+internal object FlightNumberQueries {
+    fun idsWithDigitPrefix(
         prefixDigits: String,
         limit: Int,
         firstDateInclusive: LocalDate,
@@ -29,14 +31,14 @@ internal object FlightNumberSqlQueries {
             if (digits.isEmpty()) {
                 return@transaction emptyList()
             }
-            val lim = limit.coerceIn(1, FLIGHT_NUMBER_ID_MATCH_QUERY_CAP)
+            val lim = limit.coerceIn(1, PREFIX_MATCH_CAP)
             val pattern = digits + "%"
             val start = departureLowerInclusive(firstDateInclusive)
-            val endExclusive = departureUpperExclusiveAfterLastDay(lastDateInclusive)
+            val endExclusive = departureEndExclusive(lastDateInclusive)
             Flights
                 .select(Flights.id)
                 .where {
-                    (Flights.id.castTo<String>(VarCharColumnType(FLIGHT_ID_CAST_VARCHAR_LENGTH)) like pattern) and
+                    (Flights.id.castTo<String>(VarCharColumnType(ID_CAST_LENGTH)) like pattern) and
                         (Flights.departureTime greaterEq start) and
                         (Flights.departureTime less endExclusive)
                 }.orderBy(Flights.id, SortOrder.ASC)
@@ -44,13 +46,13 @@ internal object FlightNumberSqlQueries {
                 .map { it[Flights.id] }
         }
 
-    fun minFlightIdDepartingBetween(
+    fun minIdBetween(
         firstDateInclusive: LocalDate,
         lastDateInclusive: LocalDate,
     ): Int? =
         transaction {
             val start = departureLowerInclusive(firstDateInclusive)
-            val endExclusive = departureUpperExclusiveAfterLastDay(lastDateInclusive)
+            val endExclusive = departureEndExclusive(lastDateInclusive)
             Flights
                 .select(Flights.id)
                 .where {
@@ -61,15 +63,15 @@ internal object FlightNumberSqlQueries {
                 ?.get(Flights.id)
         }
 
-    fun idsDepartingOrderedInDateWindow(
+    fun idsInDateWindow(
         firstDateInclusive: LocalDate,
         lastDateInclusive: LocalDate,
         maxRows: Int,
     ): List<Int> =
         transaction {
             val start = departureLowerInclusive(firstDateInclusive)
-            val endExclusive = departureUpperExclusiveAfterLastDay(lastDateInclusive)
-            val lim = maxRows.coerceIn(1, FLIGHT_IDS_IN_DATE_WINDOW_SCAN_CAP)
+            val endExclusive = departureEndExclusive(lastDateInclusive)
+            val lim = maxRows.coerceIn(1, DATE_WINDOW_SCAN_CAP)
             Flights
                 .select(Flights.id)
                 .where {
