@@ -42,7 +42,6 @@ internal object FlightConnectionBuilder {
             "DXB" to "HKG",
         )
 
-    /** Reuses the loaded flight list for connection lookahead. */
     fun recordsForDate(
         originCode: String,
         destCode: String,

@@ -90,7 +90,6 @@ private data class OfferCard(
     val imageUrlsJoined: String get() = imageUrls.joinToString("|||GLIDE|||")
 }
 
-/** Builds featured offer cards from one fare lookup. */
 private fun offerCardsFor(
     originCode: String,
     departDate: LocalDate,
@@ -138,7 +137,6 @@ private fun offerCardsFor(
 
 private const val HOMEPAGE_OFFER_ORDER_SEED = 0x4F46465253485546L
 
-/** When “Leaving from” equals that primary card’s airport, every such card uses this IATA instead (fare + images). */
 private const val HOMEPAGE_CONFLICT_REPLACEMENT = "AMS"
 
 private val HOMEPAGE_DISTINCT_FALLBACK_HUBS =
@@ -151,7 +149,6 @@ private data class HomepagePrimarySlot(
     val destCode: String,
 )
 
-/** Twelve featured destinations (Istanbul and Seoul are not in this strip). */
 private val HOMEPAGE_PRIMARY_OFFERS =
     listOf(
         HomepagePrimarySlot("hong_kong", "Hong Kong", "Hong Kong (HKG)", "HKG"),
@@ -168,7 +165,6 @@ private val HOMEPAGE_PRIMARY_OFFERS =
         HomepagePrimarySlot("rome", "Rome", "Rome (FCO)", "FCO"),
     )
 
-/** Stable carousel order with Hong Kong first. */
 private fun orderedHomepagePrimarySlots(): List<HomepagePrimarySlot> {
     val destCodes = HOMEPAGE_PRIMARY_OFFERS.map { it.destCode }
     check(destCodes.size == destCodes.toSet().size) {

@@ -1,8 +1,8 @@
-/* global flatpickr, attachForceSelectAll */
 (function() {
   'use strict';
 
-  let FORCE_SELECT_MS = 1000;
+  const FORCE_SELECT_MS = 1000;
+  const STATUS_DATE_PICKERS = new WeakMap();
 
   function initAutocomplete(inputId, listId) {
     let input = document.getElementById(inputId);
@@ -54,14 +54,15 @@
   }
 
   function initStatusDatePickers() {
-    if (typeof flatpickr === 'undefined') return;
+    let flatpickrFactory = window['flatpickr'];
+    if (typeof flatpickrFactory !== 'function') return;
     document.querySelectorAll('.status-date-picker').forEach(function(input) {
       let minDate = input.getAttribute('data-min-date') || 'today';
-      input._statusFlatpickr = flatpickr(input, {
+      STATUS_DATE_PICKERS.set(input, flatpickrFactory(input, {
         mode: 'single',
         dateFormat: 'Y-m-d',
         minDate: minDate
-      });
+      }));
     });
   }
 
@@ -71,7 +72,6 @@
     if (!input) return;
     let debounceTimer = null;
     let emptyMsg = null;
-    /** Bumped on pick or new query so a stale fetch cannot reopen the dropdown. */
     let suggestSeq = 0;
 
     let maxFlightDigits =
@@ -199,10 +199,11 @@
       let enabled = false;
       toggles.forEach(function(t) { if (t.checked) enabled = true; });
       dateInputs.forEach(function(input) {
+        let picker = STATUS_DATE_PICKERS.get(input);
         input.disabled = enabled;
-        if (input._statusFlatpickr) {
-          if (enabled) input._statusFlatpickr.close();
-          input._statusFlatpickr.set('clickOpens', !enabled);
+        if (picker) {
+          if (enabled) picker.close();
+          picker.set('clickOpens', !enabled);
         }
       });
     }

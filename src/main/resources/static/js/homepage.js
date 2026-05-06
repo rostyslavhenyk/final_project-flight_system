@@ -1,8 +1,7 @@
-/* global attachForceSelectAll */
 (function() {
   'use strict';
-  let FORCE_SELECT_MS = 800;
-  /** Airport autocomplete with same-airport exclusion. */
+  const FORCE_SELECT_MS = 800;
+
   function initAutocomplete(inputId, listId, otherInputId) {
     let input = document.getElementById(inputId);
     let list = document.getElementById(listId);
@@ -79,8 +78,8 @@
     input.addEventListener('change', clearIfSameAsOther);
     if (otherInput) otherInput.addEventListener('change', clearIfSameAsOther);
   }
-  let TRIP_LABELS = { 'one-way': 'One way', 'return': 'Return' };
-  /** Custom trip selector. */
+  const TRIP_LABELS = { 'one-way': 'One way', 'return': 'Return' };
+
   function initTripCombobox() {
     let tripInput = document.getElementById('trip');
     let trigger = document.getElementById('trip-trigger');
@@ -125,7 +124,7 @@
     trigger.textContent = TRIP_LABELS[initial] || initial;
   }
 
-  let CABIN_CLASS_LABELS = {
+  const CABIN_CLASS_LABELS = {
     'economy': 'Economy',
     'business': 'Business'
   };
@@ -138,7 +137,7 @@
     }
     return cls + ', ' + parts.join(', ');
   }
-  /** Cabin and passenger modal. */
+
   function initCabinModal() {
     let trigger = document.getElementById('cabin-trigger');
     let modal = document.getElementById('cabin-modal');
@@ -160,7 +159,9 @@
       !cabinClassList ||
       !cabinHidden ||
       !adultsHidden ||
-      !childrenHidden
+      !childrenHidden ||
+      !adultsDisplay ||
+      !childrenDisplay
     ) {
       return;
     }
@@ -199,8 +200,9 @@
 
     let fromEl = document.getElementById('from');
     let toEl = document.getElementById('to');
+    let adults = parseInt(adultsHidden.value, 10) || 1;
+    let children = parseInt(childrenHidden.value, 10) || 0;
 
-  /* Business is disabled on restricted regional routes. */
     function syncBusinessAvailability() {
       if (!fromEl || !toEl) return;
       let businessBtn = cabinClassList.querySelector('[data-value="business"]');
@@ -253,9 +255,6 @@
         hideCabinClassList();
       }
     });
-
-    let adults = parseInt(adultsHidden.value, 10) || 1;
-    let children = parseInt(childrenHidden.value, 10) || 0;
 
     function syncDisplays() {
       adultsDisplay.textContent = String(adults);
@@ -335,7 +334,6 @@
     syncBusinessAvailability();
   }
 
-  /** Flatpickr date controls with ISO hidden values. */
   function initDatePickers() {
     let flatpickrFactory = window['flatpickr'];
     if (typeof flatpickrFactory !== 'function') return;
@@ -345,6 +343,7 @@
     let departInput = document.getElementById('depart');
     let returnInput = document.getElementById('return');
     if (!trip || !departTrigger || !returnTrigger || !departInput || !returnInput) return;
+    let fpReturn = null;
 
     function formatDate(dateValue) {
       return dateValue.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -381,7 +380,7 @@
       }
     });
 
-    let fpReturn = flatpickrFactory(returnTrigger, {
+    fpReturn = flatpickrFactory(returnTrigger, {
       mode: 'single',
       dateFormat: 'Y-m-d',
       minDate: departInput.value || 'today',
@@ -413,7 +412,6 @@
     setReturnEnabled(trip && trip.value === 'return');
   }
 
-  /** Validates the homepage flight search before submit. */
   function initFlightSearchValidation() {
     let form = document.querySelector('.flight-search-form');
     let err = document.getElementById('flight-search-error');
@@ -476,12 +474,10 @@
       }
       if (from === to) {
         fail('Leaving from and going to must be different airports.');
-        return;
       }
     });
   }
 
-  /** Builds the valid airport lookup from dropdown options. */
   function airportValuesFromList(listId) {
     let list = document.getElementById(listId);
     if (!list) return {};
@@ -493,8 +489,7 @@
     return set;
   }
 
-  /** Separator used in `data-images`. */
-  let IMG_JOIN = '|||GLIDE|||';
+  const IMG_JOIN = '|||GLIDE|||';
 
   function parseImagesFromStack(stack) {
     let raw = stack.getAttribute('data-images');
@@ -502,7 +497,6 @@
     return raw.split(IMG_JOIN).filter(Boolean);
   }
 
-  /** Wires hover image stacks on offer cards. */
   function wireOfferCardImageStacks(root) {
     if (!root) return;
     let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -570,7 +564,7 @@
       window.setTimeout(load, 700);
     }
   }
-  /** Renders latest offers returned by the API. */
+
   function renderOffersFromJson(data) {
     let label = document.getElementById('offers-origin-label');
     if (label) label.textContent = data.originLabel || '';
@@ -579,7 +573,7 @@
     let ul = document.getElementById('offers-cards');
     if (!ul) return;
     ul.innerHTML = '';
-    const offerDataCards = data.cards || [];
+    let offerDataCards = data.cards || [];
     offerDataCards.forEach(function(c) {
       let li = document.createElement('li');
       li.className = 'offer-card';
@@ -637,7 +631,7 @@
     wireOfferCardImageStacks(ul);
     scheduleOfferImagePreload(ul);
   }
-  /** Refreshes offers when the origin changes. */
+
   function initOffersFromLeavingFrom() {
     let fromInput = document.getElementById('from');
     let departInput = document.getElementById('depart');
@@ -710,7 +704,7 @@
 
     if ((fromInput.value || '').trim()) sync();
   }
-  /** Uses an offer card as the destination search. */
+
   function initBookNowFromOffers() {
     let ul = document.getElementById('offers-cards');
     if (!ul) return;
@@ -758,7 +752,7 @@
       if (departTrigger) departTrigger.focus();
     });
   }
-  /** Offer image lightbox. */
+
   function initOfferLightbox() {
     let ul = document.getElementById('offers-cards');
     let lb = document.getElementById('offer-lightbox');
@@ -828,7 +822,7 @@
       openLb(stack);
     });
   }
-  /** Offer carousel controls. */
+
   function initOffersCarousel() {
     let scrollEl = document.getElementById('offers-scroll');
     let prev = document.getElementById('offers-prev');
@@ -869,14 +863,14 @@
     }
 
     function jumpByCards(direction) {
-      const carouselCards = offerCards();
+      let carouselCards = offerCards();
       if (!carouselCards.length) return;
       if (carouselCards.length <= 4) {
         scrollEl.scrollBy({ left: direction * (scrollEl.clientWidth || 280), behavior: 'smooth' });
         return;
       }
-      const current = nearestCardIndex(carouselCards);
-      const target = Math.max(0, Math.min(carouselCards.length - 1, current + (direction * 4)));
+      let current = nearestCardIndex(carouselCards);
+      let target = Math.max(0, Math.min(carouselCards.length - 1, current + (direction * 4)));
       scrollEl.scrollTo({ left: carouselCards[target].offsetLeft, behavior: 'smooth' });
     }
     if (prev) {

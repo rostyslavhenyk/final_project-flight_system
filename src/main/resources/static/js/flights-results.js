@@ -1,12 +1,7 @@
-/**
- * Search results: fare panel open/close, fare selection animation, route-details close animation,
- * and navigation to review/inbound pages.
- */
 (function () {
   'use strict';
 
-  /** Matches fare-plan-chosen-tap-and-leave (1.04s) + short buffer before navigation. */
-  let FARE_SELECT_EXIT_MS = 1040;
+  const FARE_SELECT_EXIT_MS = 1040;
 
   function navigateDelayMs() {
     return FARE_SELECT_EXIT_MS + 60;
@@ -51,10 +46,6 @@
     setDatasetQueryParam(params, 'obFare', card, 'obFare');
   }
 
-  /**
-   * Clears selection-exit state so fare columns are visible again. Needed when the user returns via
-   * the back button (bfcache restores the frozen DOM with animation-fill forwards opacity: 0).
-   */
   function resetFareSelectionUi() {
     document.querySelectorAll('.fare-grid.fare-grid--select-busy').forEach(function (g) {
       g.classList.remove('fare-grid--select-busy');
@@ -88,7 +79,7 @@
   }
 
   function initFarePanels() {
-    const flightCards = document.querySelectorAll('[data-flight-card]');
+    let flightCards = document.querySelectorAll('[data-flight-card]');
     if (!flightCards.length) return;
 
     flightCards.forEach(function (card) {
@@ -113,7 +104,6 @@
     });
   }
 
-  /** Shared query for /book/review and /book/passengers (segment snapshot from the card). */
   function buildBookingQueryParams(card, tier, price) {
     let p = new URLSearchParams();
     p.set('from', card.dataset.searchFrom || '');
@@ -132,14 +122,12 @@
     return p;
   }
 
-  /** Step 2: review flight + fare before passenger details. */
   function buildReviewUrl(card, tier, price) {
     let p = buildBookingQueryParams(card, tier, price);
     p.set('highlight', '1');
     return '/book/review?' + p.toString();
   }
 
-  /** Return leg: same UI as outbound results with swapped city pair and return date as depart. */
   function buildInboundSearchUrl(card, tier, price) {
     let p = new URLSearchParams();
     p.set('from', card.dataset.searchTo || '');
@@ -212,10 +200,6 @@
     });
   }
 
-  /**
-   * When retracting Route details, run a short fade-out + lift before removing [open]
-   * so it matches the open animation. Opening stays native (CSS only).
-   */
   function initRouteDetailsCloseAnimation() {
     let detailsEls = document.querySelectorAll('.flight-card__details[data-route-details]');
     if (!detailsEls.length) return;
@@ -273,7 +257,6 @@
     });
   }
 
-  /** Title comboboxes on `/book/passengers` (homepage-style white trigger; options Mr / Miss only). */
   function initPassengerTitleCombos() {
     let roots = document.querySelectorAll('[data-bp-title-combo]');
     if (!roots.length) return;
@@ -331,10 +314,6 @@
     });
   }
 
-  /**
-   * `/book/passengers`: restrict name fields (letters + space/hyphen/apostrophe), dial code (+ fixed + digits),
-   * numeric phone, and email must contain '@'.
-   */
   function initPassengerFieldConstraints() {
     let form = document.querySelector('[data-bp-passenger-form]');
     if (!form) return;
@@ -446,9 +425,6 @@
       if (focusEl && focusEl.focus) focusEl.focus();
     }
 
-    /**
-     * Validates in document order; only the first failure is shown (under that field’s white card).
-     */
     function validatePassengerFormForSubmit() {
       clearPassengerInlineErrors();
       if (emailEl) emailEl.setCustomValidity('');
