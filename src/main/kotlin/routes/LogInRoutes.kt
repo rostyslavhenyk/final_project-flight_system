@@ -10,7 +10,9 @@ import utils.jsMode
 import utils.timed
 import data.UserRepository
 import auth.UserSession
+import org.mindrot.jbcrypt.BCrypt
 
+// login and logout routes
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
     post("/login") { call.handleLogInPost() }
@@ -32,6 +34,7 @@ private suspend fun ApplicationCall.handleLogInLoad() {
     }
 }
 
+// checks email and password then logs user in
 private suspend fun ApplicationCall.handleLogInPost() {
     timed("T1_login_submit", jsMode()) {
         val params = receiveParameters()
@@ -39,7 +42,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
         val password = params["password"]
         val redirectUrl = safeLoginRedirect(params["redirect"])
 
-        if (email == null) {
+        if (email == null || password == null) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,
@@ -59,7 +62,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
             return@timed
         }
 
-        if (usr.password != password) {
+        if (!BCrypt.checkpw(password, usr.password)) {
             respondText(
                 createLoginStatus("Incorrect email or password"),
                 ContentType.Text.Html,

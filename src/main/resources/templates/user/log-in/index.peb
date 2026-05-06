@@ -25,6 +25,9 @@
                 <label for="login-password">Password</label>
                 <input id="login-password" name="password" type="password" autocomplete="current-password">
             </div>
+            <p class="auth-form__secondary-link">
+                <a href="/forgot-password">Forgot your password?</a>
+            </p>
             <button type="submit">Log in</button>
             <div id="log-in-status" role="status" aria-live="polite" aria-atomic="true"></div>
         </form>

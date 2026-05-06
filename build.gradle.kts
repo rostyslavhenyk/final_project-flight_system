@@ -18,32 +18,33 @@ val logbackVersion = "1.4.14"
 val pebbleVersion = "3.2.2"
 
 dependencies {
-    // Ktor server core
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-sessions-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-call-logging-jvm:$ktorVersion")
+    implementation("com.sun.mail:jakarta.mail:2.0.1")
+    implementation("com.twilio.sdk:twilio:10.1.5")
+    implementation("org.mindrot:jbcrypt:0.4")
 
-    // Pebble templating
+    // pebble templating
     implementation("io.pebbletemplates:pebble:$pebbleVersion")
 
-    // Logging
+    // logging
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
-    // CSV handling
+    // csv handling
     implementation("org.apache.commons:commons-csv:1.10.0")
     implementation("com.github.doyaaaaaken:kotlin-csv-jvm:1.9.3")
 
-    // Sqlite
+    // database
     implementation("org.jetbrains.exposed:exposed-core:0.49.0")
     implementation("org.jetbrains.exposed:exposed-dao:0.49.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.49.0")
-
     implementation("org.xerial:sqlite-jdbc:3.45.1.0")
 
-    // Testing
+    // testing
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
     testImplementation("io.ktor:ktor-client-content-negotiation-jvm:$ktorVersion")
@@ -59,7 +60,6 @@ tasks.test {
 }
 
 tasks.withType<JavaExec> {
-    // Enable development mode for hot reload
     systemProperty("io.ktor.development", "true")
 }
 
@@ -67,16 +67,12 @@ kotlin {
     jvmToolchain(21)
 }
 
-// Code quality: Detekt (static analysis)
-// Reports violations as warnings, doesn't fail build
 detekt {
     config.setFrom(files("detekt.yml"))
     buildUponDefaultConfig = true
-    ignoreFailures = true // Report but don't fail build
+    ignoreFailures = true
 }
 
-// Code quality: ktlint (code style)
-// Reports violations as warnings, doesn't fail build
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-    ignoreFailures.set(true) // Report but don't fail build
+    ignoreFailures.set(true)
 }

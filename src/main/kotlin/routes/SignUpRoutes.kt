@@ -10,7 +10,9 @@ import utils.jsMode
 import utils.timed
 import data.UserRepository
 import auth.UserSession
+import org.mindrot.jbcrypt.BCrypt
 
+// signup routes
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
     post("/signup") { call.handleSignUpPost() }
@@ -30,6 +32,7 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
     }
 }
 
+// validates fields then creates the user
 private suspend fun ApplicationCall.handleSignUpPost() {
     timed("T1_signup_submit", jsMode()) {
         val params = receiveParameters()
@@ -86,7 +89,8 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val createdUser = UserRepository.add(firstname, lastname, 0, email, password)
+        val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+        val createdUser = UserRepository.add(firstname, lastname, 0, email, hashedPassword)
         sessions.set(UserSession(createdUser.id, createdUser.firstname))
         response.headers.append("HX-Redirect", "/")
         respond(HttpStatusCode.OK)
