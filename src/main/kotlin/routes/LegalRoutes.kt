@@ -11,6 +11,6 @@ fun Route.legalRoutes() {
 
 private suspend fun ApplicationCall.handleLegalLoad() {
     timed("T0_legal", jsMode()) {
-        renderTemplate("legal/index.peb", mapOf("title" to "Legal and Privacy"))
+        renderTemplate("user/legal/index.peb", mapOf("title" to "Legal and Privacy"))
     }
 }

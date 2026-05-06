@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Staff Panel{% endblock %}</title>
+    <link rel="icon" href="/static/images/LogoForTab.svg" type="image/svg+xml">
 
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/staff/panel.css">
@@ -17,17 +18,22 @@
 
     <header id="navbar">
         <div class="brand">
-            <a href="/staff" class="brand-link">Glide Staff</a>
+            <a href="/staff" class="brand-link brand-link--logo brand-link--staff-logo" aria-label="Glide Staff home">
+                <img class="brand-logo brand-logo--staff" src="/static/images/StaffLogo.svg" alt="Glide Staff">
+            </a>
         </div>
         <nav>
             <ul class="main-links">
                 <li><a href="/staff">Dashboard</a></li>
                 <li><a href="/staff/flights">Flights</a></li>
                 <li><a href="/staff/users">Users</a></li>
+                {% if isStaffAdmin %}
+                <li><a href="/staff/staff-accounts">Create Staff</a></li>
+                {% endif %}
                 <li><a href="/staff/tickets">Tickets</a></li>
             </ul>
             <ul class="auth-links">
-                <li><a href="/my-account">My Account</a></li>
+                <li><a href="/staff/my-account">My Account</a></li>
                 <li><a href="/logout">Log Out</a></li>
             </ul>
         </nav>

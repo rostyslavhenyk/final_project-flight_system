@@ -3,7 +3,6 @@
 {% block content %}
 <section class="staff-shell">
     <header class="staff-hero">
-        <p class="staff-hero__eyebrow">Staff panel</p>
         <h1>Staff Dashboard</h1>
         <p>Welcome {{ user.firstname }}. Choose a workspace below.</p>
     </header>
@@ -24,6 +23,13 @@
             <strong>Manage support</strong>
             <span>Track user tickets, staff tickets, status updates, and images.</span>
         </a>
+        {% if isStaffAdmin %}
+        <a href="/staff/staff-accounts" class="staff-card">
+            <span class="staff-card__label">Admin</span>
+            <strong>Create staff accounts</strong>
+            <span>Add staff users with access to the internal staff workspace.</span>
+        </a>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

@@ -3,79 +3,108 @@ package data.flight
 import java.time.LocalTime
 import java.util.Locale
 import kotlin.math.absoluteValue
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 internal object FlightScheduleRules {
-    private const val SHORT_HAUL_MINUTES = 55
-    private const val SHORT_HAUL_SPREAD_MINUTES = 125
-    private const val MEDIUM_HAUL_MINUTES = 260
-    private const val MEDIUM_HAUL_SPREAD_MINUTES = 360
-    private const val LONG_HAUL_MINUTES = 420
-    private const val LONG_HAUL_SPREAD_MINUTES = 420
+    private const val EARTH_RADIUS_KM = 6_371.0
+    private const val MINUTES_PER_HOUR = 60
+    private const val SHORT_HAUL_DISTANCE_KM = 900.0
+    private const val MEDIUM_HAUL_DISTANCE_KM = 3_700.0
+    private const val SHORT_HAUL_AIR_SPEED_KMH = 650.0
+    private const val MEDIUM_HAUL_AIR_SPEED_KMH = 780.0
+    private const val LONG_HAUL_AIR_SPEED_KMH = 870.0
+    private const val SHORT_HAUL_BLOCK_BUFFER_MINUTES = 45
+    private const val MEDIUM_HAUL_BLOCK_BUFFER_MINUTES = 65
+    private const val LONG_HAUL_BLOCK_BUFFER_MINUTES = 85
+    private const val SHORT_HAUL_VARIATION_MINUTES = 16
+    private const val MEDIUM_HAUL_VARIATION_MINUTES = 28
+    private const val LONG_HAUL_VARIATION_MINUTES = 42
+    private const val MIN_DURATION_MINUTES = 45
+    private const val MAX_DURATION_MINUTES = 1_100
     private const val SHORT_HAUL_PRICE_LIMIT_MINUTES = 90
     private const val MEDIUM_HAUL_PRICE_LIMIT_MINUTES = 150
-    private const val LONG_HAUL_BASE_PRICE = 399.0
-    private const val PRICE_DURATION_DIVISOR = 30
-    private const val SHORT_HAUL_PRICE = 89.0
-    private const val MEDIUM_HAUL_PRICE = 129.0
-    private const val DEFAULT_PRICE = 169.0
+    private const val LONG_HAUL_STARTING_PRICE = 349.0
+    private const val LONG_HAUL_DURATION_PRICE_DIVISOR = 35
+    private const val REGIONAL_PRICE = 79.0
+    private const val SHORT_CONNECTION_PRICE = 115.0
+    private const val STANDARD_PRICE = 149.0
     private const val ROUTE_TIME_VARIANT_COUNT = 3
     private const val MORNING_HOUR_ONE = 6
     private const val MORNING_HOUR_TWO = 7
     private const val MORNING_HOUR_THREE = 8
-    private const val MIDDAY_HOUR_ONE = 12
-    private const val MIDDAY_HOUR_TWO = 13
-    private const val MIDDAY_HOUR_THREE = 14
     private const val EVENING_HOUR_ONE = 17
     private const val EVENING_HOUR_TWO = 18
     private const val EVENING_HOUR_THREE = 19
     private const val EARLY_MORNING_MINUTE = 15
     private const val LATE_MORNING_MINUTE = 45
-    private const val EARLY_MIDDAY_MINUTE = 35
-    private const val LATE_MIDDAY_MINUTE = 5
     private const val EARLY_EVENING_MINUTE = 20
     private const val LATE_EVENING_MINUTE = 50
+    private const val EXTRA_DAILY_DEPARTURE_INTERVAL = 3
 
     private val morningHours = listOf(MORNING_HOUR_ONE, MORNING_HOUR_TWO, MORNING_HOUR_THREE)
-    private val middayHours = listOf(MIDDAY_HOUR_ONE, MIDDAY_HOUR_TWO, MIDDAY_HOUR_THREE)
     private val eveningHours = listOf(EVENING_HOUR_ONE, EVENING_HOUR_TWO, EVENING_HOUR_THREE)
 
     private val europeanCodes =
         setOf("MAN", "LBA", "LHR", "LGW", "EDI", "AMS", "CDG", "BCN", "FCO", "IST", "FRA", "MUC", "ZRH", "CPH")
 
-    private val longHaulCodes =
-        setOf("DXB", "HKG", "JFK", "LAX", "YVR", "BKK", "DPS", "SIN", "NRT", "SYD", "ICN", "DOH", "AUH", "KUL", "DEL")
+    private val airportCoordinates = FlightSeedData.airportCoordinates()
 
-    fun weeklyDepartureTimes(routeIndex: Int): List<LocalTime> =
-        listOf(
+    fun weeklyDepartureTimes(routeIndex: Int): List<LocalTime> {
+        val primaryDeparture =
             LocalTime.of(
                 morningHours[routeIndex % ROUTE_TIME_VARIANT_COUNT],
                 if (routeIndex % 2 == 0) EARLY_MORNING_MINUTE else LATE_MORNING_MINUTE,
-            ),
-            LocalTime.of(
-                middayHours[routeIndex % ROUTE_TIME_VARIANT_COUNT],
-                if (routeIndex % 2 == 0) EARLY_MIDDAY_MINUTE else LATE_MIDDAY_MINUTE,
-            ),
+            )
+        val extraDeparture =
             LocalTime.of(
                 eveningHours[routeIndex % ROUTE_TIME_VARIANT_COUNT],
                 if (routeIndex % 2 == 0) EARLY_EVENING_MINUTE else LATE_EVENING_MINUTE,
-            ),
-        )
+            )
+        return if (routeIndex % EXTRA_DAILY_DEPARTURE_INTERVAL == 0) {
+            listOf(primaryDeparture, extraDeparture)
+        } else {
+            listOf(primaryDeparture)
+        }
+    }
 
     fun durationForRoute(
         departureCode: String,
         arrivalCode: String,
         routeIndex: Int,
-    ): Int =
-        when {
-            departureCode in longHaulCodes || arrivalCode in longHaulCodes ->
-                LONG_HAUL_MINUTES + stableRouteNumber(departureCode, arrivalCode, routeIndex) % LONG_HAUL_SPREAD_MINUTES
-            departureCode in europeanCodes && arrivalCode in europeanCodes ->
-                SHORT_HAUL_MINUTES +
-                    stableRouteNumber(departureCode, arrivalCode, routeIndex) % SHORT_HAUL_SPREAD_MINUTES
-            else ->
-                MEDIUM_HAUL_MINUTES +
-                    stableRouteNumber(departureCode, arrivalCode, routeIndex) % MEDIUM_HAUL_SPREAD_MINUTES
-        }
+    ): Int {
+        val distanceKm = distanceKm(departureCode, arrivalCode)
+        val profile =
+            when {
+                distanceKm <= SHORT_HAUL_DISTANCE_KM ->
+                    DurationProfile(
+                        SHORT_HAUL_AIR_SPEED_KMH,
+                        SHORT_HAUL_BLOCK_BUFFER_MINUTES,
+                        SHORT_HAUL_VARIATION_MINUTES,
+                    )
+                distanceKm <= MEDIUM_HAUL_DISTANCE_KM ->
+                    DurationProfile(
+                        MEDIUM_HAUL_AIR_SPEED_KMH,
+                        MEDIUM_HAUL_BLOCK_BUFFER_MINUTES,
+                        MEDIUM_HAUL_VARIATION_MINUTES,
+                    )
+                else ->
+                    DurationProfile(
+                        LONG_HAUL_AIR_SPEED_KMH,
+                        LONG_HAUL_BLOCK_BUFFER_MINUTES,
+                        LONG_HAUL_VARIATION_MINUTES,
+                    )
+            }
+        val variation = stableRouteNumber(departureCode, arrivalCode, routeIndex) % profile.variationMinutes
+        val airborneMinutes = ((distanceKm / profile.airSpeedKmh) * MINUTES_PER_HOUR).roundToInt()
+        return (profile.blockBufferMinutes + airborneMinutes + variation).coerceIn(
+            MIN_DURATION_MINUTES,
+            MAX_DURATION_MINUTES,
+        )
+    }
 
     fun priceForRoute(
         departureCode: String,
@@ -83,11 +112,11 @@ internal object FlightScheduleRules {
         durationMinutes: Int,
     ): Double =
         when {
-            departureCode in longHaulCodes || arrivalCode in longHaulCodes ->
-                LONG_HAUL_BASE_PRICE + (durationMinutes / PRICE_DURATION_DIVISOR)
-            durationMinutes <= SHORT_HAUL_PRICE_LIMIT_MINUTES -> SHORT_HAUL_PRICE
-            durationMinutes <= MEDIUM_HAUL_PRICE_LIMIT_MINUTES -> MEDIUM_HAUL_PRICE
-            else -> DEFAULT_PRICE
+            distanceKm(departureCode, arrivalCode) > MEDIUM_HAUL_DISTANCE_KM ->
+                LONG_HAUL_STARTING_PRICE + (durationMinutes / LONG_HAUL_DURATION_PRICE_DIVISOR)
+            durationMinutes <= SHORT_HAUL_PRICE_LIMIT_MINUTES -> REGIONAL_PRICE
+            durationMinutes <= MEDIUM_HAUL_PRICE_LIMIT_MINUTES -> SHORT_CONNECTION_PRICE
+            else -> STANDARD_PRICE
         }
 
     private fun stableRouteNumber(
@@ -96,16 +125,23 @@ internal object FlightScheduleRules {
         routeIndex: Int,
     ): Int = "$departureCode-$arrivalCode-$routeIndex".hashCode().absoluteValue
 
-    /*
-     * Codes used to restrict business cabin on intra-regional UK/EU routes (pair detection only; coercion
-     * of `cabinClass` lives in [routes.CabinNormalization] and homepage UI).
-     */
+    private fun distanceKm(
+        departureCode: String,
+        arrivalCode: String,
+    ): Double {
+        val departure = airportCoordinates.getValue(departureCode.uppercase(Locale.UK))
+        val arrival = airportCoordinates.getValue(arrivalCode.uppercase(Locale.UK))
+        val latDelta = Math.toRadians(arrival.latitude - departure.latitude)
+        val lonDelta = Math.toRadians(arrival.longitude - departure.longitude)
+        val departureLat = Math.toRadians(departure.latitude)
+        val arrivalLat = Math.toRadians(arrival.latitude)
+        val a =
+            sin(latDelta / 2) * sin(latDelta / 2) +
+                cos(departureLat) * cos(arrivalLat) * sin(lonDelta / 2) * sin(lonDelta / 2)
+        return EARTH_RADIUS_KM * 2 * atan2(sqrt(a), sqrt(1 - a))
+    }
 
-    /**
-     * UK/EU-style regional pair (both endpoints in [europeanCodes]): used to hide **Business** on the homepage
-     * and to coerce `cabinClass=business` to economy for search/review when the route is treated as
-     * short-haul regional.
-     */
+    /** True when Business should be unavailable for a regional route. */
     fun isIntraRegionalBusinessRestrictedPair(
         departureCode: String,
         arrivalCode: String,
@@ -115,3 +151,9 @@ internal object FlightScheduleRules {
         return d != a && d in europeanCodes && a in europeanCodes
     }
 }
+
+private data class DurationProfile(
+    val airSpeedKmh: Double,
+    val blockBufferMinutes: Int,
+    val variationMinutes: Int,
+)

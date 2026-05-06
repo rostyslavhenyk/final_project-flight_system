@@ -9,8 +9,8 @@ import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.get
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import utils.baseModel
-import java.io.StringWriter
+import routes.staff.receiveTicketFormUpload
+import routes.staff.saveTicketImages
 import utils.jsMode
 import utils.timed
 
@@ -74,17 +74,13 @@ private suspend fun ApplicationCall.respondHelpPage(
     ticketError: String? = null,
     ticketForm: Map<String, String> = emptyMap(),
 ) {
-    val model =
-        baseModel(
-            mapOf(
-                "title" to "Help",
-                "ticketCreated" to ticketCreated,
-                "ticketError" to ticketError,
-                "ticketForm" to ticketForm,
-            ),
-        )
-    val template = pebbleEngine.getTemplate("user/help/index.peb")
-    val writer = StringWriter()
-    template.evaluate(writer, model)
-    respondText(writer.toString(), ContentType.Text.Html)
+    renderTemplate(
+        "user/help/index.peb",
+        mapOf(
+            "title" to "Help",
+            "ticketCreated" to ticketCreated,
+            "ticketError" to ticketError,
+            "ticketForm" to ticketForm,
+        ),
+    )
 }

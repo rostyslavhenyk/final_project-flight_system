@@ -13,7 +13,7 @@ import kotlin.math.absoluteValue
 
 private const val MIN_LAYOVER_MINUTES = 75
 private const val MAX_LOOKAHEAD_DAYS = 2
-private const val MAX_CONNECTION_RECORDS = 7
+private const val CONNECTIONS_PER_STOP_COUNT = 2
 private const val ONE_STOP_HUB_LIMIT = 4
 private const val TWO_STOP_PAIR_LIMIT = 3
 private const val CONNECTED_FARE_MULTIPLIER = "0.82"
@@ -42,10 +42,7 @@ internal object FlightConnectionBuilder {
             "DXB" to "HKG",
         )
 
-    /*
-     * FLIGHT-SYSTEM-TWEAKS + codes used to speed up loading time: [allFlights] is loaded once by the search route; we
-     * only slice it by date in memory for connection lookahead (below), instead of opening a new DB query per day.
-     */
+    /** Reuses the loaded flight list for connection lookahead. */
     fun recordsForDate(
         originCode: String,
         destCode: String,
@@ -65,36 +62,33 @@ internal object FlightConnectionBuilder {
                 .flatten()
                 .filter { row -> row.stops == 0 }
                 .groupBy { row -> row.originCode.uppercase(Locale.UK) to row.destCode.uppercase(Locale.UK) }
-        val records = mutableListOf<FlightSearchRepository.FlightScheduleRecord>()
+        val oneStopRecords =
+            pickOneStopHubs(origin, destination).mapNotNull { hubCode ->
+                val firstLeg = rowsByRoute[origin to hubCode]?.firstLegOn(depart)
+                buildConnection(
+                    depart = depart,
+                    legs =
+                        listOfNotNull(
+                            firstLeg,
+                            rowsByRoute[hubCode to destination]?.firstConnectableLegAfter(firstLeg),
+                        ),
+                    stopoverCodes = listOf(hubCode),
+                )
+            }
+        val twoStopRecords =
+            pickTwoStopPairs(origin, destination).mapNotNull { stopovers ->
+                val firstLeg = rowsByRoute[origin to stopovers.first]?.firstLegOn(depart)
+                val secondLeg = rowsByRoute[stopovers.first to stopovers.second]?.firstConnectableLegAfter(firstLeg)
+                val thirdLeg = rowsByRoute[stopovers.second to destination]?.firstConnectableLegAfter(secondLeg)
+                buildConnection(
+                    depart = depart,
+                    legs = listOfNotNull(firstLeg, secondLeg, thirdLeg),
+                    stopoverCodes = listOf(stopovers.first, stopovers.second),
+                )
+            }
 
-        pickOneStopHubs(origin, destination).forEach { hubCode ->
-            val firstLeg = rowsByRoute[origin to hubCode]?.firstLegOn(depart)
-            buildConnection(
-                depart = depart,
-                legs =
-                    listOfNotNull(
-                        firstLeg,
-                        rowsByRoute[hubCode to destination]?.firstConnectableLegAfter(firstLeg),
-                    ),
-                stopoverCodes = listOf(hubCode),
-            )?.let { records += it }
-        }
-
-        pickTwoStopPairs(origin, destination).forEach { stopovers ->
-            val firstLeg = rowsByRoute[origin to stopovers.first]?.firstLegOn(depart)
-            val secondLeg = rowsByRoute[stopovers.first to stopovers.second]?.firstConnectableLegAfter(firstLeg)
-            val thirdLeg = rowsByRoute[stopovers.second to destination]?.firstConnectableLegAfter(secondLeg)
-            buildConnection(
-                depart = depart,
-                legs = listOfNotNull(firstLeg, secondLeg, thirdLeg),
-                stopoverCodes = listOf(stopovers.first, stopovers.second),
-            )?.let { records += it }
-        }
-
-        return records
-            .distinctBy { row -> row.legFlightNumbers.joinToString("|") }
-            .sortedWith(compareBy({ it.stops }, { it.departTime }))
-            .take(MAX_CONNECTION_RECORDS)
+        return (twoCheapest(oneStopRecords) + twoCheapest(twoStopRecords))
+            .sortedWith(compareBy({ it.stops }, { it.priceLight }, { it.departTime }))
     }
 
     private fun List<FlightSearchRepository.FlightScheduleRecord>.firstLegOn(
@@ -245,3 +239,11 @@ private fun connectedRecommendedRank(
 ): Int =
     CONNECTION_RANK_BASE + stopoverCount * CONNECTION_RANK_STOP_WEIGHT +
         legs.joinToString("-") { it.recommendedRank.toString() }.hashCode().absoluteValue % CONNECTION_RANK_SPREAD
+
+private fun twoCheapest(
+    records: List<FlightSearchRepository.FlightScheduleRecord>,
+): List<FlightSearchRepository.FlightScheduleRecord> =
+    records
+        .distinctBy { row -> row.legFlightNumbers.joinToString("|") }
+        .sortedWith(compareBy({ it.priceLight }, { it.durationMinutes }, { it.departTime }))
+        .take(CONNECTIONS_PER_STOP_COUNT)

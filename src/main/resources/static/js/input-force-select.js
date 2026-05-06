@@ -1,12 +1,4 @@
-/**
- * Shared “force select all on focus” for text inputs: briefly keeps the whole value selected after focus
- * (helps replace airport codes / flight digits quickly). Skips when the value is empty or whitespace-only.
- *
- * **Loaded by** (before the page script, both `defer`): `templates/homepage/index.peb`, `templates/flights/status/index.peb`.
- * **Used from** `homepage.js` and `flight-status.js` via `window.attachForceSelectAll(...)`.
- *
- * **Grep:** `FLIGHT-SYSTEM-TWEAKS`
- */
+/** Shared select-all-on-focus helper for filled text inputs. */
 (function(global) {
   'use strict';
 

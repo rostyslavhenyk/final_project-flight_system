@@ -1,0 +1,24 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block content %}
+<section class="staff-shell" aria-labelledby="staff-account-heading">
+    <header class="staff-hero">
+        <h1 id="staff-account-heading">My account</h1>
+        <p>Staff profile and workspace access.</p>
+    </header>
+
+    <section class="staff-form-card" aria-labelledby="staff-details-heading">
+        <div class="surface-card__body">
+            <h2 id="staff-details-heading">Staff details</h2>
+            <dl class="detail-list">
+                <dt>Name</dt>
+                <dd>{{ account.firstname }} {{ account.lastname }}</dd>
+                <dt>Email</dt>
+                <dd>{{ account.email }}</dd>
+                <dt>Account type</dt>
+                <dd>{% if account.roleId == 2 %}Staff admin{% else %}Staff{% endif %}</dd>
+            </dl>
+        </div>
+    </section>
+</section>
+{% endblock %}

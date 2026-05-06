@@ -17,8 +17,6 @@ private const val FLEX_FARE_INCREMENT = "75.00"
 private const val FLIGHT_NUMBER_DIGITS = 4
 
 internal object FlightRecordMapper {
-    // FLIGHT-SYSTEM-TWEAKS: callers that already loaded FlightRepository.allFull() pass the same list here
-    // so we filter/map in memory instead of querying the DB again.
     fun recordsForDate(depart: LocalDate): List<FlightSearchRepository.FlightScheduleRecord> =
         recordsForDate(depart, FlightRepository.allFull())
 
@@ -26,7 +24,11 @@ internal object FlightRecordMapper {
         depart: LocalDate,
         allFlights: List<FlightFull>,
     ): List<FlightSearchRepository.FlightScheduleRecord> =
-        allFlights.mapNotNull { full -> full.toScheduleRecord(depart) }
+        allFlights
+            .asSequence()
+            .filter { full -> matchesDepartureDate(full, depart) }
+            .mapNotNull { full -> full.toScheduleRecord(depart) }
+            .toList()
 
     fun statusRecord(row: FlightSearchRepository.FlightScheduleRecord): FlightSearchRepository.FlightStatusRecord =
         FlightSearchRepository.FlightStatusRecord(
@@ -115,31 +117,31 @@ internal object FlightRecordMapper {
             ).toMinutes()
             .toInt()
             .coerceAtLeast(DEFAULT_MIN_DURATION_MINUTES)
+}
 
-    private fun arrivalOffsetDays(
-        departure: LocalDateTime,
-        normalizedArrival: LocalDateTime,
-    ): Int =
-        Duration
-            .between(
-                departure.toLocalDate().atStartOfDay(),
-                normalizedArrival.toLocalDate().atStartOfDay(),
-            ).toDays()
-            .toInt()
+private fun arrivalOffsetDays(
+    departure: LocalDateTime,
+    normalizedArrival: LocalDateTime,
+): Int =
+    Duration
+        .between(
+            departure.toLocalDate().atStartOfDay(),
+            normalizedArrival.toLocalDate().atStartOfDay(),
+        ).toDays()
+        .toInt()
 
-    private fun parseDateTimeOrTime(
-        raw: String,
-        fallbackDate: LocalDate,
-    ): LocalDateTime? {
-        val value = raw.trim()
-        val dateTime =
-            if (value.isBlank()) {
-                null
-            } else {
-                parseDateTime(value)
-            }
-        return dateTime ?: parseTime(value)?.let { time -> LocalDateTime.of(fallbackDate, time) }
-    }
+private fun parseDateTimeOrTime(
+    raw: String,
+    fallbackDate: LocalDate,
+): LocalDateTime? {
+    val value = raw.trim()
+    val dateTime =
+        if (value.isBlank()) {
+            null
+        } else {
+            parseDateTime(value)
+        }
+    return dateTime ?: parseTime(value)?.let { time -> LocalDateTime.of(fallbackDate, time) }
 }
 
 private fun parseDateTime(value: String): LocalDateTime? =
@@ -157,3 +159,11 @@ private fun parseTime(value: String): LocalTime? =
     ).firstNotNullOfOrNull { parser -> runCatching { parser() }.getOrNull() }
 
 private fun hasDatePart(raw: String): Boolean = raw.any { it == '-' || it == '/' }
+
+private fun matchesDepartureDate(
+    full: FlightFull,
+    requestedDate: LocalDate,
+): Boolean {
+    val departure = full.flight.departureTime.trim()
+    return !hasDatePart(departure) || departure.startsWith(requestedDate.toString())
+}

@@ -1,0 +1,131 @@
+{% extends "_layout/base.peb" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/users/flights/status.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="/static/js/input-force-select.js" defer></script>
+<script src="/static/js/flight-status.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="flights-page status-page">
+<section class="status-shell">
+    <section class="status-panel">
+        <h1 class="status-panel__title">Flight status</h1>
+        <p class="status-panel__desc">Provides real time flight status for your experience</p>
+
+        <div class="status-tabs">
+            <a href="/flight-status?mode=flight-number&date={{ date }}{% if anyDate %}&anyDate=1{% endif %}" class="status-tab{% if mode == 'flight-number' %} status-tab--active{% endif %}">By flight number</a>
+            <a href="/flight-status?mode=route&date={{ date }}{% if anyDate %}&anyDate=1{% endif %}" class="status-tab{% if mode == 'route' %} status-tab--active{% endif %}">By route</a>
+        </div>
+
+        {% if mode == 'route' %}
+        <form method="get" action="/flight-status" class="status-form">
+            <input type="hidden" name="mode" value="route">
+            <div class="field--autocomplete status-airport-field">
+                <input id="status-from" type="text" name="from" value="{{ fromRaw }}" placeholder="From (IATA or city)" class="status-input" autocomplete="off" aria-autocomplete="list" aria-controls="status-from-list" aria-expanded="false" role="combobox">
+                <div id="status-from-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Origin airport suggestions">
+                    {% for airport in airports %}
+                    <div role="option" data-value="{{ airport }}">{{ airport }}</div>
+                    {% endfor %}
+                    <p class="autocomplete-dropdown__empty" hidden role="status" aria-live="polite">We can't find a matching airport.</p>
+                </div>
+            </div>
+            <div class="field--autocomplete status-airport-field">
+                <input id="status-to" type="text" name="to" value="{{ toRaw }}" placeholder="To (IATA or city)" class="status-input" autocomplete="off" aria-autocomplete="list" aria-controls="status-to-list" aria-expanded="false" role="combobox">
+                <div id="status-to-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Destination airport suggestions">
+                    {% for airport in airports %}
+                    <div role="option" data-value="{{ airport }}">{{ airport }}</div>
+                    {% endfor %}
+                    <p class="autocomplete-dropdown__empty" hidden role="status" aria-live="polite">We can't find a matching airport.</p>
+                </div>
+            </div>
+            <input type="text" name="date" value="{{ date }}" data-min-date="{{ minDate }}" class="status-input status-input--date status-date-picker" autocomplete="off">
+            <label class="status-any-date">
+                <input type="checkbox" name="anyDate" value="1" {% if anyDate %}checked{% endif %}>
+                <span>Any date (upcoming 7 days)</span>
+            </label>
+            <button type="submit" class="status-submit">Check status</button>
+        </form>
+        {% else %}
+        <form method="get" action="/flight-status" class="status-form">
+            <input type="hidden" name="mode" value="flight-number">
+            <div class="field--autocomplete status-airport-field status-flight-number-wrap">
+            <div class="status-flight-input-wrap">
+                <span class="status-flight-prefix" aria-hidden="true">GA</span>
+                <input id="status-flight-digits" type="text" name="flightNumber" value="{{ flightDigits }}" inputmode="numeric" pattern="[0-9]*" maxlength="6" data-max-flight-digits="6" placeholder="e.g. {{ flightDigitsExample }}" class="status-input status-input--flight status-input--flight-digits" autocomplete="off" aria-autocomplete="list" aria-controls="status-flight-suggest-list" aria-expanded="false" role="combobox" title="Type up to 6 digits; matching GA flights in the next {{ flightStatusSuggestDays }} days appear below.">
+            </div>
+            <div id="status-flight-suggest-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Matching flight numbers"></div>
+            </div>
+            <input type="text" name="date" value="{{ date }}" data-min-date="{{ minDate }}" class="status-input status-input--date status-date-picker" autocomplete="off">
+            <label class="status-any-date">
+                <input type="checkbox" name="anyDate" value="1" {% if anyDate %}checked{% endif %}>
+                <span>Any date (upcoming 7 days)</span>
+            </label>
+            <button type="submit" class="status-submit">Check status</button>
+        </form>
+        {% endif %}
+    </section>
+
+    <hr class="status-divider" aria-hidden="true">
+
+    {% if hasQuery %}
+    <section class="status-results">
+        {% if not formError %}
+        <div class="status-results__head">
+            <h2 class="status-results__title">{{ resultsLabel }}</h2>
+            <span class="status-results__count" aria-live="polite">{{ statusTotalFlightsLabel }}</span>
+        </div>
+        {% endif %}
+        {% if formError %}
+        <p class="status-empty">{{ formError }}</p>
+        {% elseif statusRows | length > 0 %}
+        <table class="status-table">
+            <thead>
+                <tr>
+                    <th class="status-table__col-flight">Flight number</th>
+                    <th>Route and schedule</th>
+                    <th class="status-table__col-status">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in statusRows %}
+                <tr>
+                    <td class="status-table__flight">{{ row.flightNumber }}</td>
+                    <td>
+                        {% if row.showServiceDate %}
+                        <div class="status-service-date">{{ row.serviceDateLabel }}</div>
+                        {% endif %}
+                        {% if row.hasVia %}
+                        <div class="status-via">Via {{ row.viaLine }}</div>
+                        {% endif %}
+                        <div>{{ row.originName }} ({{ row.originCode }}) {{ row.departureLabel }} -> {{ row.destName }} ({{ row.destCode }}) {{ row.arrivalLabel }}</div>
+                        {% if row.hasEstimate %}
+                        <div class="status-estimate">Estimated: {{ row.originName }} ({{ row.originCode }}) {{ row.estimatedDepartureLabel }} -> {{ row.destName }} ({{ row.destCode }}) {{ row.estimatedArrivalLabel }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="status-table__col-status"><span class="status-badge {{ row.statusClass }}">{{ row.statusLabel }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if statusPagerShow %}
+        <nav class="status-pager" aria-label="Results pages">
+            {% for p in statusPagerPages %}
+            {% if p.isCurrent %}
+            <span class="status-pager__num status-pager__num--current" aria-current="page">{{ p.pageNum }}</span>
+            {% else %}
+            <a href="{{ p.href }}" class="status-pager__num">{{ p.pageNum }}</a>
+            {% endif %}
+            {% endfor %}
+        </nav>
+        {% endif %}
+        {% else %}
+        <p class="status-empty">No matching flights found for this input/date.</p>
+        {% endif %}
+    </section>
+    {% endif %}
+</section>
+</div>
+{% endblock %}
