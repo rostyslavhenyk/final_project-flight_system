@@ -42,7 +42,7 @@ internal fun bookPassengersModel(
         "flight" to queryParams["flight"].orEmpty(),
         "price" to queryParams["price"].orEmpty(),
         "backToChooseFlightsHref" to backToChooseFlightsHref(queryParams, fromRaw, toRaw, departRaw),
-        "passengerRows" to buildPassengerRowModels(adults, children),
+        "passengerRows" to bookingPassengerRowModels(queryParams),
         "hasFlightDetail" to segment.hasFlightDetail,
         "segDep" to segment.departure,
         "segArr" to segment.arrival,
@@ -137,6 +137,15 @@ private fun inboundPassengerSearchHref(
         returnSearchParams["leg"] = "inbound"
     }
     return flightsHref(returnSearchParams)
+}
+
+/** Per-passenger row: global `slot`, screen-reader `heading`, wireframe `badgeTier`. */
+internal fun bookingPassengerRowModels(
+    queryParams: Parameters,
+): List<Map<String, Any>> {
+    val adults = queryParams["adults"]?.toIntOrNull()?.coerceIn(1, MAX_ADULT_PASSENGERS) ?: 1
+    val children = queryParams["children"]?.toIntOrNull()?.coerceIn(0, MAX_CHILD_PASSENGERS) ?: 0
+    return buildPassengerRowModels(adults, children)
 }
 
 /** Per-passenger row: global `slot`, screen-reader `heading`, wireframe `badgeTier`. */

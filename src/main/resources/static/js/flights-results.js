@@ -552,7 +552,35 @@
     if (continueLink) {
       continueLink.addEventListener('click', function (e) {
         let r = validatePassengerFormForSubmit();
-        if (!r.ok) e.preventDefault();
+        if (!r.ok) {
+          e.preventDefault();
+          return;
+        }
+        try {
+          let pax = [];
+          form.querySelectorAll(':scope > fieldset').forEach(function (fs) {
+            let hidden = fs.querySelector('input[type="hidden"][name$="_title"]');
+            if (!hidden || !hidden.name) return;
+            let m = hidden.name.match(/^pax_(\d+)_title$/);
+            if (!m) return;
+            let slot = m[1];
+            let title = (document.getElementById('bp-title-val-' + slot) || {}).value || '';
+            let given = (document.getElementById('bp-given-' + slot) || {}).value || '';
+            let family = (document.getElementById('bp-family-' + slot) || {}).value || '';
+            let displayName = (title + ' ' + given + ' ' + family).replace(/\s+/g, ' ').trim();
+            pax.push({ slot: parseInt(slot, 10), displayName: displayName });
+          });
+          sessionStorage.setItem('glideBookingPaxNames', JSON.stringify(pax));
+          let encoded = btoa(unescape(encodeURIComponent(JSON.stringify(pax))))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/g, '');
+          if (encoded) {
+            let u = new URL(continueLink.getAttribute('href'), window.location.origin);
+            u.searchParams.set('paxSel', encoded);
+            continueLink.setAttribute('href', u.pathname + u.search);
+          }
+        } catch (err) {}
       });
     }
   }

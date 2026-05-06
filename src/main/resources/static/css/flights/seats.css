@@ -1,0 +1,1061 @@
+/* Seat step (/book/seats) — uses colours from base.css :root */
+
+.seat-booking-page {
+  padding-bottom: 0;
+}
+
+/* Seat map step: stack content naturally — avoid min-height + flex-grow that left a gap above the footer */
+.seat-booking-page.seat-booking-page--seat-step {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tighter gap above footer than default `.flights-page { margin-bottom: 3.5rem }` */
+.flights-page.seat-booking-page.seat-booking-page--seat-step {
+  margin-bottom: 1rem;
+}
+
+.seat-booking__flow {
+  display: flex;
+  flex-direction: column;
+}
+
+.seat-booking__missing {
+  margin: 1.25rem 0 0;
+  max-width: 40rem;
+  color: var(--muted-text-color);
+  line-height: 1.55;
+}
+
+.seat-booking__missing a {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+/* White card: trip / summary / legs / passengers + seat map (not the CTA below) */
+.seat-booking__panel {
+  margin-top: 1.25rem;
+  padding: 1.35rem 1.5rem 1.6rem;
+  border: 2px solid var(--primary-border-color);
+  border-radius: 12px;
+  background: var(--page-white);
+}
+
+.seat-booking__journey-summaries {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0 0.95rem;
+  align-items: stretch;
+  justify-content: start;
+  justify-items: stretch;
+}
+
+/* Return: two cards side by side, total width half of a full-width row, left-aligned */
+.seat-booking__journey-summaries:not(:has(.seat-booking__summary-btn--solo)) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 50%;
+  max-width: 100%;
+}
+
+/* One-way: single card, half the previous max width */
+.seat-booking__journey-summaries:has(.seat-booking__summary-btn--solo) {
+  grid-template-columns: minmax(0, min(21rem, 100%));
+  width: fit-content;
+  max-width: min(21rem, 100%);
+}
+
+@media (max-width: 720px) {
+  .seat-booking__journey-summaries:not(:has(.seat-booking__summary-btn--solo)) {
+    grid-template-columns: 1fr;
+    width: min(21rem, 100%);
+  }
+}
+
+/* SSR journey cards — pick outbound vs return, or solo (non-interactive) */
+.seat-booking__summary-btn {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border: 2px dashed var(--primary-border-color);
+  background: var(--primary-soft-color);
+  color: var(--primary-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+  line-height: 1.45;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    border-color 0.15s ease,
+    border-style 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.seat-booking__summary-btn:not(.seat-booking__summary-btn--active):not(.seat-booking__summary-btn--solo):hover {
+  filter: brightness(0.98);
+  border-color: var(--primary-color);
+  border-style: solid;
+}
+
+.seat-booking__summary-btn--active {
+  border-color: var(--primary-color);
+  border-style: solid;
+  background: var(--primary-color);
+  color: var(--page-white);
+}
+
+.seat-booking__summary-btn--solo {
+  border-style: solid;
+  cursor: default;
+  pointer-events: none;
+}
+
+.seat-booking__summary-btn-flights {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  opacity: inherit;
+  letter-spacing: 0.02em;
+}
+
+.seat-booking__summary-btn--active .seat-booking__summary-btn-flights {
+  opacity: 0.96;
+}
+
+.seat-booking__summary-btn-route {
+  display: block;
+  margin-top: 0.2rem;
+  font-weight: 600;
+}
+
+.seat-booking__light-seat-note {
+  margin: 0.65rem 0 1rem;
+  max-width: min(42rem, 100%);
+  padding: 0.55rem 0.72rem;
+  border-radius: 6px;
+  border: 1px solid var(--primary-border-color);
+  background: color-mix(in srgb, var(--primary-soft-color) 92%, var(--page-white));
+  color: var(--muted-text-color);
+  font-size: 0.86rem;
+  line-height: 1.52;
+}
+
+.seat-booking__light-seat-note strong {
+  color: var(--text-color);
+  font-weight: 700;
+}
+
+.seat-booking__leg-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 1.35rem;
+}
+
+/* Per-segment flight buttons — distinct from summary strip */
+.seat-booking__leg-tab {
+  cursor: pointer;
+  padding: 0.42rem 0.76rem;
+  min-width: 8.35rem;
+  border-radius: 6px;
+  border: 2px solid var(--primary-border-color);
+  background: var(--primary-soft-color);
+  color: var(--primary-color);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.seat-booking__leg-tab:not(.seat-booking__leg-tab--active):hover {
+  filter: brightness(0.97);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.seat-booking__leg-tab--active {
+  border-style: solid;
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: var(--page-white);
+  pointer-events: none;
+  cursor: default;
+}
+
+.seat-booking__leg-tab--active:hover {
+  filter: none;
+}
+
+/*
+ * Height comes only from the passenger column (in-flow). The map is absolutely
+ * positioned to that height so the grey shell matches the white passenger card —
+ * seats scroll inside .seat-booking__grid-scroll instead of stretching the shell.
+ */
+.seat-booking__main {
+  position: relative;
+  display: block;
+  --seat-booking-pax-col: min(388px, 100%);
+  --seat-booking-main-gap: 2rem;
+}
+
+@media (max-width: 900px) {
+  .seat-booking__main {
+    --seat-booking-pax-col: 100%;
+  }
+}
+
+.seat-booking__pax {
+  border: 1px solid var(--primary-border-color);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 1.15rem;
+  background: var(--page-white);
+  display: flex;
+  flex-direction: column;
+  width: var(--seat-booking-pax-col);
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.seat-booking__pax-list {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.seat-booking__pax h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.35rem;
+  color: var(--text-color);
+  flex-shrink: 0;
+}
+
+.seat-booking__hint {
+  margin: 0 0 1rem;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: var(--muted-text-color);
+  line-height: 1.45;
+}
+
+.seat-booking__pax-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--primary-border-color);
+  background: var(--page-white);
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.15s ease,
+    border-width 0.15s ease,
+    box-shadow 0.15s ease,
+    padding 0.15s ease;
+}
+
+.seat-booking__pax-list .seat-booking__pax-card:last-child {
+  margin-bottom: 0;
+}
+
+.seat-booking__pax-card:not(.seat-booking__pax-card--selected):hover {
+  border-color: var(--primary-color);
+  border-width: 2px;
+  padding: calc(0.75rem - 1px) calc(0.85rem - 1px);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 35%, transparent);
+}
+
+.seat-booking__pax-card--selected:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 28%, transparent);
+}
+
+.seat-booking__pax-card--selected {
+  border: 2px solid var(--primary-color);
+  padding: calc(0.75rem - 1px) calc(0.85rem - 1px);
+  background: color-mix(in srgb, var(--primary-color) 14%, var(--page-white));
+}
+
+.seat-booking__pax-card--selected .seat-booking__pax-name {
+  color: var(--text-color);
+}
+
+.seat-booking__pax-card--selected .seat-booking__pax-seat strong {
+  color: var(--primary-color);
+}
+
+.seat-booking__pax-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.seat-booking__pax-name {
+  margin: 0;
+  min-height: 1.35em;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.seat-booking__pax-seat {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__pax-seat strong {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.seat-booking__pax-badge {
+  display: inline-block;
+  margin-top: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.seat-booking__map-shell {
+  --seat-mid-width: 4.2rem;
+  --seat-col-width: 8.6rem;
+  --seat-cell-width: 2.45rem;
+  border: 1px solid var(--primary-border-color);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem 0.65rem;
+  background: var(--primary-soft-color);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: calc(var(--seat-booking-pax-col) + var(--seat-booking-main-gap));
+}
+
+@media (max-width: 900px) {
+  .seat-booking__map-shell {
+    position: static;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    margin-top: 1.5rem;
+    min-height: min(31rem, 70vh);
+  }
+}
+
+.seat-booking__map-body {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem 0.95rem;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .seat-booking__map-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.seat-booking__grid-block {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.seat-booking__legend-aside {
+  flex-shrink: 0;
+  padding-top: 0.15rem;
+  align-self: start;
+}
+
+.seat-booking__grid-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.15rem;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.seat-booking__row {
+  display: grid;
+  grid-template-columns: var(--seat-col-width) var(--seat-mid-width) var(--seat-col-width);
+  justify-content: center;
+  gap: 0.22rem 0.3rem;
+  align-items: center;
+  margin-bottom: 0.26rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.seat-booking__row:last-child {
+  margin-bottom: 0;
+}
+
+.seat-booking__row-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted-text-color);
+  text-align: center;
+}
+
+.seat-booking__row-mid {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  align-self: center;
+  min-height: 1.75rem;
+}
+
+.seat-booking__half {
+  display: grid;
+  grid-template-columns: repeat(3, var(--seat-cell-width));
+  width: var(--seat-col-width);
+  justify-content: center;
+  gap: 0.22rem;
+}
+
+.seat-booking__facility-row {
+  display: grid;
+  grid-template-columns: var(--seat-col-width) var(--seat-mid-width) var(--seat-col-width);
+  justify-content: center;
+  align-items: center;
+  margin: 0.42rem 0 0.36rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.seat-booking__facility-mid {
+  min-height: 2.05rem;
+}
+
+.seat-booking__facility-left {
+  justify-self: start;
+  text-align: left;
+  width: var(--seat-col-width);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__facility-right {
+  justify-self: end;
+  text-align: right;
+  width: var(--seat-col-width);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__facility-row--toilet > .seat-booking__toilet {
+  justify-self: stretch;
+}
+
+.seat-booking__toilet {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 2.1rem;
+  border-radius: 6px;
+  border: 1px solid var(--primary-border-color);
+  background: var(--page-white);
+  color: var(--primary-color);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.seat-booking__toilet-icon {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.seat-booking__wing-outer {
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__wing-row {
+  display: grid;
+  grid-template-columns: var(--seat-col-width) var(--seat-mid-width) var(--seat-col-width);
+  justify-content: center;
+  align-items: flex-end;
+  margin: 0.42rem 0 0.28rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__wing-side {
+  width: var(--seat-col-width);
+}
+
+.seat-booking__wing-side:first-child {
+  justify-self: start;
+  text-align: left;
+}
+
+.seat-booking__wing-side:last-child {
+  justify-self: end;
+  text-align: right;
+}
+
+.seat-booking__seat {
+  min-height: 1.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--primary-color);
+  background: var(--page-white);
+  color: var(--primary-color);
+  font-size: 0.58rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+  opacity: 1;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    border-width 0.15s ease,
+    border-style 0.12s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    outline 0.15s ease;
+}
+
+.seat-booking__row--business .seat-booking__row-label {
+  color: var(--primary-color);
+}
+
+.seat-booking__seat:disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+/* Row 1: priority (dashed border, same 2px footprint as hover solid) */
+.seat-booking__seat--priority:not(.seat-booking__seat--assigned) {
+  border: 2px dashed var(--primary-color);
+}
+
+/* Rows 9 & 22: extra legroom (under toilet blocks in the map) */
+.seat-booking__seat--extra:not(.seat-booking__seat--assigned) {
+  border: 2px solid var(--primary-color);
+  box-shadow:
+    inset 0 -5px 0 0 color-mix(in srgb, var(--primary-soft-color) 45%, var(--primary-color)),
+    0 0 0 1px var(--primary-border-color);
+}
+
+.seat-booking__seat--regular:not(.seat-booking__seat--assigned) {
+  border: 1px solid var(--primary-border-color);
+  color: var(--primary-color);
+}
+
+/* Hover: no outer “ring” — priority goes dashed → solid at same 2px; extra keeps inset bar only */
+.seat-booking__seat--regular:not(.seat-booking__seat--unavailable):not(.seat-booking__seat--assigned):not(:disabled):hover {
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-soft-color) 75%, var(--page-white));
+}
+
+.seat-booking__seat--priority:not(.seat-booking__seat--unavailable):not(.seat-booking__seat--assigned):not(:disabled):hover {
+  border: 2px solid var(--primary-color);
+  background: color-mix(in srgb, var(--primary-soft-color) 75%, var(--page-white));
+}
+
+.seat-booking__seat--extra:not(.seat-booking__seat--unavailable):not(.seat-booking__seat--assigned):not(:disabled):hover {
+  border: 2px solid var(--primary-color);
+  box-shadow:
+    inset 0 -5px 0 0 color-mix(in srgb, var(--primary-soft-color) 45%, var(--primary-color)),
+    0 0 0 1px var(--primary-border-color);
+  background: color-mix(in srgb, var(--primary-soft-color) 75%, var(--page-white));
+}
+
+.seat-booking__seat--assigned:not(:disabled):hover {
+  outline: 2px solid color-mix(in srgb, var(--page-white) 65%, var(--primary-color));
+  outline-offset: 1px;
+}
+
+.seat-booking__seat--unavailable {
+  border-color: var(--primary-border-color);
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--page-white),
+    var(--page-white) 3px,
+    var(--primary-border-color) 3px,
+    var(--primary-border-color) 4px
+  );
+  color: transparent;
+  font-size: 0;
+}
+
+/* Taken seats (P1–P9…): same green fill whether or not this passenger is active */
+.seat-booking__seat--assigned,
+.seat-booking__seat--mine {
+  border: 1px solid var(--primary-color);
+  background: var(--primary-color);
+  color: var(--page-white);
+}
+
+.seat-booking__legend {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 13.5rem;
+}
+
+.seat-booking__legend-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.45rem;
+  color: var(--text-color);
+}
+
+.seat-booking__legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seat-booking__legend-items li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.88rem;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__swatch {
+  width: 1.75rem;
+  height: 1.35rem;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid var(--primary-border-color);
+  background: var(--page-white);
+}
+
+.seat-booking__swatch--extra {
+  border: 2px solid var(--primary-color);
+  background: linear-gradient(to top, var(--primary-soft-color) 35%, var(--page-white) 36%);
+}
+
+.seat-booking__swatch--priority {
+  border: 2px dashed var(--primary-color);
+  background: color-mix(in srgb, var(--primary-soft-color) 72%, var(--page-white));
+}
+
+.seat-booking__swatch--regular {
+  border: 1px solid var(--primary-border-color);
+  background: var(--page-white);
+}
+
+.seat-booking__swatch--unavailable {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--page-white),
+    var(--page-white) 2px,
+    var(--primary-border-color) 2px,
+    var(--primary-border-color) 3px
+  );
+  border-color: var(--primary-border-color);
+}
+
+.seat-booking__swatch--mine {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.seat-booking__swatch--toilet {
+  width: 1.75rem;
+  height: 1.35rem;
+  background: var(--page-white);
+  border-color: var(--primary-border-color);
+  position: relative;
+}
+
+.seat-booking__swatch--toilet::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: center / contain no-repeat url("/static/images/toilet-symbol.svg");
+}
+
+.seat-booking__cta-region {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem 0 0;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.seat-booking__fee-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.92rem;
+}
+
+.seat-booking__fee-table th,
+.seat-booking__fee-table td {
+  border: 1px solid var(--primary-border-color);
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+}
+
+/* Narrow money columns (step 1 subtotal + seat fees on pay page): right-align amounts */
+.seat-booking__fee-table--price-right th:last-child,
+.seat-booking__fee-table--price-right td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.seat-booking__fee-table thead th,
+.seat-booking__fee-table tfoot th,
+.seat-booking__fee-table tfoot td {
+  background: var(--primary-soft-color);
+  font-weight: 700;
+}
+
+.seat-booking__fee-hint {
+  margin: 0 0 0.75rem !important;
+  font-size: 0.88rem !important;
+}
+
+.seat-booking__fee-missing {
+  margin-top: 0.75rem !important;
+}
+
+.seat-booking__dialog {
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  max-width: min(26rem, calc(100vw - 2rem));
+  box-shadow: 0 12px 36px rgba(32, 35, 32, 0.22);
+}
+
+.seat-booking__dialog::backdrop {
+  background: rgba(32, 35, 32, 0.42);
+}
+
+.seat-booking__dialog-panel {
+  padding: 1.35rem 1.5rem 1.45rem;
+}
+
+.seat-booking__dialog-title {
+  margin: 0 0 0.65rem;
+  font-size: 1.12rem;
+  color: var(--text-color);
+}
+
+.seat-booking__dialog-text {
+  margin: 0 0 1.15rem;
+  font-size: 0.92rem;
+  color: var(--muted-text-color);
+  line-height: 1.55;
+}
+
+.seat-booking__dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
+}
+
+.seat-booking__dialog-btn {
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--primary-border-color);
+  font-size: 0.9rem;
+}
+
+.seat-booking__dialog-btn--secondary {
+  background: var(--page-white);
+  color: var(--text-color);
+}
+
+/* Solid green CTA — do not combine with .review-wf-continue (that class forces green text for outline buttons). */
+.seat-booking__dialog-btn--primary {
+  min-width: 11rem;
+  padding: 0.65rem 1.35rem;
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: var(--page-white);
+  font-size: 1rem;
+  box-shadow: 0 1px 2px rgba(45, 79, 47, 0.15);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.seat-booking__dialog-btn--primary:hover {
+  background: var(--primary-color-hover);
+  border-color: var(--primary-color-hover);
+  color: var(--page-white);
+}
+
+/* ----- Step 4 payment (two stacked panels like seat step) ----- */
+.seat-booking__pay-step-title {
+  font-size: 1.08rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  color: var(--text-color);
+}
+
+.seat-booking__pay-leg {
+  margin-bottom: 0.25rem;
+}
+
+.seat-booking__pay-leg-title {
+  font-size: 0.98rem;
+  margin: 0 0 0.35rem;
+  color: var(--text-color);
+}
+
+.seat-booking__pay-route {
+  margin: 0 0 0.75rem;
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.seat-booking__pay-flight-card {
+  margin: 0 0 1rem;
+}
+
+.seat-booking__fare-line-group {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--primary-border-color);
+  background: color-mix(in srgb, var(--primary-soft-color) 82%, var(--page-white));
+}
+
+.seat-booking__package-name-pay {
+  margin: 0 0 0.4rem;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.seat-booking__fare-line-row--spread {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.seat-booking__fare-line-row--spread .seat-booking__package-name-pay {
+  margin: 0;
+  flex: 1 1 12rem;
+}
+
+.seat-booking__price-per-person-only {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.seat-booking__price-per-person-suffix {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__fee-table--step1-subtotal {
+  margin-top: 1rem;
+}
+
+.seat-booking__pay-leg-divider {
+  border: none;
+  border-top: 1px solid var(--primary-border-color);
+  margin: 1.15rem 0 1.15rem;
+}
+
+.seat-booking__pay-table-heading {
+  margin: 1.15rem 0 0.45rem;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+/* Name in column 1, badge in column 2 — badges share one vertical alignment (no zigzag) */
+.seat-booking__pax-head.seat-booking__pax-head--pay-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem 0.65rem;
+  align-items: start;
+  margin: 0;
+}
+
+.seat-booking__fee-table-pax-cell .seat-booking__pax-head--pay-summary .seat-booking__pax-name {
+  margin: 0;
+  min-width: 0;
+}
+
+.seat-booking__fee-table-pax-cell .seat-booking__pax-badge {
+  margin-top: 0.06rem;
+}
+
+.seat-booking__fee-table--pax-pay {
+  margin-top: 0.35rem;
+}
+
+.seat-booking__fee-table-pax-cell {
+  min-width: 10rem;
+  vertical-align: top;
+}
+
+.seat-booking__fee-table--pax-pay .seat-booking__pax-name {
+  font-size: 0.96rem;
+}
+
+td.seat-booking__fee-free,
+.seat-booking__fee-free {
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.seat-booking__pay-footer {
+  margin-top: 1.35rem;
+  padding: 0 0 1rem;
+  text-align: center;
+}
+
+.seat-booking__pay-footer--receipt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.seat-booking__pay-receipt {
+  width: 100%;
+  max-width: 22rem;
+  text-align: left;
+}
+
+.seat-booking__receipt-unit-line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+  margin: 0;
+}
+
+.seat-booking__receipt-combined-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.seat-booking__receipt-unit-amount {
+  font-size: 1.06rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.seat-booking__receipt-pax-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-color);
+}
+
+.seat-booking__receipt-pax-label {
+  font-weight: 800;
+}
+
+.seat-booking__receipt-pax-num {
+  font-weight: 800;
+}
+
+.seat-booking__receipt-rule {
+  margin: 0.75rem 0;
+  border: none;
+  border-top: 1px solid var(--primary-border-color);
+}
+
+.seat-booking__receipt-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+}
+
+.seat-booking__receipt-total-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-text-color);
+}
+
+.seat-booking__receipt-total-amount {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+.seat-booking__pay-cta.review-wf-continue-wrap {
+  margin-top: 0;
+  padding-top: 0.25rem;
+}

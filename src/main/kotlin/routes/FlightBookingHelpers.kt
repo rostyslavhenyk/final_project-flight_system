@@ -43,6 +43,8 @@ private val bookingQueryKeys =
         "segArrPlus",
         "segOrig",
         "segDest",
+        "seatSel",
+        "paxSel",
     )
 
 /** Preserves booking state across /book/... steps. */
