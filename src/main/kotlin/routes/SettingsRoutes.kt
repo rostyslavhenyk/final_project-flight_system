@@ -38,7 +38,6 @@ private suspend fun ApplicationCall.handleSettingsPage() {
             mapOf(
                 "title" to "Settings",
                 "account" to account,
-                "layout" to "_layout/base.peb",
             ),
         )
     }

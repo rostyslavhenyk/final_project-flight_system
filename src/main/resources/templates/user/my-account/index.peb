@@ -1,4 +1,4 @@
-{% extends layout %}
+{% extends "_layout/base.peb" %}
 
 {% block extra_head %}
 {% if not isStaff %}
@@ -122,21 +122,5 @@
     </div>
     <div class="fare-summary-dialog__scroll" id="fare-summary-dialog-body"></div>
 </dialog>
-<script>
-  (function () {
-    var btn = document.getElementById('account-name-edit-toggle');
-    var form = document.getElementById('account-name-edit-form');
-    if (!btn || !form) return;
-    btn.addEventListener('click', function () {
-      var open = !form.hidden;
-      form.hidden = open;
-      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
-      if (!open) {
-        var first = form.querySelector('input[name="firstName"]');
-        if (first) first.focus();
-      }
-    });
-  })();
-</script>
 {% endif %}
 {% endblock %}

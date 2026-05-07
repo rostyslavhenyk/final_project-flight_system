@@ -58,6 +58,23 @@
     activate(window.location.hash === '#manage-booking' ? 'manage' : 'details');
   }
 
+  function wireNameEditToggle() {
+    var btn = document.getElementById('account-name-edit-toggle');
+    var form = document.getElementById('account-name-edit-form');
+    if (!btn || !form) return;
+
+    btn.addEventListener('click', function () {
+      var open = !form.hidden;
+      form.hidden = open;
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+
+      if (!open) {
+        var first = form.querySelector('input[name="firstName"]');
+        if (first) first.focus();
+      }
+    });
+  }
+
   function wireManageCardsAndModal() {
     var emptyEl = document.getElementById('manage-booking-empty');
     var listEl = document.getElementById('manage-booking-list');
@@ -128,6 +145,7 @@
 
   function onReady() {
     wireTabs();
+    wireNameEditToggle();
     wireManageCardsAndModal();
   }
 

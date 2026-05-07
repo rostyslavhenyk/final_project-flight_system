@@ -189,7 +189,6 @@ object SeatRepository {
         transaction {
             Seats.deleteWhere { Seats.id eq idValue } > 0
         }
-
 }
 
 object SeatMaintenance {

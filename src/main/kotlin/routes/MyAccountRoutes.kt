@@ -56,7 +56,6 @@ private suspend fun ApplicationCall.handleMyAccountLoad() {
                 "nameStatus" to request.queryParameters["nameStatus"].orEmpty(),
                 "serverBookings" to accountBookingCards(account.id, past = false),
                 "pastBookings" to accountBookingCards(account.id, past = true),
-                "layout" to "_layout/base.peb",
             ),
         )
     }

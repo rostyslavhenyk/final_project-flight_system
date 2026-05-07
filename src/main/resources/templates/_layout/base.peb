@@ -27,7 +27,6 @@
         </div>
         <nav>
             <ul class="main-links">
-                <li><a href="/settings">Settings</a></li>
                 <li><a href="/membership">Membership</a></li>
                 <li><a href="/help">Help</a></li>
             </ul>
@@ -43,6 +42,7 @@
                     <li><a href="/signup">Sign Up</a></li>
                     <li><a href="/login">Log In</a></li>
                 {% endif %}
+                <li><a href="/settings">Settings</a></li>
             </ul>
         </nav>
     </header>
