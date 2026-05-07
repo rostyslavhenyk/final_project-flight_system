@@ -146,7 +146,6 @@ private fun soldFlightSales(
     startDate: LocalDate,
     endDate: LocalDate,
 ): SoldFlightSales {
-    val flights = FlightRepository.allFull(startDate, endDate)
     val realSoldSeats =
         bookings.count {
             it.booking.createdAt
@@ -161,7 +160,7 @@ private fun soldFlightSales(
                     .isBetweenDates(startDate, endDate)
             }.map { it.flight.flightID }
             .toSet()
-    val rangeFlightCount = maxOf(flights.size, bookedFlightIds.size)
+    val rangeFlightCount = maxOf(FlightRepository.countBetweenDates(startDate, endDate).toInt(), bookedFlightIds.size)
     val simulatedSoldSeats = ((rangeFlightCount * SEATS_PER_FLIGHT * SIMULATED_TAKEN_SEAT_PERCENT) / PERCENT_MAX)
     val totalCapacity = rangeFlightCount * SEATS_PER_FLIGHT
     val soldSeats = realSoldSeats + simulatedSoldSeats

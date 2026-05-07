@@ -175,6 +175,11 @@ class RouteIntegrationExtraTest {
                 assertEquals(HttpStatusCode.OK, response.status)
                 assertTrue(response.bodyAsText().contains("Create Staff"))
             }
+            withClue("staff admin can open dashboard") {
+                val response = admin.get("/staff")
+                assertEquals(HttpStatusCode.OK, response.status)
+                assertTrue(response.bodyAsText().contains("Staff Dashboard"))
+            }
         }
 
     @Test
