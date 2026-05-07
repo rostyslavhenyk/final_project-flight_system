@@ -858,8 +858,8 @@ main {
   min-height: calc(100vh - 40px);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 40px 80px 40px 40px;
+  justify-content: center;
+  padding: 40px 20px;
   position: relative;
   overflow: hidden;
   background-color: #e0f2ef;

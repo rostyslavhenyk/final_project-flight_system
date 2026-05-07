@@ -207,7 +207,33 @@ function trackRefund(event) {
 
 function submitRefund(event) {
     event.preventDefault()
-    document.getElementById('requestResult').innerHTML = '<p class="form-success">Your request has been submitted. You will receive a confirmation email shortly.</p>'
+
+    var firstname = document.getElementById('refund-firstname').value
+    var lastname = document.getElementById('refund-lastname').value
+    var email = document.getElementById('refund-email').value
+    var ref = document.getElementById('refund-ref').value
+    var reason = document.getElementById('refund-reason').value
+    var details = document.getElementById('refund-details').value
+
+    var body = 'firstname=' + encodeURIComponent(firstname) +
+        '&lastname=' + encodeURIComponent(lastname) +
+        '&email=' + encodeURIComponent(email) +
+        '&ref=' + encodeURIComponent(ref) +
+        '&reason=' + encodeURIComponent(reason) +
+        '&details=' + encodeURIComponent(details)
+
+    fetch('/help/refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body
+    })
+        .then(function (response) {
+            if (response.ok) {
+                document.getElementById('requestResult').innerHTML = '<p class="form-success">Your request has been submitted. You will receive a confirmation email shortly.</p>'
+            } else {
+                document.getElementById('requestResult').innerHTML = '<p style="color:#d32f2f;">Something went wrong. Please try again.</p>'
+            }
+        })
 }
 
 function submitContact(event) {

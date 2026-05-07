@@ -104,4 +104,3 @@ class InputValidationTest {
         assertTrue(input.contains(";"))
     }
 }
-np

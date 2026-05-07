@@ -57,4 +57,31 @@ object EmailService {
             println("Failed to send email: ${e.message}")
         }
     }
+    fun sendRefundRequest(customerEmail: String, subject: String, body: String) {
+        try {
+        val session = getSession()
+        val message = MimeMessage(session)
+        message.setFrom(InternetAddress(senderEmail))
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(senderEmail))
+        message.subject = subject
+        message.setText("Refund request from $customerEmail\n\n$body")
+        Transport.send(message)
+    } catch (e: Exception) {
+        println("Failed to send refund request email: ${e.message}")
+    }
+}
+
+    fun sendRefundConfirmation(toEmail: String, firstname: String, ref: String) {
+        try {
+        val session = getSession()
+        val message = MimeMessage(session)
+        message.setFrom(InternetAddress(senderEmail))
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
+        message.subject = "Glide Airways - Refund Request Received"
+        message.setText("Hi $firstname,\n\nWe have received your refund request for booking $ref.\n\nWe will get back to you within 3-5 business days.\n\nGlide Airways")
+        Transport.send(message)
+    } catch (e: Exception) {
+        println("Failed to send refund confirmation: ${e.message}")
+    }
+}
 }
