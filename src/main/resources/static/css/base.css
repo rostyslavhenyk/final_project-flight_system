@@ -409,297 +409,93 @@ button {
     border-color: var(--primary-color-hover);
 }
 
-.auth-form__secondary-link {
-    margin: -0.25rem 0 0.25rem;
-    text-align: right;
-    font-size: 0.9rem;
+.typing-indicator {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    opacity: 0.6;
 }
 
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: min(100% - 2rem, 360px);
-    margin: 10vh auto;
-    padding: 2rem;
-    border: 1px solid var(--primary-border-color);
+.chat-convo-card {
+    background: white;
+    border: 1px solid #b2d8d1;
     border-radius: 8px;
-    background: var(--page-white);
-    box-shadow: var(--surface-shadow);
+    padding: 20px;
+    margin-bottom: 24px;
+    max-width: 700px;
 }
 
-.login-form h1,
-.login-form p {
-    margin: 0;
-}
-
-.login-form input {
-    padding: 0.75rem;
+.chat-convo-card h3 {
     font-size: 1rem;
-    border: 1px solid var(--primary-border-color);
-    border-radius: 4px;
-}
-
-.login-form input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-.login-form button {
-    padding: 0.75rem;
-    font-size: 1rem;
-    border-radius: 4px;
-}
-
-.login-form button:hover {
-    background-color: var(--primary-color-hover);
-}
-
-.login-page {
-    min-height: calc(100vh - 40px);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 40px 80px 40px 40px;
-    position: relative;
-    overflow: hidden;
-    background-color: #e0f2ef;
-}
-
-.login-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-}
-
-.cloud {
-    position: absolute;
-    background: white;
-    border-radius: 50px;
-    opacity: 0.5;
-}
-
-.cloud::before,
-.cloud::after {
-    content: '';
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-}
-
-.cloud-1 {
-    width: 160px;
-    height: 45px;
-    top: 18%;
-    left: 8%;
-    animation: driftcloud 18s linear infinite;
-}
-
-.cloud-1::before {
-    width: 70px;
-    height: 70px;
-    top: -35px;
-    left: 20px;
-}
-
-.cloud-1::after {
-    width: 50px;
-    height: 50px;
-    top: -25px;
-    left: 70px;
-}
-
-.cloud-2 {
-    width: 120px;
-    height: 35px;
-    top: 40%;
-    left: 5%;
-    animation: driftcloud 24s linear infinite;
-    animation-delay: 4s;
-    opacity: 0.35;
-}
-
-.cloud-2::before {
-    width: 55px;
-    height: 55px;
-    top: -28px;
-    left: 15px;
-}
-
-.cloud-2::after {
-    width: 40px;
-    height: 40px;
-    top: -20px;
-    left: 55px;
-}
-
-.cloud-3 {
-    width: 200px;
-    height: 50px;
-    top: 65%;
-    left: 15%;
-    animation: driftcloud 30s linear infinite;
-    animation-delay: 10s;
-    opacity: 0.3;
-}
-
-.cloud-3::before {
-    width: 80px;
-    height: 80px;
-    top: -40px;
-    left: 25px;
-}
-
-.cloud-3::after {
-    width: 60px;
-    height: 60px;
-    top: -30px;
-    left: 90px;
-}
-
-@keyframes driftcloud {
-    0% {
-        transform: translateX(-300px);
-    }
-
-    100% {
-        transform: translateX(110vw);
-    }
-}
-
-.login-card {
-    background: white;
-    border-radius: 12px;
-    padding: 40px 36px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    position: relative;
-    z-index: 1;
-}
-
-.login-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-}
-
-.login-logo span {
-    font-size: 1.1rem;
     font-weight: 700;
-    color: #2d7d6f;
+    color: #1f5c51;
+    margin-bottom: 12px;
 }
 
-.login-card h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 4px;
-}
-
-.login-subtitle {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 28px;
-}
-
-.login-field {
+.chat-convo-messages {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 8px;
     margin-bottom: 16px;
 }
 
-.login-field label {
-    font-size: 0.87rem;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
-.login-field input {
-    padding: 10px 14px;
-    border: 1.5px solid #b2d8d1;
+.chat-convo-msg {
+    padding: 8px 12px;
     border-radius: 8px;
-    font-size: 0.93rem;
+    max-width: 80%;
+    font-size: 0.88rem;
+}
+
+.chat-convo-msg.customer {
+    background-color: #e8f5f2;
+    align-self: flex-start;
+}
+
+.chat-convo-msg.staff {
+    background-color: #2d7d6f;
+    color: white;
+    align-self: flex-end;
+}
+
+.chat-convo-name {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 3px;
+    opacity: 0.7;
+}
+
+.chat-reply-row {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-reply-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1.5px solid #b2d8d1;
+    border-radius: 6px;
+    font-size: 0.9rem;
     font-family: inherit;
-    color: #1a1a1a;
-    background: white;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    width: 100%;
-    margin: 0;
 }
 
-.login-field input:focus {
+.chat-reply-row input:focus {
     border-color: #2d7d6f;
-    box-shadow: 0 0 0 3px rgba(45, 125, 111, 0.1);
 }
 
-.login-forgot {
-    text-align: right;
-    margin-bottom: 20px;
-    margin-top: -8px;
-}
-
-.login-forgot a {
-    font-size: 0.83rem;
-    color: #2d7d6f;
-    text-decoration: none;
-    width: auto;
-    margin: 0;
-}
-
-.login-forgot a:hover {
-    text-decoration: underline;
-}
-
-.login-btn {
-    width: 100%;
-    padding: 11px;
+.chat-reply-row button {
+    padding: 8px 18px;
     background-color: #2d7d6f;
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    border-radius: 6px;
     font-family: inherit;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.2s;
-    margin-bottom: 0;
 }
 
-.login-btn:hover {
+.chat-reply-row button:hover {
     background-color: #1f5c51;
-}
-
-.login-signup-link {
-    text-align: center;
-    font-size: 0.88rem;
-    color: #666;
-    margin-top: 20px;
-}
-
-.login-signup-link a {
-    color: #2d7d6f;
-    font-weight: 600;
-    text-decoration: none;
-    width: auto;
-    margin: 0;
-}
-
-.login-signup-link a:hover {
-    text-decoration: underline;
-}
-
-@media (max-width: 480px) {
-    .login-card {
-        padding: 28px 20px;
-    }
 }
 
 :is(.btn-help, .staff-action-button, .staff-action-link) {

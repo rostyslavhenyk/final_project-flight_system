@@ -41,7 +41,6 @@ data class User(
 
 // handles all database queries for users
 object UserRepository {
-
     fun all(): List<User> =
         transaction {
             Users.selectAll().map { it.toUser() }
@@ -79,6 +78,7 @@ object UserRepository {
             val normalizedFirstName = normalizePersonName(firstname)
             val normalizedLastName = normalizePersonName(lastname)
             val normalizedEmail = normalizeEmail(email)
+            val normalizedPhone = normalizePhone(phone)
             val id =
                 Users.insert {
                     it[Users.firstname] = normalizedFirstName
@@ -86,10 +86,10 @@ object UserRepository {
                     it[Users.roleId] = roleId
                     it[Users.email] = normalizedEmail
                     it[Users.password] = password
-                    it[Users.phone] = phone
+                    it[Users.phone] = normalizedPhone
                 } get Users.id
 
-            User(id, normalizedFirstName, normalizedLastName, roleId, normalizedEmail, password, phone)
+            User(id, normalizedFirstName, normalizedLastName, roleId, normalizedEmail, password, normalizedPhone)
         }
 
     fun get(id: Int): User? =
@@ -106,6 +106,15 @@ object UserRepository {
             Users
                 .selectAll()
                 .where { Users.email eq normalizeEmail(email) }
+                .map { it.toUser() }
+                .singleOrNull()
+        }
+
+    fun getByPhone(phone: String): User? =
+        transaction {
+            Users
+                .selectAll()
+                .where { Users.phone eq normalizePhone(phone) }
                 .map { it.toUser() }
                 .singleOrNull()
         }
@@ -136,17 +145,23 @@ object UserRepository {
             Users.deleteWhere { Users.id eq id } > 0
         }
 
-    fun updatePassword(id: Int, newPassword: String): Boolean =
+    fun updatePassword(
+        id: Int,
+        newPassword: String,
+    ): Boolean =
         transaction {
             Users.update({ Users.id eq id }) {
                 it[password] = newPassword
             } > 0
         }
 
-    fun updatePhone(id: Int, newPhone: String): Boolean =
+    fun updatePhone(
+        id: Int,
+        newPhone: String,
+    ): Boolean =
         transaction {
             Users.update({ Users.id eq id }) {
-                it[phone] = newPhone
+                it[phone] = normalizePhone(newPhone)
             } > 0
         }
 
@@ -163,6 +178,11 @@ object UserRepository {
 }
 
 private fun normalizeEmail(value: String): String = value.trim().lowercase(Locale.UK)
+
+private fun normalizePhone(value: String): String =
+    value
+        .trim()
+        .replace(Regex("[\\s()-]"), "")
 
 private fun normalizePersonName(value: String): String =
     value

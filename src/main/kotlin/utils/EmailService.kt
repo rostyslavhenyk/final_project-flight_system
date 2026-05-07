@@ -12,9 +12,10 @@ import java.util.Properties
 // sends emails via gmail smtp
 // replace senderEmail and senderPassword before testing
 object EmailService {
+    private val senderEmail = System.getenv("GLIDE_EMAIL_ADDRESS").orEmpty()
+    private val senderPassword = System.getenv("GLIDE_EMAIL_APP_PASSWORD").orEmpty()
 
-    private val senderEmail = "yourapp@gmail.com"
-    private val senderPassword = "your-app-password-here"
+    private fun isConfigured(): Boolean = senderEmail.isNotBlank() && senderPassword.isNotBlank()
 
     private fun getSession(): Session {
         val props = Properties()
@@ -23,38 +24,62 @@ object EmailService {
         props["mail.smtp.auth"] = "true"
         props["mail.smtp.starttls.enable"] = "true"
 
-        return Session.getInstance(props, object : Authenticator() {
-            override fun getPasswordAuthentication(): PasswordAuthentication {
-                return PasswordAuthentication(senderEmail, senderPassword)
+        return Session.getInstance(
+            props,
+            object : Authenticator() {
+                override fun getPasswordAuthentication(): PasswordAuthentication =
+                    PasswordAuthentication(senderEmail, senderPassword)
+            },
+        )
+    }
+
+    fun sendVerificationCode(
+        toEmail: String,
+        code: String,
+    ): Boolean =
+        try {
+            if (!isConfigured()) {
+                println("Email is not configured. Set GLIDE_EMAIL_ADDRESS and GLIDE_EMAIL_APP_PASSWORD.")
+                false
+            } else {
+                val session = getSession()
+                val message = MimeMessage(session)
+                message.setFrom(InternetAddress(senderEmail))
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
+                message.subject = "Your Glide Airways Verification Code"
+                message.setText(
+                    "Hi,\n\nYour verification code is: $code\n\nThis code expires in 10 minutes.\n\nGlide Airways",
+                )
+                Transport.send(message)
+                true
             }
-        })
-    }
-
-    fun sendVerificationCode(toEmail: String, code: String) {
-        try {
-            val session = getSession()
-            val message = MimeMessage(session)
-            message.setFrom(InternetAddress(senderEmail))
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
-            message.subject = "Your Glide Airways Verification Code"
-            message.setText("Hi,\n\nYour verification code is: $code\n\nThis code expires in 10 minutes.\n\nGlide Airways")
-            Transport.send(message)
         } catch (e: Exception) {
             println("Failed to send email: ${e.message}")
+            false
         }
-    }
 
-    fun sendPasswordResetCode(toEmail: String, code: String) {
+    fun sendPasswordResetCode(
+        toEmail: String,
+        code: String,
+    ): Boolean =
         try {
-            val session = getSession()
-            val message = MimeMessage(session)
-            message.setFrom(InternetAddress(senderEmail))
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
-            message.subject = "Glide Airways Password Reset"
-            message.setText("Hi,\n\nYour password reset code is: $code\n\nIf you did not request this, ignore this email.\n\nGlide Airways")
-            Transport.send(message)
+            if (!isConfigured()) {
+                println("Email is not configured. Set GLIDE_EMAIL_ADDRESS and GLIDE_EMAIL_APP_PASSWORD.")
+                false
+            } else {
+                val session = getSession()
+                val message = MimeMessage(session)
+                message.setFrom(InternetAddress(senderEmail))
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
+                message.subject = "Glide Airways Password Reset"
+                message.setText(
+                    "Hi,\n\nYour password reset code is: $code\n\nIf you did not request this, ignore this email.\n\nGlide Airways",
+                )
+                Transport.send(message)
+                true
+            }
         } catch (e: Exception) {
             println("Failed to send email: ${e.message}")
+            false
         }
-    }
 }

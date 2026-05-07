@@ -1,6 +1,17 @@
 var resetKey = ''
 var resetType = ''
 
+function updateVerifyStatus(html) {
+    var status = document.getElementById('verify-status')
+    if (status) {
+        status.outerHTML = html
+    }
+}
+
+function responseWasSuccessful(html, successText) {
+    return html.indexOf(successText) !== -1
+}
+
 function sendResetCode() {
     var email = document.getElementById('reset-email').value.trim()
     var phone = document.getElementById('reset-phone').value.trim()
@@ -28,11 +39,10 @@ function sendResetCode() {
     })
         .then(function (response) {
             return response.text().then(function (text) {
-                if (response.ok) {
+                updateVerifyStatus(text)
+                if (response.ok && responseWasSuccessful(text, 'Code sent successfully')) {
                     document.getElementById('step1').hidden = true
                     document.getElementById('step2').hidden = false
-                } else {
-                    document.getElementById('verify-status').textContent = text
                 }
             })
         })
@@ -55,11 +65,10 @@ function verifyResetCode() {
     })
         .then(function (response) {
             return response.text().then(function (text) {
-                if (response.ok) {
+                updateVerifyStatus(text)
+                if (response.ok && responseWasSuccessful(text, 'Code verified')) {
                     document.getElementById('step2').hidden = true
                     document.getElementById('step3').hidden = false
-                } else {
-                    document.getElementById('verify-status').textContent = text
                 }
             })
         })
@@ -89,12 +98,12 @@ function resetPassword() {
         body: body
     })
         .then(function (response) {
-            if (response.ok) {
-                window.location.href = '/login'
-            } else {
-                response.text().then(function (text) {
-                    document.getElementById('verify-status').textContent = text
-                })
-            }
+            return response.text().then(function (text) {
+                if (response.ok && text === '') {
+                    window.location.href = '/login'
+                } else {
+                    updateVerifyStatus(text)
+                }
+            })
         })
 }

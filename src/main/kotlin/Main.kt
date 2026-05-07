@@ -13,6 +13,7 @@ import io.ktor.server.sessions.*
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import routes.commitmentRoutes
+import routes.chatRoutes
 import routes.flight.flightsRoutes
 import routes.helpRoutes
 import routes.homepageRoutes
@@ -105,5 +106,6 @@ fun Application.configureRouting() {
         myAccountRoutes()
         staffRoutes()
         verificationRoutes()
+        chatRoutes()
     }
 }

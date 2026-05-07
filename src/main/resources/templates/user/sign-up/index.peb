@@ -1,20 +1,75 @@
 {% extends "_layout/base.peb" %}
 
+{% block styles %}
+<link rel="stylesheet" href="/static/css/users/auth.css">
+{% endblock %}
+
+{% block body_class %}auth-page-body{% endblock %}
+
 {% block content %}
-<h1 style="text-align: center;">Sign Up</h1>
 
-<form class="login-form"
-    method="post"
-    action="/signup"
-    hx-post="/signup"
-    hx-target="#sign-up-status"
-    hx-swap="innerHTML">
+<div class="login-page">
 
-    <input name="firstname" placeholder="First Name">
-    <input name="lastname" placeholder="Last Name">
-    <input name="email" placeholder="Email">
-    <input name="password" type="password" placeholder="Password">
-    <button type="submit">Sign Up</button>
-    <div id="sign-up-status" role="status" aria-live="polite" aria-atomic="true"></div>
-</form>
+    <div class="login-card signup-card">
+
+        <div class="login-logo">
+            <img src="/static/images/LogoForTab.svg" alt="" aria-hidden="true">
+            <span>Glide Airlines</span>
+        </div>
+
+        <h1>Create your account</h1>
+        <p class="login-subtitle">Create your account with an optional phone number</p>
+
+        <form class="signup-form"
+            method="post"
+            action="/signup"
+            hx-post="/signup"
+            hx-target="#sign-up-status"
+            hx-swap="innerHTML"
+            novalidate>
+
+            <div class="signup-name-row">
+                <div class="login-field">
+                    <label for="firstname">First Name</label>
+                    <input id="firstname" name="firstname" placeholder="First Name" autocomplete="given-name" required aria-required="true">
+                </div>
+
+                <div class="login-field">
+                    <label for="lastname">Last Name</label>
+                    <input id="lastname" name="lastname" placeholder="Last Name" autocomplete="family-name" required aria-required="true">
+                </div>
+            </div>
+
+            <div class="login-field">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" autocomplete="email" required aria-required="true">
+            </div>
+
+            <div class="login-field">
+                <label for="phone">Phone Number <span class="optional-label">Optional</span></label>
+                <input type="tel" id="phone" name="phone" placeholder="+44 7000 000000" autocomplete="tel">
+            </div>
+
+            <div class="login-field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required aria-required="true">
+            </div>
+
+            <button type="submit" class="login-btn">Sign Up</button>
+            <div id="sign-up-status" class="auth-status" role="status" aria-live="polite" aria-atomic="true"></div>
+        </form>
+
+        <p class="login-signup-link">
+            Already have an account? <a href="/login">Sign in</a>
+        </p>
+
+    </div>
+
+    <div class="login-bg" aria-hidden="true">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
+
+</div>
 {% endblock %}

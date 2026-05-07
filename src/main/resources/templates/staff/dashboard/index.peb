@@ -23,6 +23,11 @@
             <strong>Manage support</strong>
             <span>Track user tickets, staff tickets, status updates, and images.</span>
         </a>
+        <a href="/staff/chat" class="staff-card">
+            <span class="staff-card__label">Chat</span>
+            <strong>View customer messages</strong>
+            <span>Read customer chat messages and send staff replies.</span>
+        </a>
         {% if isStaffAdmin %}
         <a href="/staff/staff-accounts" class="staff-card">
             <span class="staff-card__label">Admin</span>

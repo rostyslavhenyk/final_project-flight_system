@@ -1,0 +1,347 @@
+.auth-page-body {
+    background-color: #e0f2ef;
+}
+
+.auth-page-body main {
+    display: flex;
+    background-color: #e0f2ef;
+}
+
+.auth-page-body .site-footer {
+    margin-top: 0;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 320px;
+    margin: 10vh auto;
+    padding: 2rem;
+}
+
+.login-form input {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.login-form button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    background-color: #333333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.login-form button:hover {
+    background-color: #232323;
+}
+
+.login-page {
+    min-height: calc(100vh - 64px);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 40px 80px 40px 40px;
+    position: relative;
+    overflow: hidden;
+    background-color: #e0f2ef;
+}
+
+.login-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50px;
+    opacity: 0.5;
+    animation-name: driftcloud;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.cloud::before,
+.cloud::after {
+    content: "";
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+}
+
+.cloud-1 {
+    width: 160px;
+    height: 45px;
+    top: 18%;
+    left: 8%;
+    animation-duration: 18s;
+}
+
+.cloud-1::before {
+    width: 70px;
+    height: 70px;
+    top: -35px;
+    left: 20px;
+}
+
+.cloud-1::after {
+    width: 50px;
+    height: 50px;
+    top: -25px;
+    left: 70px;
+}
+
+.cloud-2 {
+    width: 120px;
+    height: 35px;
+    top: 40%;
+    left: 5%;
+    animation-duration: 24s;
+    animation-delay: -8s;
+    opacity: 0.35;
+}
+
+.cloud-2::before {
+    width: 55px;
+    height: 55px;
+    top: -28px;
+    left: 15px;
+}
+
+.cloud-2::after {
+    width: 40px;
+    height: 40px;
+    top: -20px;
+    left: 55px;
+}
+
+.cloud-3 {
+    width: 200px;
+    height: 50px;
+    top: 65%;
+    left: 15%;
+    animation-duration: 30s;
+    animation-delay: -16s;
+    opacity: 0.3;
+}
+
+.cloud-3::before {
+    width: 80px;
+    height: 80px;
+    top: -40px;
+    left: 25px;
+}
+
+.cloud-3::after {
+    width: 60px;
+    height: 60px;
+    top: -30px;
+    left: 90px;
+}
+
+@keyframes driftcloud {
+    0% {
+        transform: translateX(-300px);
+    }
+
+    100% {
+        transform: translateX(110vw);
+    }
+}
+
+.login-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
+}
+
+.signup-card {
+    max-width: 440px;
+}
+
+.login-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.login-logo span {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.login-logo img {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+.login-card h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.login-subtitle {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 28px;
+}
+
+.login-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 16px;
+}
+
+.login-field label {
+    font-size: 0.87rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.login-field input {
+    padding: 10px 14px;
+    border: 1.5px solid var(--primary-border-color);
+    border-radius: 8px;
+    font-size: 0.93rem;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: white;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    margin: 0;
+}
+
+.login-field input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(45, 79, 47, 0.12);
+}
+
+.signup-name-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.optional-label {
+    color: #666;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.login-forgot {
+    text-align: right;
+    margin-bottom: 20px;
+    margin-top: -8px;
+}
+
+.login-forgot a {
+    font-size: 0.83rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    width: auto;
+    margin: 0;
+}
+
+.login-forgot a:hover {
+    text-decoration: underline;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 11px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 0;
+}
+
+.login-btn:hover {
+    background-color: var(--primary-color-hover);
+}
+
+.auth-status {
+    min-height: 20px;
+    margin-top: 12px;
+    color: #c62828;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.auth-status:not(:empty) {
+    padding: 9px 12px;
+    border: 1px solid #f3b5b5;
+    border-radius: 8px;
+    background: #ffebee;
+}
+
+.login-signup-link {
+    text-align: center;
+    font-size: 0.88rem;
+    color: #666;
+    margin-top: 20px;
+}
+
+.login-signup-link a {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+    width: auto;
+    margin: 0;
+}
+
+.login-signup-link a:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+    .login-page {
+        justify-content: center;
+        padding: 28px 16px;
+    }
+
+    .login-card {
+        padding: 28px 20px;
+    }
+
+    .signup-name-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}

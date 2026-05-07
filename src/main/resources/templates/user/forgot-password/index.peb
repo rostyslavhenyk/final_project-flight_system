@@ -1,5 +1,11 @@
 {% extends "_layout/base.peb" %}
 
+{% block styles %}
+<link rel="stylesheet" href="/static/css/users/auth.css">
+{% endblock %}
+
+{% block body_class %}auth-page-body{% endblock %}
+
 {% block content %}
 
 <div class="login-form">
@@ -17,7 +23,7 @@
             <input type="tel" id="reset-phone" placeholder="+44 7000 000000">
         </div>
         <button onclick="sendResetCode()">Send Code</button>
-        <div id="verify-status" role="status" aria-live="polite"></div>
+        <div id="verify-status" class="auth-status" role="status" aria-live="polite"></div>
     </div>
 
     <div id="step2" hidden>

@@ -1,6 +1,7 @@
 plugins {
     application
     kotlin("jvm") version "2.2.21"
+    kotlin("plugin.serialization") version "2.2.21"
     id("io.ktor.plugin") version "2.3.12"
     id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
     id("io.gitlab.arturbosch.detekt") version "1.23.8"
@@ -27,6 +28,7 @@ dependencies {
     implementation("com.sun.mail:jakarta.mail:2.0.1")
     implementation("com.twilio.sdk:twilio:10.1.5")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
 
     // pebble templating
     implementation("io.pebbletemplates:pebble:$pebbleVersion")

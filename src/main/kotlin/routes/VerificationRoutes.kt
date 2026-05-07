@@ -28,7 +28,7 @@ fun Route.verificationRoutes() {
 }
 
 fun ApplicationCall.createVerifyStatus(message: String): String =
-    """<div id="verify-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
+    """<div id="verify-status" class="auth-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
 private suspend fun ApplicationCall.handleForgotPasswordLoad() {
     timed("T0_forgot_password", jsMode()) {
@@ -69,10 +69,33 @@ private suspend fun ApplicationCall.handleForgotPasswordSend() {
                 return@timed
             }
             VerificationStore.saveCode(email, code)
-            EmailService.sendPasswordResetCode(email, code)
+            if (!EmailService.sendPasswordResetCode(email, code)) {
+                respondText(
+                    createVerifyStatus("Email sending is not configured"),
+                    ContentType.Text.Html,
+                    status = HttpStatusCode.OK,
+                )
+                return@timed
+            }
         } else if (!phone.isNullOrBlank()) {
+            val user = UserRepository.getByPhone(phone)
+            if (user == null) {
+                respondText(
+                    createVerifyStatus("No account found with that phone number"),
+                    ContentType.Text.Html,
+                    status = HttpStatusCode.OK,
+                )
+                return@timed
+            }
             VerificationStore.saveCode(phone, code)
-            SmsService.sendPasswordResetCode(phone, code)
+            if (!SmsService.sendPasswordResetCode(phone, code)) {
+                respondText(
+                    createVerifyStatus("SMS sending is not configured"),
+                    ContentType.Text.Html,
+                    status = HttpStatusCode.OK,
+                )
+                return@timed
+            }
         }
 
         respondText(
@@ -161,7 +184,12 @@ private suspend fun ApplicationCall.handlePasswordReset() {
             return@timed
         }
 
-        val user = UserRepository.getByEmail(key)
+        val user =
+            if (key.contains("@")) {
+                UserRepository.getByEmail(key)
+            } else {
+                UserRepository.getByPhone(key)
+            }
         if (user == null) {
             respondText(
                 createVerifyStatus("User not found"),
@@ -196,7 +224,14 @@ private suspend fun ApplicationCall.handleSendEmailCode() {
 
         val code = VerificationStore.generateCode()
         VerificationStore.saveCode(email, code)
-        EmailService.sendVerificationCode(email, code)
+        if (!EmailService.sendVerificationCode(email, code)) {
+            respondText(
+                createVerifyStatus("Email sending is not configured"),
+                ContentType.Text.Html,
+                status = HttpStatusCode.OK,
+            )
+            return@timed
+        }
 
         respondText(
             createVerifyStatus("Code sent to $email"),
@@ -257,7 +292,14 @@ private suspend fun ApplicationCall.handleSendSmsCode() {
 
         val code = VerificationStore.generateCode()
         VerificationStore.saveCode(phone, code)
-        SmsService.sendVerificationCode(phone, code)
+        if (!SmsService.sendVerificationCode(phone, code)) {
+            respondText(
+                createVerifyStatus("SMS sending is not configured"),
+                ContentType.Text.Html,
+                status = HttpStatusCode.OK,
+            )
+            return@timed
+        }
 
         respondText(
             createVerifyStatus("Code sent to $phone"),

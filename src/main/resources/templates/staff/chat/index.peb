@@ -1,0 +1,34 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block content %}
+
+<h1>Customer Messages</h1>
+
+{% if conversations is empty %}
+    <p>No messages yet.</p>
+{% else %}
+    {% for convo in conversations %}
+    <div class="chat-convo-card">
+        <h3>{{ convo.userName }}</h3>
+
+        <div class="chat-convo-messages">
+            {% for msg in convo.messages %}
+            <div class="chat-convo-msg {% if msg.isStaff %}staff{% else %}customer{% endif %}">
+                <span class="chat-convo-name">{{ msg.senderName }}</span>
+                <p>{{ msg.message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <form method="post" action="/staff/chat/reply">
+            <input type="hidden" name="userId" value="{{ convo.userId }}">
+            <div class="chat-reply-row">
+                <input type="text" name="message" placeholder="Type a reply..." required>
+                <button type="submit">Reply</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% endblock %}
