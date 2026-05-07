@@ -38,14 +38,12 @@ document.getElementById('faqSearch').addEventListener('input', function () {
 
     for (var i = 0; i < allItems.length; i++) {
         var questionText = allItems[i].querySelector('.faq-question').textContent.toLowerCase()
-
-        if (questionText.includes(typed)) {
-            allItems[i].style.display = 'block'
-        } else {
-            allItems[i].style.display = 'none'
-        }
+        allItems[i].style.display = questionText.includes(typed) ? 'block' : 'none'
     }
 })
+
+var chatPollId = null
+var chatPollMs = 8000
 
 // chat open and close
 function toggleChat() {
@@ -56,141 +54,119 @@ function toggleChat() {
     if (chatBody.hidden) {
         chatBody.hidden = false
         chatHeader.setAttribute('aria-expanded', 'true')
-        chevron.textContent = '▼'
+        chevron.textContent = 'v'
         document.getElementById('chatInput').focus()
+        loadReplies()
+        startChatPolling()
     } else {
         chatBody.hidden = true
         chatHeader.setAttribute('aria-expanded', 'false')
-        chevron.textContent = '▲'
+        chevron.textContent = '^'
+        stopChatPolling()
     }
-}
-
-// keyword based bot replies
-function getBotReply(text) {
-    var msg = text.toLowerCase()
-
-    if (msg.includes('refund')) {
-        return 'For refund requests, please use the Refunds section on this page or email us at support@glideairways.com. Refunds are processed within 3-5 business days.'
-    }
-
-    if (msg.includes('book') || msg.includes('booking')) {
-        return 'To manage your booking, go to the Manage Booking page. You can change or cancel flights there as long as they have not departed yet.'
-    }
-
-    if (msg.includes('check in') || msg.includes('checkin') || msg.includes('check-in')) {
-        return 'Online check-in opens 24 hours before your flight. Go to the Check-in page and have your booking reference and passport ready.'
-    }
-
-    if (msg.includes('baggage') || msg.includes('luggage') || msg.includes('bag')) {
-        return 'Standard economy includes 1 carry-on bag up to 10kg. Extra baggage can be added through Manage Booking before your flight departs.'
-    }
-
-    if (msg.includes('delay') || msg.includes('delayed') || msg.includes('cancel') || msg.includes('cancelled')) {
-        return 'If your flight is delayed or cancelled you will be notified by email. You can also check live status on the Flight Status page. You may be entitled to compensation - raise a refund request below.'
-    }
-
-    if (msg.includes('membership') || msg.includes('points') || msg.includes('loyalty')) {
-        return 'We offer Silver, Gold and Platinum membership tiers. Visit the Membership page to sign up for free and start earning points from your first booking.'
-    }
-
-    if (msg.includes('passport') || msg.includes('visa') || msg.includes('document')) {
-        return 'You will need a valid passport or government ID and your booking reference to check in. For visa requirements check your destination country\'s official embassy website.'
-    }
-
-    if (msg.includes('seat') || msg.includes('seats')) {
-        return 'Seat selection is available during booking. You can also update your seat through Manage Booking before your flight departs.'
-    }
-
-    if (msg.includes('payment') || msg.includes('pay') || msg.includes('price') || msg.includes('cost')) {
-        return 'We accept all major credit and debit cards. If you have a payment issue please contact us at support@glideairways.com.'
-    }
-
-    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-        return 'Hi there! How can we help you today? You can ask about bookings, check-in, baggage, refunds, or anything else.'
-    }
-
-    if (msg.includes('thank') || msg.includes('thanks')) {
-        return 'You\'re welcome! Is there anything else we can help you with?'
-    }
-
-    return 'Thanks for your message. For urgent queries please email us at support@glideairways.com or call +44 000 000 0000 Monday to Friday 8am-8pm.'
 }
 
 // send chat message
 function sendChat() {
     var input = document.getElementById('chatInput')
-    var messages = document.getElementById('chatMessages')
     var text = input.value.trim()
 
     if (text === '') return
 
-    var userMsg = document.createElement('div')
-    userMsg.classList.add('chat-msg', 'user')
-    userMsg.textContent = text
-    messages.appendChild(userMsg)
     input.value = ''
-    messages.scrollTop = messages.scrollHeight
 
     fetch('/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'message=' + encodeURIComponent(text)
-    }).catch(function () {
-        // not logged in, just show bot reply
     })
+        .then(function (response) {
+            if (response.status === 401) {
+                renderChatStatus('Log in to send a live chat message to staff.')
+                return
+            }
 
-    var typing = document.createElement('div')
-    typing.classList.add('chat-msg', 'bot', 'typing-indicator')
-    typing.textContent = '...'
-    messages.appendChild(typing)
-    messages.scrollTop = messages.scrollHeight
+            if (!response.ok) {
+                renderChatStatus('Your message could not be sent. Please try again.')
+                return
+            }
 
-    setTimeout(function () {
-        messages.removeChild(typing)
-
-        var botMsg = document.createElement('div')
-        botMsg.classList.add('chat-msg', 'bot')
-        botMsg.textContent = getBotReply(text)
-        messages.appendChild(botMsg)
-        messages.scrollTop = messages.scrollHeight
-    }, 1000)
+            loadReplies()
+        })
+        .catch(function () {
+            renderChatStatus('Your message could not be sent. Please try again.')
+        })
 }
 
-// loads staff replies from backend
+// loads customer and staff messages from backend
 function loadReplies() {
     fetch('/chat/messages')
         .then(function (response) {
+            if (response.status === 401) {
+                renderChatStatus('Log in to start a live chat with staff.')
+                return
+            }
+
             if (!response.ok) return
             return response.json()
         })
         .then(function (data) {
             if (!data) return
-
-            var messages = document.getElementById('chatMessages')
-            messages.innerHTML = ''
-
-            for (var i = 0; i < data.length; i++) {
-                var msg = document.createElement('div')
-                msg.classList.add('chat-msg')
-                msg.classList.add(data[i].isStaff ? 'bot' : 'user')
-                msg.textContent = data[i].message
-                messages.appendChild(msg)
-            }
-
-            messages.scrollTop = messages.scrollHeight
+            renderChatMessages(data)
         })
         .catch(function () {
-            // not logged in, just ignore
+            renderChatStatus('Live chat is unavailable right now.')
         })
 }
 
-// load replies when chat opens
+function renderChatMessages(data) {
+    var messages = document.getElementById('chatMessages')
+    messages.innerHTML = ''
+
+    if (data.length === 0) {
+        renderChatStatus('Send a message and staff will reply here.')
+        return
+    }
+
+    for (var i = 0; i < data.length; i++) {
+        var msg = document.createElement('div')
+        msg.classList.add('chat-msg')
+        msg.classList.add(data[i].isStaff ? 'bot' : 'user')
+        msg.textContent = data[i].senderName + ': ' + data[i].message
+        messages.appendChild(msg)
+    }
+
+    messages.scrollTop = messages.scrollHeight
+}
+
+function renderChatStatus(text) {
+    var messages = document.getElementById('chatMessages')
+    messages.innerHTML = ''
+
+    var status = document.createElement('div')
+    status.classList.add('chat-msg', 'system')
+    status.textContent = text
+    messages.appendChild(status)
+}
+
+function startChatPolling() {
+    if (chatPollId !== null) return
+    chatPollId = window.setInterval(loadReplies, chatPollMs)
+}
+
+function stopChatPolling() {
+    if (chatPollId === null) return
+    window.clearInterval(chatPollId)
+    chatPollId = null
+}
+
 function openChat() {
     var chatBody = document.getElementById('chatBody')
     if (chatBody.hidden) {
         toggleChat()
+    } else {
+        loadReplies()
     }
-    loadReplies()
 }
 
 function handleChatKey(event) {

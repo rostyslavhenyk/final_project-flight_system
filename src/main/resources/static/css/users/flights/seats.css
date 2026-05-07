@@ -754,6 +754,78 @@
   text-align: center;
 }
 
+.seat-booking__extras {
+  margin-top: 1rem;
+}
+
+.seat-booking__extras-head h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  color: var(--text-color);
+}
+
+.seat-booking__extras-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.seat-booking__extra-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--primary-border-color);
+  border-radius: 8px;
+  background: var(--page-white);
+  cursor: pointer;
+}
+
+.seat-booking__extra-card:has(input:checked) {
+  border: 2px solid var(--primary-color);
+  padding: calc(0.85rem - 1px) calc(0.9rem - 1px);
+  background: color-mix(in srgb, var(--primary-color) 10%, var(--page-white));
+}
+
+.seat-booking__extra-card input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--primary-color);
+}
+
+.seat-booking__extra-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.seat-booking__extra-label {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.seat-booking__extra-description {
+  font-size: 0.84rem;
+  color: var(--muted-text-color);
+  line-height: 1.35;
+}
+
+.seat-booking__extra-price {
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--primary-color);
+}
+
+@media (max-width: 900px) {
+  .seat-booking__extras-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .seat-booking__fee-table {
   width: 100%;
   border-collapse: collapse;
@@ -990,6 +1062,26 @@
   font-size: 0.96rem;
 }
 
+.seat-booking__stripe-panel {
+  max-width: 42rem;
+}
+
+.seat-booking__stripe-card {
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--primary-border-color);
+  border-radius: 8px;
+  background: var(--page-white);
+}
+
+.seat-booking__stripe-card.StripeElement--focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 30%, transparent);
+}
+
+.seat-booking__stripe-hint {
+  margin-top: 0.7rem !important;
+}
+
 td.seat-booking__fee-free,
 .seat-booking__fee-free {
   font-weight: 700;
@@ -1086,4 +1178,10 @@ td.seat-booking__fee-free,
 .seat-booking__pay-cta.review-wf-continue-wrap {
   margin-top: 0;
   padding-top: 0.25rem;
+}
+
+.seat-booking__pay-cta #pay-confirm-error {
+  flex-basis: 100%;
+  margin: 0.7rem auto 0 !important;
+  text-align: center;
 }

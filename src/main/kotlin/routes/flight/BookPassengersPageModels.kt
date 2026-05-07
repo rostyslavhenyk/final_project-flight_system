@@ -11,6 +11,8 @@ import java.util.Locale
 private const val MAX_ADULT_PASSENGERS = 9
 private const val MAX_CHILD_PASSENGERS = 8
 private const val MEMBER_NUMBER_FORMAT = "GA%06d"
+private const val UK_DIAL_CODE = "44"
+private const val UK_PHONE_WITH_DIAL_MIN_LENGTH = 11
 
 internal fun bookPassengersModel(
     queryParams: Parameters,
@@ -58,8 +60,29 @@ internal fun bookPassengersModel(
             },
         "membershipFilled" to (logged.loggedIn && session != null),
         "contactEmailValue" to (account?.email ?: ""),
+        "contactPhoneDialValue" to account?.phone.contactDialCode(),
+        "contactPhoneValue" to account?.phone.contactNationalNumber(),
         "continueSeatsHref" to bookingHref("/book/seats", queryParams),
     )
+}
+
+private fun String?.contactDigits(): String = orEmpty().filter { char -> char.isDigit() }
+
+private fun String?.contactDialCode(): String {
+    val digits = contactDigits()
+    return when {
+        digits.startsWith(UK_DIAL_CODE) && digits.length >= UK_PHONE_WITH_DIAL_MIN_LENGTH -> UK_DIAL_CODE
+        else -> ""
+    }
+}
+
+private fun String?.contactNationalNumber(): String {
+    val digits = contactDigits()
+    return when {
+        digits.startsWith(UK_DIAL_CODE) && digits.length >= UK_PHONE_WITH_DIAL_MIN_LENGTH ->
+            digits.drop(UK_DIAL_CODE.length)
+        else -> digits
+    }
 }
 
 private data class PassengerSegmentSnapshot(

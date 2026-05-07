@@ -22,15 +22,15 @@ fun Route.staffChatRoutes() {
 private suspend fun ApplicationCall.handleStaffChatLoad() {
     val allMessages = ChatRepository.getAll()
 
-    // group messages by user id
-    val grouped = allMessages.groupBy { it.userId }
-
     val conversations =
-        grouped.map { (userId, messages) ->
+        allMessages.groupBy { it.userId }.map { (userId, messages) ->
             val user = UserRepository.get(userId)
             mapOf(
                 "userId" to userId,
-                "userName" to (user?.firstname ?: "Unknown"),
+                "userName" to user.displayName(),
+                "userEmail" to (user?.email ?: "Unknown account"),
+                "messageCount" to messages.size,
+                "lastMessageAt" to (messages.maxOfOrNull { it.timestamp } ?: 0L),
                 "messages" to
                     messages.map { msg ->
                         mapOf(
@@ -42,7 +42,7 @@ private suspend fun ApplicationCall.handleStaffChatLoad() {
                         )
                     },
             )
-        }
+        }.sortedByDescending { it["lastMessageAt"] as Long }
 
     val model =
         baseModel(
@@ -78,3 +78,8 @@ private suspend fun ApplicationCall.handleStaffReply() {
     ChatRepository.add(userId, "Support Team", message, true)
     respondRedirect("/staff/chat")
 }
+
+private fun data.User?.displayName(): String =
+    this?.let { "${it.firstname} ${it.lastname}".trim() }
+        ?.takeIf { it.isNotBlank() }
+        ?: "Unknown customer"

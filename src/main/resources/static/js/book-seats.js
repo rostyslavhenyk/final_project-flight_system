@@ -120,6 +120,32 @@
     return 0;
   }
 
+  function unavailableKey(journeyKey, legIndex, seatId) {
+    return journeyKey + '|' + String(legIndex) + '|' + seatId;
+  }
+
+  function postSeatAction(action, journeyKey, legIndex, seatId) {
+    var body = new URLSearchParams();
+    body.set('journeyKey', journeyKey);
+    body.set('legIndex', String(legIndex));
+    body.set('seatId', seatId);
+    return fetch('/book/seats/' + action + window.location.search, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: body.toString(),
+    });
+  }
+
+  function mapUnavailableSeats(payload) {
+    var mapped = {};
+    if (!payload || !Array.isArray(payload.seats)) return mapped;
+    payload.seats.forEach(function (entry) {
+      if (!entry) return;
+      mapped[unavailableKey(entry.journeyKey, entry.legIndex, entry.seatId)] = true;
+    });
+    return mapped;
+  }
+
   function init() {
     var cfgEl = document.getElementById('seat-booking-config');
     if (!cfgEl || !cfgEl.dataset.journeysB64) return;
@@ -143,6 +169,7 @@
     }
 
     var seatMap = loadSeatMap();
+    var serverUnavailableSeats = {};
     var journeyKey = journeys[0].key;
     var legIndex = 0;
     var selectedPax = 1;
@@ -157,6 +184,7 @@
     var breakRows = document.querySelectorAll('[data-seat-break-row]');
     var facilityRows = document.querySelectorAll('[data-seat-facility]');
     var wingRows = document.querySelectorAll('[data-seat-wing-row]');
+    var extraInputs = document.querySelectorAll('[data-booking-extra]');
     var continueBtn = document.getElementById('seat-continue-placeholder');
 
     if (!legTabsEl || !seatGrid) return;
@@ -189,6 +217,12 @@
           var rawPax = sessionStorage.getItem(STORAGE_PAX);
           if (rawPax) url.searchParams.set('paxSel', toBase64UrlUtf8(rawPax));
         } catch (ep) {}
+        var extras = [];
+        extraInputs.forEach(function (input) {
+          if (input.checked && input.value) extras.push(input.value);
+        });
+        if (extras.length) url.searchParams.set('extras', extras.join(','));
+        else url.searchParams.delete('extras');
         continueBtn.setAttribute('href', url.pathname + url.search);
       } catch (e) {}
     }
@@ -301,6 +335,14 @@
           return;
         }
 
+        if (serverUnavailableSeats[unavailableKey(journeyKey, legIndex, id)]) {
+          btn.classList.add('seat-booking__seat--unavailable');
+          btn.disabled = true;
+          btn.textContent = letter;
+          btn.setAttribute('aria-label', 'Seat ' + id + ', unavailable');
+          return;
+        }
+
         var occ = findOccupant(seatMap, journeyKey, legIndex, id);
         if (occ) {
           btn.textContent = 'P' + occ;
@@ -316,6 +358,124 @@
           btn.setAttribute('aria-label', 'Seat ' + id);
         }
       });
+    }
+
+    function loadUnavailableSeats() {
+      return fetch('/book/seats/unavailable' + window.location.search)
+        .then(function (response) {
+          if (!response.ok) return null;
+          return response.json();
+        })
+        .then(function (payload) {
+          serverUnavailableSeats = mapUnavailableSeats(payload);
+          paintSeats();
+          return serverUnavailableSeats;
+        })
+        .catch(function () {});
+    }
+
+    function validateSelectedSeats() {
+      updateContinueHref();
+      var href = continueBtn && continueBtn.getAttribute('href');
+      var query = href && href.indexOf('?') !== -1 ? href.slice(href.indexOf('?')) : window.location.search;
+      return fetch('/book/seats/validate' + query)
+        .then(function (response) {
+          if (!response.ok) return null;
+          return response.json();
+        })
+        .then(function (payload) {
+          return mapUnavailableSeats(payload);
+        });
+    }
+
+    function selectedUnavailableKeys() {
+      var blocked = [];
+      Object.keys(seatMap).forEach(function (selectedJourneyKey) {
+        Object.keys(seatMap[selectedJourneyKey] || {}).forEach(function (selectedLegIndex) {
+          var leg = seatMap[selectedJourneyKey][selectedLegIndex] || {};
+          Object.keys(leg).forEach(function (slot) {
+            var seatId = leg[slot];
+            var key = unavailableKey(selectedJourneyKey, selectedLegIndex, seatId);
+            if (serverUnavailableSeats[key]) blocked.push(key);
+          });
+        });
+      });
+      return blocked;
+    }
+
+    function removeUnavailableSelections() {
+      Object.keys(seatMap).forEach(function (selectedJourneyKey) {
+        Object.keys(seatMap[selectedJourneyKey] || {}).forEach(function (selectedLegIndex) {
+          var leg = seatMap[selectedJourneyKey][selectedLegIndex] || {};
+          Object.keys(leg).forEach(function (slot) {
+            var seatId = leg[slot];
+            if (serverUnavailableSeats[unavailableKey(selectedJourneyKey, selectedLegIndex, seatId)]) {
+              delete leg[slot];
+            }
+          });
+          if (Object.keys(leg).length === 0) delete seatMap[selectedJourneyKey][selectedLegIndex];
+        });
+        if (Object.keys(seatMap[selectedJourneyKey] || {}).length === 0) delete seatMap[selectedJourneyKey];
+      });
+    }
+
+    function showSeatUnavailableMessage() {
+      if (!continueBtn || !continueBtn.parentNode) return;
+      var existing = document.getElementById('seat-unavailable-error');
+      if (existing) {
+        existing.hidden = false;
+        return;
+      }
+      var msg = document.createElement('p');
+      msg.id = 'seat-unavailable-error';
+      msg.className = 'flights-hero__hint';
+      msg.setAttribute('role', 'alert');
+      msg.textContent = 'One or more selected seats are no longer available. Please choose another seat.';
+      continueBtn.insertAdjacentElement('afterend', msg);
+    }
+
+    function hideSeatUnavailableMessage() {
+      var existing = document.getElementById('seat-unavailable-error');
+      if (existing) existing.hidden = true;
+    }
+
+    function proceedToPayment() {
+      saveSeatMap(seatMap);
+      updateContinueHref();
+      var href = continueBtn && continueBtn.getAttribute('href');
+      if (href && href !== '#') window.location.href = href;
+    }
+
+    function continueAfterAvailabilityCheck(showMissingDialog) {
+      if (!continueBtn) return;
+      continueBtn.setAttribute('aria-busy', 'true');
+      Promise.all([loadUnavailableSeats(), validateSelectedSeats()])
+        .then(function (results) {
+          continueBtn.removeAttribute('aria-busy');
+          var selectedBlockedSeats = results[1] || {};
+          Object.keys(selectedBlockedSeats).forEach(function (key) {
+            serverUnavailableSeats[key] = true;
+          });
+          if (selectedUnavailableKeys().length > 0) {
+            removeUnavailableSelections();
+            saveSeatMap(seatMap);
+            paintSeats();
+            syncPaxPanel();
+            updateContinueHref();
+            showSeatUnavailableMessage();
+            return;
+          }
+          hideSeatUnavailableMessage();
+          var missing = countMissingAssignments(seatMap, journeys, paxButtons.length);
+          if (missing > 0 && showMissingDialog && continueDialog && typeof continueDialog.showModal === 'function') {
+            continueDialog.showModal();
+            return;
+          }
+          proceedToPayment();
+        })
+        .catch(function () {
+          continueBtn.removeAttribute('aria-busy');
+        });
     }
 
     function syncPaxPanel() {
@@ -382,14 +542,8 @@
 
     if (continueBtn) {
       continueBtn.addEventListener('click', function (e) {
-        saveSeatMap(seatMap);
-        updateContinueHref();
-        var paxCount = paxButtons.length;
-        var missing = countMissingAssignments(seatMap, journeys, paxCount);
-        if (missing > 0 && continueDialog && typeof continueDialog.showModal === 'function') {
-          e.preventDefault();
-          continueDialog.showModal();
-        }
+        e.preventDefault();
+        continueAfterAvailabilityCheck(true);
       });
     }
 
@@ -401,11 +555,8 @@
 
     if (dialogConfirm && continueBtn && continueDialog) {
       dialogConfirm.addEventListener('click', function () {
-        saveSeatMap(seatMap);
-        updateContinueHref();
         continueDialog.close();
-        var href = continueBtn.getAttribute('href');
-        if (href && href !== '#') window.location.href = href;
+        continueAfterAvailabilityCheck(false);
       });
     }
 
@@ -421,17 +572,37 @@
       if (!seatMap[journeyKey][String(legIndex)]) seatMap[journeyKey][String(legIndex)] = {};
       var leg = seatMap[journeyKey][String(legIndex)];
       if (leg[String(selectedPax)] === seatId) {
-        delete leg[String(selectedPax)];
-        if (Object.keys(leg).length === 0) delete seatMap[journeyKey][String(legIndex)];
-        if (Object.keys(seatMap[journeyKey]).length === 0) delete seatMap[journeyKey];
+        postSeatAction('release', journeyKey, legIndex, seatId).finally(function () {
+          delete leg[String(selectedPax)];
+          if (Object.keys(leg).length === 0) delete seatMap[journeyKey][String(legIndex)];
+          if (Object.keys(seatMap[journeyKey]).length === 0) delete seatMap[journeyKey];
+          saveSeatMap(seatMap);
+          paintSeats();
+          syncPaxPanel();
+          updateContinueHref();
+          hideSeatUnavailableMessage();
+        });
       } else {
-        clearSeatFromOthers(seatMap, journeyKey, legIndex, seatId, selectedPax);
-        leg[String(selectedPax)] = seatId;
+        var previousSeat = leg[String(selectedPax)] || '';
+        btn.disabled = true;
+        postSeatAction('hold', journeyKey, legIndex, seatId)
+          .then(function (response) {
+            if (!response.ok) throw new Error('seat-unavailable');
+            if (previousSeat) postSeatAction('release', journeyKey, legIndex, previousSeat);
+            clearSeatFromOthers(seatMap, journeyKey, legIndex, seatId, selectedPax);
+            leg[String(selectedPax)] = seatId;
+            saveSeatMap(seatMap);
+            paintSeats();
+            syncPaxPanel();
+            updateContinueHref();
+            hideSeatUnavailableMessage();
+          })
+          .catch(function () {
+            serverUnavailableSeats[unavailableKey(journeyKey, legIndex, seatId)] = true;
+            paintSeats();
+            syncPaxPanel();
+          });
       }
-      saveSeatMap(seatMap);
-      paintSeats();
-      syncPaxPanel();
-      updateContinueHref();
     });
 
     paxButtons.forEach(function (btn) {
@@ -443,11 +614,16 @@
       });
     });
 
+    extraInputs.forEach(function (input) {
+      input.addEventListener('change', updateContinueHref);
+    });
+
     applyPaxNames();
     updateJourneyPickersUI();
     buildLegTabs();
     applyCabinLayout();
     paintSeats();
+    loadUnavailableSeats();
     syncPaxPanel();
     updateContinueHref();
   }

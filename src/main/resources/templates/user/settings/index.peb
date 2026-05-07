@@ -1,0 +1,36 @@
+{% extends layout %}
+
+{% block title %}Settings · Glide Airways{% endblock %}
+
+{% block content %}
+<section class="page-shell" aria-labelledby="settings-heading">
+    <header class="page-header">
+        <p class="page-header__eyebrow">Account</p>
+        <h1 id="settings-heading" class="page-header__title">Settings</h1>
+        <p class="page-header__text">Manage the account options connected to {{ account.email }}.</p>
+    </header>
+
+    <section class="surface-card" aria-labelledby="account-settings-heading">
+        <div class="surface-card__body">
+            <h2 id="account-settings-heading">Account settings</h2>
+            <dl class="detail-list">
+                <dt>Name</dt>
+                <dd>{{ account.firstname }} {{ account.lastname }}</dd>
+                <dt>Email</dt>
+                <dd>{{ account.email }}</dd>
+                <dt>Account type</dt>
+                <dd>{% if isStaff %}Staff{% else %}Customer{% endif %}</dd>
+            </dl>
+            <p><a class="staff-action-link" href="{% if isStaff %}/staff/my-account{% else %}/my-account{% endif %}">Manage account details</a></p>
+        </div>
+    </section>
+
+    <section class="surface-card" aria-labelledby="support-settings-heading">
+        <div class="surface-card__body">
+            <h2 id="support-settings-heading">Support and privacy</h2>
+            <p><a class="staff-secondary-button" href="/help">Help and contact</a></p>
+            <p><a class="staff-secondary-button" href="/legal">Legal and Privacy</a></p>
+        </div>
+    </section>
+</section>
+{% endblock %}

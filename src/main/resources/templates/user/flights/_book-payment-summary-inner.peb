@@ -128,7 +128,7 @@
     </table>
 
     <h3 class="seat-booking__pay-table-heading">Seat fees</h3>
-    <p class="flights-hero__hint seat-booking__fee-hint">Economy Light: seat fee applies once per journey if you choose any seat on that journey.</p>
+    <p class="flights-hero__hint seat-booking__fee-hint">Economy Light: seat fee applies once per flight segment where you choose a seat.</p>
     <table class="seat-booking__fee-table seat-booking__fee-table--price-right">
         <thead>
             <tr>
@@ -146,13 +146,50 @@
         </tbody>
         <tfoot>
             <tr>
-                <th scope="row">Step 2 subtotal</th>
-                <td>{% if totalSeatFeeGbp == 0 %}<span class="seat-booking__fee-free">Free of charge</span>{% else %}GBP {{ step2ExtrasSubtotalPlain }}{% endif %}</td>
+                <th scope="row">Seat fees subtotal</th>
+                <td>{% if totalSeatFeeGbp == 0 %}<span class="seat-booking__fee-free">Free of charge</span>{% else %}GBP {{ seatFeesSubtotalPlain }}{% endif %}</td>
             </tr>
         </tfoot>
     </table>
     {% if not hasSeatSelection %}
     <p class="flights-hero__hint seat-booking__fee-missing">No seat selections were detected in this browser session.</p>
     {% endif %}
+
+    <h3 class="seat-booking__pay-table-heading">Booking extras</h3>
+    {% if hasBookingExtras %}
+    <table class="seat-booking__fee-table seat-booking__fee-table--price-right">
+        <thead>
+            <tr>
+                <th scope="col">Extra</th>
+                <th scope="col">Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in bookingExtraRows %}
+            <tr>
+                <td>{{ row.label }}</td>
+                <td>GBP {{ row.amountPlain }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th scope="row">Booking extras subtotal</th>
+                <td>GBP {{ bookingExtrasSubtotalPlain }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    {% else %}
+    <p class="flights-hero__hint seat-booking__fee-missing">No booking extras selected.</p>
+    {% endif %}
+
+    <table class="seat-booking__fee-table seat-booking__fee-table--price-right">
+        <tbody>
+            <tr>
+                <th scope="row">Step 2 subtotal</th>
+                <td>{% if totalStep2ExtrasGbp == 0 %}<span class="seat-booking__fee-free">Free of charge</span>{% else %}GBP {{ step2ExtrasSubtotalPlain }}{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
 </section>
 

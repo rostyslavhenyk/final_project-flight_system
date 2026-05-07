@@ -170,6 +170,24 @@
     color: var(--muted-text-color);
 }
 
+.past-bookings-dropdown {
+    margin-top: 1rem;
+    border-top: 1px solid var(--primary-border-color);
+    padding-top: 0.85rem;
+}
+
+.past-bookings-dropdown summary {
+    width: fit-content;
+    cursor: pointer;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.past-bookings-dropdown__list,
+.past-bookings-dropdown__empty {
+    margin-top: 0.85rem;
+}
+
 .fare-summary-dialog {
     max-width: min(52rem, 96vw);
     width: calc(100% - 2rem);

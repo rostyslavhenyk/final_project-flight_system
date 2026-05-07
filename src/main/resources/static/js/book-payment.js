@@ -1,55 +1,114 @@
 /**
- * /book/payment — if the URL lacks paxSel (e.g. refresh), refill visible names from the same sessionStorage key as passenger + seat steps.
- * Pay now persists the booking query string for My Account → Manage booking, then redirects.
+ * /book/payment - confirms a Stripe test-mode card setup, then logs the paid booking server-side.
  */
 (function () {
   'use strict';
 
   var STORAGE_PAX = 'glideBookingPaxNames';
-  /** Legacy single-booking key; superseded by glideManagedBookings JSON array */
-  var STORAGE_MANAGED_BOOKING_QUERY = 'glideManagedBookingQuery';
-  var STORAGE_BOOKINGS_LIST = 'glideManagedBookings';
+  var stripeState = {
+    stripe: null,
+    card: null,
+    clientSecret: '',
+    ready: false,
+  };
 
-  function rememberBookingAndRedirect() {
-    try {
-      var qs = window.location.search;
-      var raw = qs.length > 1 ? qs.slice(1) : '';
-      if (!raw) {
-        window.location.href = '/my-account#manage-booking';
-        return;
-      }
-      var list = [];
-      try {
-        var parsed = JSON.parse(localStorage.getItem(STORAGE_BOOKINGS_LIST) || 'null');
-        if (Array.isArray(parsed)) list = parsed;
-      } catch (e2) {}
-      if (list.length === 0) {
-        try {
-          var legacy = localStorage.getItem(STORAGE_MANAGED_BOOKING_QUERY);
-          if (legacy)
-            list = [{ qs: legacy, at: Date.now(), pax: sessionStorage.getItem(STORAGE_PAX) }];
-        } catch (e3) {}
-      }
-      var paxSnap = null;
-      try {
-        paxSnap = sessionStorage.getItem(STORAGE_PAX);
-      } catch (e4) {}
-      list = list.filter(function (x) {
-        return x && typeof x.qs === 'string' && x.qs !== raw;
-      });
-      list.push({ qs: raw, at: Date.now(), pax: paxSnap });
-      localStorage.setItem(STORAGE_BOOKINGS_LIST, JSON.stringify(list));
-      try {
-        localStorage.removeItem(STORAGE_MANAGED_BOOKING_QUERY);
-      } catch (e5) {}
-    } catch (e) {}
+  function redirectToManageBooking() {
     window.location.href = '/my-account#manage-booking';
   }
 
   function wirePayNow() {
     var btn = document.getElementById('pay-now-button');
     if (!btn) return;
-    btn.addEventListener('click', rememberBookingAndRedirect);
+    btn.addEventListener('click', function () {
+      btn.disabled = true;
+      var originalText = btn.textContent;
+      btn.textContent = 'Checking card...';
+      confirmStripeCard()
+        .then(function (setupIntentId) {
+          btn.textContent = 'Processing...';
+          return confirmBooking(setupIntentId);
+        })
+        .then(function (response) {
+          if (!response.ok) throw new Error('Payment confirmation failed');
+          redirectToManageBooking();
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.textContent = originalText;
+          showPaymentError('Card setup or booking confirmation failed. Please check the card and seats.');
+        });
+    });
+  }
+
+  function confirmBooking(setupIntentId) {
+    var body = new URLSearchParams();
+    body.set('setupIntentId', setupIntentId);
+    return fetch('/book/payment/confirm' + window.location.search, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: body.toString(),
+    });
+  }
+
+  function confirmStripeCard() {
+    if (!stripeState.ready || !stripeState.stripe || !stripeState.card || !stripeState.clientSecret) {
+      return Promise.reject(new Error('Stripe is not ready'));
+    }
+    return stripeState.stripe
+      .confirmCardSetup(stripeState.clientSecret, {
+        payment_method: {
+          card: stripeState.card,
+        },
+      })
+      .then(function (result) {
+        if (result.error) throw new Error(result.error.message || 'Card setup failed');
+        if (!result.setupIntent || result.setupIntent.status !== 'succeeded') {
+          throw new Error('Card setup was not completed');
+        }
+        return result.setupIntent.id;
+      });
+  }
+
+  function showPaymentError(message) {
+    var btn = document.getElementById('pay-now-button');
+    if (!btn || !btn.parentNode) return;
+    var existing = document.getElementById('pay-confirm-error');
+    if (existing) {
+      existing.hidden = false;
+      if (message) existing.textContent = message;
+      return;
+    }
+    var msg = document.createElement('p');
+    msg.id = 'pay-confirm-error';
+    msg.className = 'flights-hero__hint';
+    msg.setAttribute('role', 'alert');
+    msg.textContent = message || 'Card setup or booking confirmation failed. Please check the card and seats.';
+    btn.insertAdjacentElement('afterend', msg);
+  }
+
+  function initStripeCard() {
+    var cardEl = document.getElementById('stripe-card-element');
+    if (!cardEl || typeof Stripe !== 'function') return Promise.resolve();
+    return fetch('/book/payment/setup-intent' + window.location.search, { method: 'POST' })
+      .then(function (response) {
+        if (!response.ok) throw new Error('Stripe test keys are not configured');
+        return response.json();
+      })
+      .then(function (payload) {
+        stripeState.stripe = Stripe(payload.publishableKey);
+        var elements = stripeState.stripe.elements();
+        stripeState.card = elements.create('card', {
+          hidePostalCode: true,
+        });
+        stripeState.card.mount(cardEl);
+        stripeState.clientSecret = payload.clientSecret;
+        stripeState.ready = true;
+      })
+      .catch(function () {
+        showPaymentError(
+          'Stripe test mode is not configured. Add GLIDE_STRIPE_SECRET_KEY and GLIDE_STRIPE_PUBLISHABLE_KEY.',
+        );
+      });
   }
 
   function hydratePaxNames() {
@@ -79,6 +138,7 @@
 
   function init() {
     hydratePaxNames();
+    initStripeCard();
     wirePayNow();
   }
 

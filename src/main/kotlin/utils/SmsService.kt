@@ -54,7 +54,8 @@ object SmsService {
                     .creator(
                         PhoneNumber(toPhone),
                         PhoneNumber(twilioNumber),
-                        "Your Glide Airways password reset code is: $code. If you did not request this, ignore this message.",
+                        "Your Glide Airways password reset code is: $code. " +
+                            "If you did not request this, ignore this message.",
                     ).create()
                 true
             }

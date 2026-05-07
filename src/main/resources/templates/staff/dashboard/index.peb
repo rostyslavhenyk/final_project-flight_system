@@ -7,34 +7,75 @@
         <p>Welcome {{ user.firstname }}. Choose a workspace below.</p>
     </header>
 
-    <div class="staff-card-grid">
-        <a href="/staff/flights" class="staff-card">
-            <span class="staff-card__label">Flights</span>
-            <strong>Manage flight data</strong>
-            <span>Review generated services, timings, prices, and route details.</span>
-        </a>
-        <a href="/staff/users" class="staff-card">
-            <span class="staff-card__label">Users</span>
-            <strong>Manage users</strong>
-            <span>Check customer accounts, roles, loyalty tiers, and points.</span>
-        </a>
-        <a href="/staff/tickets" class="staff-card">
+    <section class="staff-dashboard-grid" aria-label="Dashboard metrics">
+        <article class="staff-dashboard-card staff-dashboard-card--wide">
+            <div class="staff-dashboard-card__head">
+                <div>
+                    <span class="staff-card__label">Sold flights</span>
+                    <h2>Total sold flights</h2>
+                </div>
+                <div class="staff-dashboard-toggle" role="group" aria-label="Sold flights range">
+                    <button type="button" class="staff-dashboard-toggle__btn staff-dashboard-toggle__btn--active" data-sales-range="day">Day</button>
+                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="week">7 days</button>
+                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="fourWeeks">28 days</button>
+                </div>
+            </div>
+
+            <div class="staff-pie-panel" data-sales-chart="day">
+                <div class="staff-pie staff-pie--sales" style="--pie-main: {{ soldFlightsPercentToday }}%;" aria-label="{{ soldFlightsPercentToday }} percent sold"></div>
+                <div class="staff-pie-details">
+                    <strong>{{ soldFlightsToday }}</strong>
+                    <span>sold seats today</span>
+                    <p>{{ soldFlightsRealToday }} real bookings, {{ soldFlightsSimulatedToday }} simulated taken seats, {{ soldFlightsRemainingToday }} available.</p>
+                </div>
+            </div>
+            <div class="staff-pie-panel" data-sales-chart="week" hidden>
+                <div class="staff-pie staff-pie--sales" style="--pie-main: {{ soldFlightsPercentWeek }}%;" aria-label="{{ soldFlightsPercentWeek }} percent sold"></div>
+                <div class="staff-pie-details">
+                    <strong>{{ soldFlightsWeek }}</strong>
+                    <span>sold seats in 7 days</span>
+                    <p>{{ soldFlightsRealWeek }} real bookings, {{ soldFlightsSimulatedWeek }} simulated taken seats, {{ soldFlightsRemainingWeek }} available.</p>
+                </div>
+            </div>
+            <div class="staff-pie-panel" data-sales-chart="fourWeeks" hidden>
+                <div class="staff-pie staff-pie--sales" style="--pie-main: {{ soldFlightsPercentFourWeeks }}%;" aria-label="{{ soldFlightsPercentFourWeeks }} percent sold"></div>
+                <div class="staff-pie-details">
+                    <strong>{{ soldFlightsFourWeeks }}</strong>
+                    <span>sold seats in 28 days</span>
+                    <p>{{ soldFlightsRealFourWeeks }} real bookings, {{ soldFlightsSimulatedFourWeeks }} simulated taken seats, {{ soldFlightsRemainingFourWeeks }} available.</p>
+                </div>
+            </div>
+        </article>
+
+        <article class="staff-dashboard-card">
             <span class="staff-card__label">Tickets</span>
-            <strong>Manage support</strong>
-            <span>Track user tickets, staff tickets, status updates, and images.</span>
-        </a>
-        <a href="/staff/chat" class="staff-card">
-            <span class="staff-card__label">Chat</span>
-            <strong>View customer messages</strong>
-            <span>Read customer chat messages and send staff replies.</span>
-        </a>
-        {% if isStaffAdmin %}
-        <a href="/staff/staff-accounts" class="staff-card">
-            <span class="staff-card__label">Admin</span>
-            <strong>Create staff accounts</strong>
-            <span>Add staff users with access to the internal staff workspace.</span>
-        </a>
-        {% endif %}
-    </div>
+            <h2>Active tickets</h2>
+            <div class="staff-ticket-widget">
+                <div>
+                    <strong>{{ activeUserTickets }}</strong>
+                    <span>User tickets</span>
+                </div>
+                <div>
+                    <strong>{{ activeStaffTickets }}</strong>
+                    <span>Staff tickets</span>
+                </div>
+            </div>
+            <p class="staff-dashboard-note">{{ activeTicketTotal }} open or in progress in total.</p>
+        </article>
+
+        <article class="staff-dashboard-card">
+            <span class="staff-card__label">Sales target</span>
+            <h2>28 day target</h2>
+            <div class="staff-pie-panel staff-pie-panel--compact">
+                <div class="staff-pie staff-pie--target" style="--pie-main: {{ salesTargetChartPercent }}%; --pie-overflow: {{ salesTargetOverflowPercent }}%;" aria-label="{{ salesTargetProgressPercent }} percent reached"></div>
+                <div class="staff-pie-details">
+                    <strong>GBP {{ salesReached28DaysPlain }}</strong>
+                    <span>of GBP {{ salesTarget28DaysPlain }}</span>
+                </div>
+            </div>
+            <p class="staff-dashboard-note">{{ salesTargetProgressPercent }}% reached.</p>
+        </article>
+    </section>
 </section>
+<script src="/static/js/staff-dashboard.js" defer></script>
 {% endblock %}

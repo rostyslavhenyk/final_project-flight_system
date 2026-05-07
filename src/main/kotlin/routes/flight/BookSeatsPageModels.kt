@@ -1,5 +1,3 @@
-@file:Suppress("InvalidPackageDeclaration")
-
 package routes.flight
 
 import data.flight.FlightSearchRepository
@@ -8,8 +6,35 @@ import io.ktor.http.Parameters
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-private const val LIGHT_SEAT_SELECTION_FEE_GBP = 30
+private const val LIGHT_SEAT_SELECTION_FEE_GBP = 10
 private const val SEAT_ROW_COUNT = 30
+private const val CHECKED_BAG_PRICE_GBP = 25
+private const val PRIORITY_BOARDING_PRICE_GBP = 8
+private const val TRAVEL_INSURANCE_PRICE_GBP = 14
+
+private data class BookingExtraOption(
+    val id: String,
+    val label: String,
+    val description: String,
+    val priceGbp: Int,
+)
+
+private val bookingExtraOptions =
+    listOf(
+        BookingExtraOption("checked-bag", "Checked bag", "20kg hold luggage", CHECKED_BAG_PRICE_GBP),
+        BookingExtraOption(
+            "priority-boarding",
+            "Priority boarding",
+            "Board earlier with cabin bags",
+            PRIORITY_BOARDING_PRICE_GBP,
+        ),
+        BookingExtraOption(
+            "travel-insurance",
+            "Travel insurance",
+            "Basic cover for this booking",
+            TRAVEL_INSURANCE_PRICE_GBP,
+        ),
+    )
 
 private data class SeatJourney(
     val key: String,
@@ -45,6 +70,12 @@ internal fun bookSeatsModel(queryParams: Parameters): Map<String, Any?> {
     val outboundLight = outboundTier.equals("light", ignoreCase = true)
     val inboundLight = returnTier.equals("light", ignoreCase = true)
     val showLightSeatFeeNote = outboundLight || (dualReturn && inboundLight)
+    val selectedBookingExtraIds =
+        queryParams["extras"]
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.toSet()
+            .orEmpty()
     val seatJourneySummaries =
         journeys.map { j ->
             mapOf(
@@ -64,6 +95,16 @@ internal fun bookSeatsModel(queryParams: Parameters): Map<String, Any?> {
         "seatJourneySummaries" to seatJourneySummaries,
         "showLightSeatFeeNote" to showLightSeatFeeNote,
         "lightSeatFeeGbp" to LIGHT_SEAT_SELECTION_FEE_GBP,
+        "bookingExtraOptions" to
+            bookingExtraOptions.map { option ->
+                mapOf(
+                    "id" to option.id,
+                    "label" to option.label,
+                    "description" to option.description,
+                    "priceGbp" to option.priceGbp,
+                    "selected" to (option.id in selectedBookingExtraIds),
+                )
+            },
         "seatJourneysB64" to b64,
         "seatRows" to (1..SEAT_ROW_COUNT).toList(),
         "seatLettersLeft" to listOf("A", "B", "C"),

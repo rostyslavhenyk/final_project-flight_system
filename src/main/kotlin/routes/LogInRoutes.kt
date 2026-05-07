@@ -21,7 +21,10 @@ fun Route.logInRoutes() {
 }
 
 fun ApplicationCall.createLoginStatus(message: String): String =
-    """<div id="log-in-status" class="auth-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
+    """
+    <div id="log-in-status" class="auth-status" hx-swap-oob="true" role="status"
+         aria-live="polite" aria-atomic="true">$message</div>
+    """.trimIndent()
 
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T1_login_load", jsMode()) {

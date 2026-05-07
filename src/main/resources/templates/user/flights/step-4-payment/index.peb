@@ -6,11 +6,12 @@
 <link rel="stylesheet" href="/static/css/users/flights/core.css">
 <link rel="stylesheet" href="/static/css/users/flights/review.css">
 <link rel="stylesheet" href="/static/css/users/flights/seats.css">
+<script src="https://js.stripe.com/v3/"></script>
 <script src="/static/js/book-payment.js" defer></script>
 {% endblock %}
 
 {% block content %}
-<div class="flights-page seat-booking-page seat-booking-page--seat-step">
+<div class="flights-page seat-booking-page seat-booking-page--seat-step" data-account-id="{{ user.id }}">
     <nav class="booking-stepper" aria-label="Booking progress">
         <ol class="booking-stepper__list">
             <li class="booking-stepper__item booking-stepper__item--done">
@@ -37,6 +38,14 @@
     </header>
 
     {% include 'user/flights/_book-payment-summary-inner.peb' %}
+
+    <section class="seat-booking__panel seat-booking__stripe-panel" aria-labelledby="stripe-card-heading">
+        <h2 id="stripe-card-heading" class="seat-booking__pay-step-title">Card details</h2>
+        <div class="seat-booking__stripe-card" id="stripe-card-element"></div>
+        <p class="flights-hero__hint seat-booking__stripe-hint">
+            Test mode: use card 4242 4242 4242 4242, any future expiry, any CVC.
+        </p>
+    </section>
 
     <footer class="seat-booking__pay-footer seat-booking__pay-footer--receipt">
         {% include 'user/flights/_book-payment-receipt.peb' %}

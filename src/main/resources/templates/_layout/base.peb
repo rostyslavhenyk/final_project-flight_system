@@ -27,7 +27,7 @@
         </div>
         <nav>
             <ul class="main-links">
-                <li><a href="/flights">Flights</a></li>
+                <li><a href="/settings">Settings</a></li>
                 <li><a href="/membership">Membership</a></li>
                 <li><a href="/help">Help</a></li>
             </ul>

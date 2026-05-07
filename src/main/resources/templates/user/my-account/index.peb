@@ -65,12 +65,36 @@
         </section>
     </div>
 
-    <div id="panel-manage-booking" role="tabpanel" class="account-tab-panel" aria-labelledby="tab-manage-booking" hidden>
+    <div id="panel-manage-booking" role="tabpanel" class="account-tab-panel" aria-labelledby="tab-manage-booking" hidden data-account-id="{{ account.id }}">
         <section class="surface-card account-section" aria-labelledby="manage-heading">
             <div class="surface-card__body">
                 <h2 id="manage-heading">Manage booking</h2>
-                <p id="manage-booking-empty" class="empty-state">After you complete a booking and pay on our site, your trip summaries will appear here, ordered by outbound departure date. Open this tab to review fare and passenger details anytime on this browser.</p>
-                <div id="manage-booking-list" class="manage-booking-list" hidden></div>
+                <p id="manage-booking-empty" class="empty-state"{% if serverBookings is not empty %} hidden{% endif %}>After you complete a booking and pay on our site, your trip summaries will appear here, ordered by outbound departure date.</p>
+                <div id="manage-booking-list" class="manage-booking-list"{% if serverBookings is empty %} hidden{% endif %}>
+                    {% for booking in serverBookings %}
+                    <button type="button" class="manage-booking-card" data-fare-summary-href="{{ booking.href }}" aria-label="Open fare summary for {{ booking.label }}">
+                        <p class="manage-booking-card__eyebrow">{{ booking.label }}</p>
+                        <p class="manage-booking-card__route">{{ booking.route }}</p>
+                        <p class="manage-booking-card__meta">{{ booking.meta }}</p>
+                    </button>
+                    {% endfor %}
+                </div>
+                <details class="past-bookings-dropdown">
+                    <summary>Past bookings</summary>
+                    {% if pastBookings is empty %}
+                    <p class="empty-state past-bookings-dropdown__empty">You have no old bookings.</p>
+                    {% else %}
+                    <div class="manage-booking-list past-bookings-dropdown__list">
+                        {% for booking in pastBookings %}
+                        <button type="button" class="manage-booking-card" data-fare-summary-href="{{ booking.href }}" aria-label="Open fare summary for {{ booking.label }}">
+                            <p class="manage-booking-card__eyebrow">{{ booking.label }}</p>
+                            <p class="manage-booking-card__route">{{ booking.route }}</p>
+                            <p class="manage-booking-card__meta">{{ booking.meta }}</p>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </details>
             </div>
         </section>
     </div>

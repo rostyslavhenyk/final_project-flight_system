@@ -157,6 +157,25 @@
         </div>
     </div>
 
+    <section class="seat-booking__panel seat-booking__extras" aria-labelledby="seat-extras-heading">
+        <div class="seat-booking__extras-head">
+            <h2 id="seat-extras-heading">Extras</h2>
+            <p class="seat-booking__hint">Add optional extras to this booking.</p>
+        </div>
+        <div class="seat-booking__extras-grid">
+            {% for option in bookingExtraOptions %}
+            <label class="seat-booking__extra-card">
+                <input type="checkbox" value="{{ option.id }}" data-booking-extra{% if option.selected %} checked{% endif %}>
+                <span class="seat-booking__extra-copy">
+                    <span class="seat-booking__extra-label">{{ option.label }}</span>
+                    <span class="seat-booking__extra-description">{{ option.description }}</span>
+                </span>
+                <span class="seat-booking__extra-price">GBP {{ option.priceGbp }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </section>
+
     <div class="seat-booking__cta-region review-wf-continue-wrap">
         <a class="review-wf-continue" href="{{ continuePaymentHref }}" data-base-href="{{ continuePaymentHref }}" id="seat-continue-placeholder">Continue to payment</a>
     </div>

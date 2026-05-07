@@ -409,95 +409,6 @@ button {
     border-color: var(--primary-color-hover);
 }
 
-.typing-indicator {
-    font-size: 1.2rem;
-    letter-spacing: 2px;
-    opacity: 0.6;
-}
-
-.chat-convo-card {
-    background: white;
-    border: 1px solid #b2d8d1;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 24px;
-    max-width: 700px;
-}
-
-.chat-convo-card h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1f5c51;
-    margin-bottom: 12px;
-}
-
-.chat-convo-messages {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.chat-convo-msg {
-    padding: 8px 12px;
-    border-radius: 8px;
-    max-width: 80%;
-    font-size: 0.88rem;
-}
-
-.chat-convo-msg.customer {
-    background-color: #e8f5f2;
-    align-self: flex-start;
-}
-
-.chat-convo-msg.staff {
-    background-color: #2d7d6f;
-    color: white;
-    align-self: flex-end;
-}
-
-.chat-convo-name {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 600;
-    margin-bottom: 3px;
-    opacity: 0.7;
-}
-
-.chat-reply-row {
-    display: flex;
-    gap: 8px;
-}
-
-.chat-reply-row input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1.5px solid #b2d8d1;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-family: inherit;
-    outline: none;
-}
-
-.chat-reply-row input:focus {
-    border-color: #2d7d6f;
-}
-
-.chat-reply-row button {
-    padding: 8px 18px;
-    background-color: #2d7d6f;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.chat-reply-row button:hover {
-    background-color: #1f5c51;
-}
-
 :is(.btn-help, .staff-action-button, .staff-action-link) {
     background-color: var(--primary-color);
     color: var(--page-white);
@@ -613,7 +524,7 @@ button {
 }
 
 #navbar .brand-link--logo {
-    padding-bottom: 23px;
+    padding-bottom: 20px;
 }
 
 #navbar .brand-link--staff-logo {

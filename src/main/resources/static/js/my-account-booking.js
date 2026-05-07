@@ -1,49 +1,11 @@
 /**
- * My account — Manage booking tab: paid trips from localStorage (see book-payment.js), sorted by outbound
- * departure date, each card opens the fare summary dialog.
+ * My account - Manage booking tab.
+ * Paid bookings are rendered by the server from the database for the logged-in account.
  */
 (function () {
   'use strict';
 
-  var STORAGE_QUERY_LEGACY = 'glideManagedBookingQuery';
-  var STORAGE_BOOKINGS_LIST = 'glideManagedBookings';
   var STORAGE_PAX = 'glideBookingPaxNames';
-
-  function loadManagedBookings() {
-    try {
-      var parsed = JSON.parse(localStorage.getItem(STORAGE_BOOKINGS_LIST) || 'null');
-      if (Array.isArray(parsed) && parsed.length) {
-        return parsed.filter(function (x) {
-          return x && typeof x.qs === 'string' && x.qs.length > 0;
-        });
-      }
-    } catch (e1) {}
-    try {
-      var leg = localStorage.getItem(STORAGE_QUERY_LEGACY);
-      if (leg) return [{ qs: leg, at: 0, pax: null }];
-    } catch (e2) {}
-    return [];
-  }
-
-  /** Outbound departure for sort: URL `depart=YYYY-MM-DD` (soonest trips first). */
-  function outboundDepartTime(entry) {
-    try {
-      var p = new URLSearchParams(entry.qs);
-      var d = (p.get('depart') || '').trim();
-      var t = d ? Date.parse(d) : NaN;
-      if (!isNaN(t)) return t;
-    } catch (e) {}
-    return typeof entry.at === 'number' ? entry.at : 0;
-  }
-
-  function sortBookingsSoonestDepartFirst(entries) {
-    return entries.slice().sort(function (a, b) {
-      var ta = outboundDepartTime(a);
-      var tb = outboundDepartTime(b);
-      if (ta !== tb) return ta - tb;
-      return (typeof a.at === 'number' ? a.at : 0) - (typeof b.at === 'number' ? b.at : 0);
-    });
-  }
 
   function hydratePaxCells(root) {
     if (!root) return;
@@ -71,34 +33,6 @@
     } catch (e) {}
   }
 
-  function cardLinesFromBookingQuery(qs) {
-    var p = new URLSearchParams(qs);
-    var fromRaw = (p.get('from') || '').trim();
-    var toRaw = (p.get('to') || '').trim();
-    var depart = (p.get('depart') || '').trim();
-    var trip = (p.get('trip') || '').toLowerCase() === 'return' ? 'Return' : 'One way';
-    var adults = parseInt(p.get('adults') || '1', 10) || 1;
-    var ch = parseInt(p.get('children') || '0', 10) || 0;
-    var route = '';
-    if (fromRaw && toRaw) {
-      route = fromRaw + ' → ' + toRaw;
-    } else if (fromRaw || toRaw) {
-      route = (fromRaw || toRaw).trim();
-    } else {
-      route = 'Your flight';
-    }
-    var metaBits = [];
-    if (depart) metaBits.push(depart);
-    metaBits.push(trip);
-    var paxParts = [];
-    paxParts.push(adults + (adults === 1 ? ' adult' : ' adults'));
-    if (ch > 0) {
-      paxParts.push(ch + (ch === 1 ? ' child' : ' children'));
-    }
-    metaBits.push(paxParts.join(', '));
-    return { route: route, meta: metaBits.join(' · ') };
-  }
-
   function wireTabs() {
     var detailTab = document.getElementById('tab-account-details');
     var manageTab = document.getElementById('tab-manage-booking');
@@ -121,11 +55,7 @@
       activate('manage');
     });
 
-    if (window.location.hash === '#manage-booking') {
-      activate('manage');
-    } else {
-      activate('details');
-    }
+    activate(window.location.hash === '#manage-booking' ? 'manage' : 'details');
   }
 
   function wireManageCardsAndModal() {
@@ -137,18 +67,15 @@
 
     if (!listEl || !dialog || !bodyEl || !closeBtn) return;
 
-    var entries = sortBookingsSoonestDepartFirst(loadManagedBookings());
-
-    if (!entries.length) {
+    var currentCards = listEl.querySelectorAll('[data-fare-summary-href]');
+    var allCards = document.querySelectorAll('[data-fare-summary-href]');
+    if (!currentCards.length) {
       listEl.hidden = true;
-      listEl.innerHTML = '';
       if (emptyEl) emptyEl.hidden = false;
-      return;
+    } else {
+      if (emptyEl) emptyEl.hidden = true;
+      listEl.hidden = false;
     }
-
-    if (emptyEl) emptyEl.hidden = true;
-    listEl.hidden = false;
-    listEl.innerHTML = '';
 
     function closeDialog() {
       if (typeof dialog.close === 'function') {
@@ -156,15 +83,10 @@
       }
     }
 
-    function openFareSummary(qs, paxSnap) {
-      bodyEl.innerHTML = '<p class="empty-state" role="status">Loading fare summary…</p>';
+    function openFareSummary(href) {
+      bodyEl.innerHTML = '<p class="empty-state" role="status">Loading fare summary...</p>';
       if (typeof dialog.showModal === 'function') dialog.showModal();
-      if (paxSnap) {
-        try {
-          sessionStorage.setItem(STORAGE_PAX, paxSnap);
-        } catch (e) {}
-      }
-      fetch('/account/fare-summary?' + qs, {
+      fetch(href, {
         credentials: 'same-origin',
         headers: {
           Accept: 'text/html'
@@ -184,31 +106,11 @@
         });
     }
 
-    entries.forEach(function (entry, idx) {
-      var qs = entry.qs.trim();
-      if (!qs) return;
-      var lines = cardLinesFromBookingQuery(qs);
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'manage-booking-card';
-      btn.setAttribute('aria-label', 'Open fare summary for booking ' + (idx + 1));
-      var eyebrow = document.createElement('p');
-      eyebrow.className = 'manage-booking-card__eyebrow';
-      eyebrow.textContent = entries.length > 1 ? 'Booking ' + (idx + 1) : 'Latest booking';
-      var route = document.createElement('p');
-      route.className = 'manage-booking-card__route';
-      route.textContent = lines.route;
-      var meta = document.createElement('p');
-      meta.className = 'manage-booking-card__meta';
-      meta.textContent = lines.meta;
-      btn.appendChild(eyebrow);
-      btn.appendChild(route);
-      btn.appendChild(meta);
-      var paxSnap = typeof entry.pax === 'string' ? entry.pax : null;
-      btn.addEventListener('click', function () {
-        openFareSummary(qs, paxSnap);
+    allCards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        var href = card.getAttribute('data-fare-summary-href');
+        if (href) openFareSummary(href);
       });
-      listEl.appendChild(btn);
     });
 
     closeBtn.addEventListener('click', closeDialog);
