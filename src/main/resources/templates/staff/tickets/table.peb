@@ -5,7 +5,7 @@
                 <span class="ticket-button-title">Ticket No. {{ item.ticket.ticketID }}</span>
             </span>
             <span class="ticket-button-tags">
-                <span>{{ item.ticket.status }}</span>
+                <span>{% if item.ticket.status == "IN_PROGRESS" %}IN PROGRESS{% else %}{{ item.ticket.status }}{% endif %}</span>
             </span>
             <span class="ticket-button-meta">{{ item.user.firstname }} {{ item.user.lastname }}</span>
             <span class="ticket-button-view">{{ item.createdAtText }}</span>

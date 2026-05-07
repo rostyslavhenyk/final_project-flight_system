@@ -338,6 +338,7 @@
   function initPassengerFieldConstraints() {
     let form = document.querySelector('[data-bp-passenger-form]');
     if (!form) return;
+    let seatResetStorageKey = 'glideSeatResetOnNextLoad';
 
     let nameStripRe = /[^\p{L}\s'-]/gu;
     let nameFallbackRe = /[^A-Za-z\u00C0-\u024F\s'-]/g;
@@ -557,6 +558,7 @@
           return;
         }
         try {
+          sessionStorage.setItem(seatResetStorageKey, '1');
           let pax = [];
           form.querySelectorAll(':scope > fieldset').forEach(function (fs) {
             let hidden = fs.querySelector('input[type="hidden"][name$="_title"]');

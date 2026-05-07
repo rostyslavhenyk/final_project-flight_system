@@ -23,6 +23,7 @@ fun ApplicationCall.baseModel(extra: Map<String, Any?> = emptyMap()): Map<String
             "sessionId" to (metricsSession?.id ?: "anonymous"),
             "loggedIn" to (user != null),
             "user" to user,
-            "isStaff" to (user?.roleId == 1),
+            "isStaff" to (user?.roleId in setOf(1, 2)),
+            "isStaffAdmin" to (user?.roleId == 2),
         )
 }

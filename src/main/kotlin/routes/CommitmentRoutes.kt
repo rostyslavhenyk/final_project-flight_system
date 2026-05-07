@@ -11,6 +11,6 @@ fun Route.commitmentRoutes() {
 
 private suspend fun ApplicationCall.handleCommitmentLoad() {
     timed("T0_commitment", jsMode()) {
-        renderTemplate("commitment/index.peb", mapOf("title" to "Our commitment to you"))
+        renderTemplate("user/commitment/index.peb", mapOf("title" to "Our commitment to you"))
     }
 }

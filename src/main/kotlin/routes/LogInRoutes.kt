@@ -6,17 +6,16 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import java.io.StringWriter
 import utils.jsMode
 import utils.timed
 import data.UserRepository
 import auth.UserSession
-import utils.baseModel
 
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
     post("/login") { call.handleLogInPost() }
-    get("/logout") { call.handleLogOut() }
+    post("/logout") { call.handleLogOut() }
+    get("/logout") { call.respondRedirect("/") }
 }
 
 fun ApplicationCall.createLoginStatus(message: String): String =
@@ -24,20 +23,13 @@ fun ApplicationCall.createLoginStatus(message: String): String =
 
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T1_login_load", jsMode()) {
+        val redirectUrl = safeLoginRedirectParam(request.queryParameters)
         if (sessions.get<UserSession>() != null) {
-            respondRedirect("/")
+            respondRedirect(redirectUrl)
             return@timed
         }
 
-        val model =
-            baseModel(
-                mapOf("title" to "Log In"),
-            )
-
-        val template = pebbleEngine.getTemplate("user/log-in/index.peb")
-        val writer = StringWriter()
-        template.evaluate(writer, model)
-        respondText(writer.toString(), ContentType.Text.Html)
+        renderTemplate("user/log-in/index.peb", mapOf("title" to "Log In", "redirect" to redirectUrl))
     }
 }
 
@@ -46,6 +38,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
         val params = receiveParameters()
         val email = params["email"]
         val password = params["password"]
+        val redirectUrl = safeLoginRedirectParam(params)
 
         if (email == null) {
             respondText(
@@ -77,8 +70,8 @@ private suspend fun ApplicationCall.handleLogInPost() {
         }
 
         sessions.set(UserSession(usr.id, usr.firstname))
-        val redirectUrl = if (usr.roleId == 1) "/staff" else "/"
-        response.headers.append("HX-Redirect", redirectUrl)
+        val redirectTarget = if (usr.roleId == 1 || usr.roleId == 2) "/staff" else redirectUrl
+        response.headers.append("HX-Redirect", redirectTarget)
         respond(HttpStatusCode.OK)
     }
 }
@@ -88,4 +81,22 @@ private suspend fun ApplicationCall.handleLogOut() {
         sessions.clear<UserSession>()
         respondRedirect("/")
     }
+}
+
+private fun safeLoginRedirect(rawRedirect: String?): String {
+    val redirect = rawRedirect?.trim().orEmpty()
+    val unsafeRedirect =
+        redirect.isBlank() ||
+            !redirect.startsWith("/") ||
+            redirect.startsWith("//") ||
+            redirect.contains('\r') ||
+            redirect.contains('\n') ||
+            redirect == "/login" ||
+            redirect.startsWith("/login?")
+    return if (unsafeRedirect) "/" else redirect
+}
+
+private fun safeLoginRedirectParam(params: Parameters): String {
+    val rawRedirect = params["redirect"] ?: params["returnUrl"]
+    return safeLoginRedirect(rawRedirect)
 }

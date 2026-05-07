@@ -45,7 +45,7 @@ object UserRepository {
             val loyaltyByUser =
                 LoyaltyUsers
                     .selectAll()
-                    .map { LoyaltyRepository.run { it.toLoyaltyUser() } }
+                    .map { LoyaltyUserRepository.run { it.toLoyaltyUser() } }
                     .associateBy { it.userID }
 
             Users
@@ -99,6 +99,30 @@ object UserRepository {
                 .where { Users.email eq normalizeEmail(email) }
                 .map { it.toUser() }
                 .singleOrNull()
+        }
+
+    fun updateName(
+        id: Int,
+        firstName: String,
+        lastName: String,
+    ): User? =
+        transaction {
+            val normalizedFirstName = normalizePersonName(firstName)
+            val normalizedLastName = normalizePersonName(lastName)
+            val updatedRows =
+                Users.update({ Users.id eq id }) {
+                    it[firstname] = normalizedFirstName
+                    it[lastname] = normalizedLastName
+                }
+            if (updatedRows == 0) {
+                null
+            } else {
+                Users
+                    .selectAll()
+                    .where { Users.id eq id }
+                    .map { it.toUser() }
+                    .singleOrNull()
+            }
         }
 
     fun normalizeStoredNames() {

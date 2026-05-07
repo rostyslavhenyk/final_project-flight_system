@@ -45,7 +45,28 @@
 }
 
 .ticket-search {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) auto;
+  align-items: stretch;
+  max-width: 360px;
+  min-height: 44px;
   margin-left: auto;
+}
+
+.ticket-search input,
+.ticket-search button {
+  height: 44px;
+}
+
+.ticket-search input {
+  min-width: 0;
+}
+
+.ticket-search button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .ticket-filter {
@@ -375,32 +396,6 @@
   outline: none;
 }
 
-.staff-action-link,
-.staff-secondary-button {
-  display: inline-block;
-  width: auto;
-  margin: 0;
-  padding: 10px 24px;
-  border-radius: 6px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.staff-action-link {
-  background-color: var(--primary-color);
-  color: var(--page-white);
-}
-
-.staff-action-link:hover {
-  background-color: var(--primary-color-hover);
-  text-decoration: none;
-}
-
-.staff-secondary-button:hover {
-  background-color: var(--primary-soft-color);
-  text-decoration: none;
-}
-
 .ticket-reply-box {
   padding: 14px 18px;
   border-top: 1px solid var(--primary-border-color);
@@ -434,6 +429,10 @@
   .ticket-toolbar-actions,
   .ticket-search {
     width: 100%;
+  }
+
+  .ticket-search {
+    max-width: none;
   }
 
   .ticket-mode-button {

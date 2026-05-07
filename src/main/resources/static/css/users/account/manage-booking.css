@@ -1,0 +1,228 @@
+/* My account — tabs + manage booking card + fare summary dialog */
+
+.account-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 1.25rem 0 1rem;
+    border-bottom: 1px solid var(--primary-border-color);
+}
+
+.account-tabs__btn {
+    position: relative;
+    margin: 0;
+    padding: 0.5rem 0.85rem;
+    border: none;
+    border-radius: var(--surface-radius) var(--surface-radius) 0 0;
+    background: transparent;
+    color: var(--muted-text-color);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease;
+}
+
+.account-tabs__btn:hover {
+    color: var(--text-color);
+}
+
+.account-tabs__btn[aria-selected="true"] {
+    color: var(--primary-color);
+    background: var(--page-white);
+    box-shadow: 0 -1px 0 var(--page-background) inset;
+}
+
+.account-tab-panel[hidden] {
+    display: none !important;
+}
+
+.account-name-status {
+    margin: 0 0 0.8rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.account-name-status--success {
+    color: var(--primary-color);
+}
+
+.account-name-status--error {
+    color: #8b1e1e;
+}
+
+.account-edit-toggle {
+    margin-top: 0.85rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--control-radius);
+    background: var(--page-white);
+    color: var(--primary-color);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.account-name-form {
+    margin-top: 0.8rem;
+    padding-top: 0.7rem;
+    border-top: 1px solid var(--primary-border-color);
+}
+
+.account-name-form__grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 700px) {
+    .account-name-form__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.account-name-form__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.88rem;
+    color: var(--muted-text-color);
+}
+
+.account-name-form__field input {
+    width: 100%;
+    min-height: 2.3rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--primary-border-color);
+    border-radius: var(--control-radius);
+    background: var(--page-white);
+    color: var(--text-color);
+    font: inherit;
+}
+
+.account-name-form__actions {
+    margin-top: 0.85rem;
+}
+
+.account-name-save {
+    padding: 0.5rem 0.95rem;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--control-radius);
+    background: var(--primary-color);
+    color: var(--page-white);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.manage-booking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.manage-booking-card {
+    width: 100%;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--primary-border-color);
+    border-radius: var(--surface-radius);
+    background: var(--page-white);
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    box-shadow: var(--surface-shadow);
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.12s ease;
+}
+
+.manage-booking-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--surface-shadow-hover);
+}
+
+.manage-booking-card:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.manage-booking-card__eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted-text-color);
+}
+
+.manage-booking-card__route {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.manage-booking-card__meta {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--muted-text-color);
+}
+
+.fare-summary-dialog {
+    max-width: min(52rem, 96vw);
+    width: calc(100% - 2rem);
+    max-height: calc(100vh - 4rem);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--primary-border-color);
+    border-radius: var(--surface-radius);
+    background: var(--page-background);
+    color: var(--text-color);
+    box-shadow:
+        var(--surface-shadow-hover),
+        0 24px 60px rgba(0, 0, 0, 0.2);
+}
+
+.fare-summary-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.fare-summary-dialog__head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--primary-border-color);
+    background: var(--page-white);
+    border-radius: var(--surface-radius) var(--surface-radius) 0 0;
+}
+
+.fare-summary-dialog__scroll {
+    max-height: min(76vh, 640px);
+    overflow: auto;
+    padding: 0.85rem 1rem 1.25rem;
+}
+
+.fare-summary-dialog__scroll .seat-booking__pay-footer.fare-summary-sheet__footer-only {
+    margin-top: 0.5rem;
+}
+
+.fare-summary-dialog__btn {
+    margin: 0;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--control-radius);
+    border: 1px solid var(--primary-color);
+    background: var(--primary-color);
+    color: var(--page-white);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.fare-summary-dialog__btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}

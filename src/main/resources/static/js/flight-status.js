@@ -1,9 +1,7 @@
 /* global flatpickr, attachForceSelectAll */
-/* FLIGHT-SYSTEM-TWEAKS: flight-number autocomplete (GA digits, 7-day suggest), shared force-select, status UX */
 (function() {
   'use strict';
 
-  /** Milliseconds for [attachForceSelectAll] on this page (shared script: `/static/js/input-force-select.js`). */
   let FORCE_SELECT_MS = 1000;
 
   function initAutocomplete(inputId, listId) {

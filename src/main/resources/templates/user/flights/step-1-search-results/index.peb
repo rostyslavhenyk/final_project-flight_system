@@ -1,0 +1,442 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Search flights · Glide Airways{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/users/flights/core.css">
+<script src="/static/js/flights-results.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="flights-page" id="flights-page-root" data-trip="{{ trip }}" data-search-leg="{% if inboundLeg %}inbound{% else %}outbound{% endif %}">
+    {# Booking stepper with current step highlighted. #}
+    <nav class="booking-stepper" aria-label="Booking progress">
+        <ol class="booking-stepper__list">
+            <li class="booking-stepper__item booking-stepper__item--current">
+                <span class="booking-stepper__num">1</span>
+                <span class="booking-stepper__label">Choose flights</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">2</span>
+                <span class="booking-stepper__label">Passenger info</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">3</span>
+                <span class="booking-stepper__label">Seat and extras</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">4</span>
+                <span class="booking-stepper__label">Confirm and pay</span>
+            </li>
+        </ol>
+    </nav>
+
+    {# Header with route title and leg label. #}
+    <header class="flights-hero">
+        <p class="flights-hero__eyebrow">{% if inboundLeg %}Returning flight{% else %}Departing flight{% endif %}</p>
+        {% if hasSearch %}
+        <h1 class="flights-hero__title"><strong>{{ originCity }}</strong> to <strong>{{ destCity }}</strong></h1>
+        {% else %}
+        <h1 class="flights-hero__title">Select airports and a date</h1>
+        {% endif %}
+        {% if not hasSearch %}
+        <p class="flights-hero__hint">Use the search form on the <a href="/">homepage</a> to choose airports and a departure date.</p>
+        {% endif %}
+    </header>
+
+    {# Inbound leg: recap of selected outbound flight. #}
+    {% if hasSearch and inboundLeg and outboundSummaryLine %}
+    <p class="flights-outbound-recap" role="status">Your outbound: {{ outboundSummaryLine }}</p>
+    {% endif %}
+
+    {# Link back to outbound results for edits. #}
+    {% if backToOutboundHref %}
+    <nav class="flights-leg-nav" aria-label="Outbound flight">
+        <a class="flights-leg-nav__link" href="{{ backToOutboundHref }}">← Back to departing flights</a>
+    </nav>
+    {% endif %}
+
+    {% if hasSearch %}
+    {# Date, sort, and order controls are server-rendered links. #}
+    <section class="date-carousel" aria-label="Departure date">
+        <a class="date-carousel__arrow" href="{{ weekPrevHref }}" aria-label="View dates one week earlier">‹</a>
+        <ul class="date-carousel__days">
+            {% for day in carouselDays %}
+            <li class="date-carousel__cell{% if day.selected %} date-carousel__cell--selected{% endif %}{% if day.past %} date-carousel__cell--past{% endif %}">
+                {% if day.selected %}
+                <span class="date-carousel__chip date-carousel__chip--selected" aria-current="date">{{ day.label }}</span>
+                {% elseif day.past %}
+                <span class="date-carousel__chip date-carousel__chip--past" aria-disabled="true">{{ day.label }}</span>
+                {% else %}
+                <a class="date-carousel__chip" href="{{ day.href }}">{{ day.label }}</a>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        <a class="date-carousel__arrow" href="{{ weekNextHref }}" aria-label="View dates one week later">›</a>
+    </section>
+
+    <div class="flights-toolbar">
+        <div class="sort-row" role="toolbar" aria-label="Sort flights">
+            <span class="sort-row__prefix">Sort by</span>
+            <ul class="sort-row__list">
+                <li>{% if sortRecommendedCurrent %}<span class="sort-pill sort-pill--current">Recommended</span>{% else %}<a class="sort-pill" href="{{ sortLinkRecommended }}">Recommended</a>{% endif %}</li>
+                <li>{% if sortDepartureCurrent %}<span class="sort-pill sort-pill--current">Departure time</span>{% else %}<a class="sort-pill" href="{{ sortLinkDeparture }}">Departure time</a>{% endif %}</li>
+                <li>{% if sortArrivalCurrent %}<span class="sort-pill sort-pill--current">Arrival time</span>{% else %}<a class="sort-pill" href="{{ sortLinkArrival }}">Arrival time</a>{% endif %}</li>
+                <li>{% if sortDurationCurrent %}<span class="sort-pill sort-pill--current">Duration</span>{% else %}<a class="sort-pill" href="{{ sortLinkDuration }}">Duration</a>{% endif %}</li>
+                <li>{% if sortFareCurrent %}<span class="sort-pill sort-pill--current">Fare</span>{% else %}<a class="sort-pill" href="{{ sortLinkFare }}">Fare</a>{% endif %}</li>
+                <li>{% if sortStopsCurrent %}<span class="sort-pill sort-pill--current">Stops</span>{% else %}<a class="sort-pill" href="{{ sortLinkStops }}">Stops</a>{% endif %}</li>
+            </ul>
+        </div>
+        <div class="sort-row" role="toolbar" aria-label="Filter flights by stops">
+            <span class="sort-row__prefix">Show</span>
+            <ul class="sort-row__list">
+                <li>{% if stopFilterAllCurrent %}<span class="sort-pill sort-pill--current">All flights</span>{% else %}<a class="sort-pill" href="{{ stopFilterAllHref }}">All flights</a>{% endif %}</li>
+                <li>{% if stopFilterDirectCurrent %}<span class="sort-pill sort-pill--current">Direct</span>{% else %}<a class="sort-pill" href="{{ stopFilterDirectHref }}">Direct</a>{% endif %}</li>
+                <li>{% if stopFilterOneCurrent %}<span class="sort-pill sort-pill--current">1 stop</span>{% else %}<a class="sort-pill" href="{{ stopFilterOneHref }}">1 stop</a>{% endif %}</li>
+                <li>{% if stopFilterTwoCurrent %}<span class="sort-pill sort-pill--current">2 stops</span>{% else %}<a class="sort-pill" href="{{ stopFilterTwoHref }}">2 stops</a>{% endif %}</li>
+            </ul>
+        </div>
+        <div class="results-meta">
+            <p class="results-meta__count"><strong>{{ totalResults }}</strong> flight{% if totalResults != 1 %}s{% endif %} found</p>
+            {% if orderToggleHref %}
+            <a class="results-meta__order" href="{{ orderToggleHref }}" title="{{ orderToggleHint }}">{{ orderToggleLabel }}</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <p class="cabin-banner{% if isBusinessCabin %} cabin-banner--business{% endif %}" role="status">
+        Prices shown for <strong>{{ cabinLabel }}</strong>
+    </p>
+
+    {# Results list; data-* attributes are used by flights-results.js. #}
+    <div class="flight-results" id="flight-results">
+        {% for card in flightCards %}
+        <article class="flight-card" data-flight-card
+            data-search-leg="{% if inboundLeg %}inbound{% else %}outbound{% endif %}"
+            data-search-from="{{ fromRaw }}"
+            data-search-to="{{ toRaw }}"
+            data-search-depart="{{ departRaw }}"
+            data-search-return="{{ returnDateForFareNav }}"
+            data-ob-from="{{ obFromRaw }}"
+            data-ob-to="{{ obToRaw }}"
+            data-ob-depart="{{ obDepartRaw }}"
+            data-outbound-price="{{ outboundPriceRaw }}"
+            data-ob-flight-id="{{ preservedOutboundFlightId }}"
+            data-ob-fare="{{ preservedOutboundFare }}"
+            data-trip="{{ trip }}"
+            data-cabin="{{ cabinClass }}"
+            data-adults="{{ adults }}"
+            data-children="{{ children }}"
+            data-flight-id="{{ card.id }}"
+            data-price-light="{{ card.priceLight }}"
+            data-price-essential="{{ card.priceEssential }}"
+            data-price-flex="{{ card.priceFlex }}"
+            data-card-depart-time="{{ card.departTime }}"
+            data-card-arrival-time="{{ card.arrivalTime }}"
+            data-card-duration="{{ card.durationLabel }}"
+            data-card-flights="{{ card.flightNumberChain }}"
+            data-card-stops="{{ card.stops }}"
+            data-card-arr-plus="{{ card.arrivalPlusDays }}"
+            data-card-origin-code="{{ card.originCode }}"
+            data-card-dest-code="{{ card.destCode }}">
+            <div class="flight-card__detail">
+                <div class="flight-card__times">
+                    <div class="flight-card__endpoint">
+                        <span class="flight-card__time">{{ card.departTime }}</span>
+                        <span class="flight-card__code">{{ card.originCode }}</span>
+                        <span class="flight-card__timezone">{{ card.originTimeZone }}</span>
+                    </div>
+                    <div class="flight-card__timeline-wrap">
+                        <div class="flight-card__track-column{% if card.stops > 0 %} flight-card__track-column--has-stops{% endif %}">
+                            <div class="flight-card__track-block{% if card.stops > 0 %} flight-card__track-block--has-stops{% endif %}">
+                                <div class="flight-card__track-with-plane">
+                                    <div class="flight-card__duration-above">{{ card.durationLabel }}</div>
+                                    <span class="flight-card__plane">
+                                        <svg class="flight-card__plane-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                                    </span>
+                                    <div class="flight-card__timeline flight-card__timeline--stops-{{ card.stops }}" aria-hidden="true">
+                                        <div class="flight-card__track">
+                                            <span class="flight-card__track-line"></span>
+                                            <div class="flight-card__track-stops">
+                                                {% for ts in card.timelineStops %}
+                                                <span class="flight-card__stop-group">
+                                                    <span class="flight-card__stop-dot"></span>
+                                                    <span class="flight-card__stop-code">{{ ts.code }}</span>
+                                                </span>
+                                                {% endfor %}
+                                            </div>
+                                            <span class="flight-card__end-ring" title="Arrival"></span>
+                                        </div>
+                                    </div>
+                                    <p class="flight-card__stops-line">{{ card.stopSummary }}</p>
+                                    <p class="flight-card__timezone-change">{{ card.timeZoneDifference }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flight-card__endpoint flight-card__endpoint--arrive">
+                        <span class="flight-card__time">{{ card.arrivalTime }}{% if card.arrivalPlusDays > 0 %}<sup class="flight-card__plus-day">+{{ card.arrivalPlusDays }}</sup>{% endif %}</span>
+                        <span class="flight-card__code">{{ card.destCode }}</span>
+                        <span class="flight-card__timezone">{{ card.destTimeZone }}</span>
+                    </div>
+                </div>
+                <div class="flight-card__footer">
+                    <div class="flight-card__footer-bar">
+                    <span class="flight-card__preflight-chain">{{ card.flightNumberChain }}</span>
+                    {# Route details rows come from card.routeBlocks. #}
+                    <details class="flight-card__details" data-route-details>
+                        <summary class="flight-card__details-summary">Route details</summary>
+                        <div class="flight-card__details-body">
+                            <div class="route-itinerary route-itinerary--ledger">
+                            {% for block in card.routeBlocks %}
+                            {% if block.kind == "segment" %}
+                            <div class="route-itinerary__row route-itinerary__row--segment">
+                                <div class="route-itinerary__lead route-itinerary__lead--fn"><span class="route-itinerary__fn">{{ block.flight }}</span></div>
+                                <div class="route-seg">
+                                    <div class="route-seg__times">
+                                        <span class="route-seg__time">{{ block.depart }}{% if block.depPlusDays > 0 %}<sup class="flight-card__plus-day">+{{ block.depPlusDays }}</sup>{% endif %}</span>
+                                        <span class="route-seg__arrow" aria-hidden="true">→</span>
+                                        <span class="route-seg__time">{{ block.arrive }}{% if block.arrPlusDays > 0 %}<sup class="flight-card__plus-day">+{{ block.arrPlusDays }}</sup>{% endif %}</span>
+                                    </div>
+                                    <p class="route-seg__airports"><strong>{{ block.fromName }}</strong> ({{ block.fromCode }}) → <strong>{{ block.toName }}</strong> ({{ block.toCode }})</p>
+                                    <p class="route-seg__meta">Flight {{ block.flight }} · Glide Airways · {{ block.fromTimeZone }} to {{ block.toTimeZone }}</p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="route-itinerary__row route-itinerary__row--join">
+                                <div class="route-itinerary__lead route-itinerary__lead--arrow" aria-hidden="true">↓</div>
+                                <div class="route-connect">
+                                    <span class="route-connect__label">Connect at {{ block.airportCode }}</span>
+                                    <span class="route-connect__name">{{ block.airportName }}</span>
+                                    <span class="route-connect__layover"><span class="route-connect__layover-time">{{ block.layoverLabel }}</span> layover</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            </div>
+                            <div class="route-total-row">
+                                <span class="route-total-row__spacer" aria-hidden="true"></span>
+                                <div class="route-total-bar">Total duration {{ card.durationLabel }}</div>
+                            </div>
+                        </div>
+                    </details>
+                    </div>
+                </div>
+            </div>
+            <aside class="flight-card__buy">
+                {% if card.departed %}
+                <button type="button" class="flight-card__price-btn flight-card__price-btn--departed" disabled aria-disabled="true" aria-label="Flight departed">
+                    <span class="flight-card__price-label">Status</span>
+                    <span class="flight-card__price-value">Flight departed</span>
+                </button>
+                {% else %}
+                <button type="button" class="flight-card__price-btn" data-fare-toggle aria-expanded="false" aria-controls="fares-{{ card.id }}" aria-label="Choose fare, from GBP {{ card.fromPrice }}">
+                    <span class="flight-card__price-label">From</span>
+                    <span class="flight-card__price-value">GBP {{ card.fromPrice }}</span>
+                </button>
+                {% endif %}
+            </aside>
+            <div class="flight-card__fares" id="fares-{{ card.id }}" data-fare-panel data-state="closed" aria-hidden="true">
+                <div class="flight-card__fares-clip">
+                <div class="flight-card__fares-inner" inert>
+                <div class="fare-grid{% if isBusinessCabin %} fare-grid--business{% endif %}" role="group" aria-label="Fare comparison for this flight">
+                    {% if isEconomyCabin %}
+                    <div class="fare-plan">
+                        <h3 class="fare-plan__name">Glide <em>Light</em></h3>
+                        <p class="fare-plan__tag">The Budget Saver</p>
+                        <div class="fare-plan__body">
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-light-seat">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-seat"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-light-seat">Seat</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Seat selection: <strong>randomly</strong> assigned at check-in.</li>
+                                        <li>Seat reservation <strong>for a fee</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-light-bag">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-baggage"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-light-bag">Baggage</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Carry-on baggage: <strong>1 piece, 7kg each</strong>.</li>
+                                        <li>Check-in Baggage: <strong>1 piece, 23kg each</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-light-rewards">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-rewards"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-light-rewards">Glide Club</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Qualifying Glide Club points: <strong>25%</strong> of full fare.</li>
+                                        <li>Status bonus multipliers: <strong>not eligible</strong> on Light.</li>
+                                        <li>Mileage upgrades: <strong>not eligible</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-light-flex">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-flex"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-light-flex">Fees &amp; flexibility</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Flight change: <strong>not permitted</strong>.</li>
+                                        <li>Cancellation fee: <strong>non-refundable</strong>.</li>
+                                        <li>No-show fee: <strong>GBP300</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                        </div>
+                        <p class="fare-plan__price" aria-label="Light fare price">GBP {{ card.priceLight }}</p>
+                        <button type="button" class="fare-plan__cta" data-fare-select data-fare-tier="light" data-fare-price="{{ card.priceLight }}">Select Light</button>
+                    </div>
+                    {% endif %}
+                    <div class="fare-plan{% if isBusinessCabin %} fare-plan--business{% endif %}">
+                        <h3 class="fare-plan__name">{% if isBusinessCabin %}Glide <em>Business Essential</em>{% else %}Glide <em>Essential</em>{% endif %}</h3>
+                        <p class="fare-plan__tag">{% if isBusinessCabin %}The Business Standard{% else %}The Standard Choice{% endif %}</p>
+                        <div class="fare-plan__body">
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-ess-seat">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-seat"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-ess-seat">Seat</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>All seats are <strong>free of charge</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-ess-bag">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-baggage"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-ess-bag">Baggage</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Carry-on baggage: <strong>1 piece, 10kg each</strong>.</li>
+                                        <li>Check-in Baggage: <strong>2 pieces, 28kg each</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-ess-rewards">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-rewards"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-ess-rewards">Glide Club</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Qualifying Glide Club points: <strong>100%</strong> of miles flown.</li>
+                                        <li>Status credits: <strong>standard accrual</strong>.</li>
+                                        <li>Mileage upgrades: <strong>eligible</strong> (subject to availability).</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-ess-flex">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-flex"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-ess-flex">Fees &amp; flexibility</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Flight change fee: <strong>GBP200</strong> + potential fare difference.</li>
+                                        <li>Cancellation fee: <strong>GBP200</strong>.</li>
+                                        <li>No-show fee: <strong>GBP250</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                        </div>
+                        <p class="fare-plan__price" aria-label="Essential fare price">GBP {{ card.priceEssential }}</p>
+                        <button type="button" class="fare-plan__cta" data-fare-select data-fare-tier="essential" data-fare-price="{{ card.priceEssential }}">Select Essential</button>
+                    </div>
+                    <div class="fare-plan{% if isBusinessCabin %} fare-plan--business{% endif %}">
+                        <h3 class="fare-plan__name">{% if isBusinessCabin %}Glide <em>Business Flex</em>{% else %}Glide <em>Flex</em>{% endif %}</h3>
+                        <p class="fare-plan__tag">{% if isBusinessCabin %}The Premium Business Experience{% else %}The Premium Experience{% endif %}</p>
+                        <div class="fare-plan__body">
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-flex-seat">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-seat"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-flex-seat">Seat</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>All seats are <strong>free of charge</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-flex-bag">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-baggage"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-flex-bag">Baggage</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Carry-on baggage: <strong>1 piece, 10kg each</strong>.</li>
+                                        <li>Check-in baggage: <strong>2 pieces, 32kg each</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-flex-rewards">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-rewards"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-flex-rewards">Glide Club</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Qualifying Glide Club points: <strong>175%</strong> of miles flown.</li>
+                                        <li>Glide Points bonus: <strong>+250 points per long-haul segment</strong>.</li>
+                                        <li>Mileage upgrades: <strong>eligible</strong> with <strong>priority waitlist</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                            <section class="fare-block" aria-labelledby="fare-{{ card.id }}-flex-flex">
+                                <div class="fare-block__head">
+                                    <svg class="fare-block__glyph" width="22" height="22" aria-hidden="true" focusable="false"><use href="/static/images/fare-icons.svg#fare-flex"/></svg>
+                                    <h4 class="fare-block__title" id="fare-{{ card.id }}-flex-flex">Fees &amp; flexibility</h4>
+                                </div>
+                                <div class="fare-block__text">
+                                    <ul class="fare-block__list">
+                                        <li>Flight change fee: <strong>GBP150</strong> + potential fare difference.</li>
+                                        <li>Cancellation fee: <strong>GBP150</strong>.</li>
+                                        <li>No-show fee: <strong>GBP200</strong>.</li>
+                                    </ul>
+                                </div>
+                            </section>
+                        </div>
+                        <p class="fare-plan__price" aria-label="Flex fare price">GBP {{ card.priceFlex }}</p>
+                        <button type="button" class="fare-plan__cta" data-fare-select data-fare-tier="flex" data-fare-price="{{ card.priceFlex }}">Select Flex</button>
+                    </div>
+                </div>
+                </div>
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <p class="flight-results__empty">No flights match this search for the selected date. Try another day in the date row above.</p>
+        {% endfor %}
+    </div>
+
+    {# Pager for multiple results pages. #}
+    {% if showPager %}
+    <nav class="flight-pager" aria-label="Results pages">
+        {% for p in pagerPages %}
+        {% if p.current %}
+        <span class="flight-pager__page flight-pager__page--current" aria-current="page">{{ p.num }}</span>
+        {% else %}
+        <a class="flight-pager__page" href="{{ p.href }}">{{ p.num }}</a>
+        {% endif %}
+        {% endfor %}
+    </nav>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

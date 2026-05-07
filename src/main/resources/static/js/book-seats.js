@@ -8,6 +8,7 @@
   var STORAGE_ASSIGN = 'glideSeatAssignmentsV1';
   var STORAGE_ASSIGN_FALLBACK = 'glideSeatAssignmentsV1Local';
   var STORAGE_PAX = 'glideBookingPaxNames';
+  var STORAGE_SEAT_RESET_ON_LOAD = 'glideSeatResetOnNextLoad';
 
   function decodeB64Utf8(b64) {
     var binary = atob(b64);
@@ -37,6 +38,13 @@
     } catch (e) {}
   }
 
+  function clearSavedSeatMap() {
+    try {
+      sessionStorage.removeItem(STORAGE_ASSIGN);
+      localStorage.removeItem(STORAGE_ASSIGN_FALLBACK);
+    } catch (e) {}
+  }
+
   function toBase64UrlUtf8(text) {
     var encoded = btoa(unescape(encodeURIComponent(text)));
     return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
@@ -57,14 +65,18 @@
     return m ? parseInt(m[1], 10) : 0;
   }
 
-  /** Row 1 = priority only. Rows 9 & 22 = extra legroom (first row under each toilet block in the map). */
-  function applySeatKindClasses(btn, seatId) {
+  /** Economy: row 11 priority; rows 19 and 32 extra legroom. Business: no extra-legroom classing. */
+  function applySeatKindClasses(btn, seatId, isBusinessCabin) {
     var row = seatRowNumber(seatId);
-    if (row === 1) {
+    if (isBusinessCabin) {
+      btn.classList.add('seat-booking__seat--regular');
+      return;
+    }
+    if (row === 11) {
       btn.classList.add('seat-booking__seat--priority');
       return;
     }
-    if (row === 9 || row === 22) {
+    if (row === 19 || row === 32) {
       btn.classList.add('seat-booking__seat--extra');
       return;
     }
@@ -120,6 +132,16 @@
     }
     if (!journeys || !journeys.length) return;
 
+    var resetFromPassengerStep = false;
+    try {
+      resetFromPassengerStep = sessionStorage.getItem(STORAGE_SEAT_RESET_ON_LOAD) === '1';
+      if (resetFromPassengerStep) sessionStorage.removeItem(STORAGE_SEAT_RESET_ON_LOAD);
+    } catch (e) {}
+
+    if (resetFromPassengerStep) {
+      clearSavedSeatMap();
+    }
+
     var seatMap = loadSeatMap();
     var journeyKey = journeys[0].key;
     var legIndex = 0;
@@ -129,8 +151,12 @@
     var journeyPickers = document.querySelectorAll('[data-summary-picker][data-trip-key]');
     var paxButtons = document.querySelectorAll('[data-pax-slot]');
     var seatGrid = document.querySelector('[data-seat-grid]');
+    var mapShell = document.querySelector('.seat-booking__map-shell');
     var seatButtons = document.querySelectorAll('[data-seat-id]');
     var seatRows = document.querySelectorAll('[data-row-index]');
+    var breakRows = document.querySelectorAll('[data-seat-break-row]');
+    var facilityRows = document.querySelectorAll('[data-seat-facility]');
+    var wingRows = document.querySelectorAll('[data-seat-wing-row]');
     var continueBtn = document.getElementById('seat-continue-placeholder');
 
     if (!legTabsEl || !seatGrid) return;
@@ -192,16 +218,68 @@
 
     function applyCabinLayout() {
       var hasBusiness = !!currentJourney().hasBusinessCabin;
+      if (mapShell) {
+        mapShell.classList.toggle('seat-booking__map-shell--business', hasBusiness);
+      }
       seatRows.forEach(function (rowEl) {
         var idx = parseInt(rowEl.getAttribute('data-row-index') || '0', 10);
-        var isBusiness = hasBusiness && idx > 0 && idx <= 10;
-        rowEl.classList.toggle('seat-booking__row--business', isBusiness);
-        rowEl.classList.toggle('seat-booking__row--economy', !isBusiness);
+        var shownInBusiness = idx >= 1 && idx <= 10;
+        var showRow = hasBusiness ? shownInBusiness : idx >= 1;
+        rowEl.hidden = !showRow;
+        rowEl.style.display = showRow ? '' : 'none';
+
+        var displayRow = hasBusiness ? idx : idx + 10;
+        var rowLabelEl = rowEl.querySelector('.seat-booking__row-label');
+        if (rowLabelEl && showRow) rowLabelEl.textContent = String(displayRow);
+
+        rowEl.classList.toggle('seat-booking__row--business', hasBusiness);
+        rowEl.classList.toggle('seat-booking__row--economy', !hasBusiness);
+
+        rowEl.querySelectorAll('[data-seat-letter]').forEach(function (seatBtn) {
+          var letter = seatBtn.getAttribute('data-seat-letter') || '';
+          var hideBusinessMiddle = hasBusiness && (letter === 'B' || letter === 'E');
+          seatBtn.hidden = !showRow || hideBusinessMiddle;
+          seatBtn.style.display = seatBtn.hidden ? 'none' : '';
+          if (hideBusinessMiddle) {
+            seatBtn.disabled = true;
+            return;
+          }
+          if (!showRow) {
+            seatBtn.disabled = true;
+            return;
+          }
+          var seatId = String(displayRow) + letter;
+          seatBtn.setAttribute('data-seat-id', seatId);
+          seatBtn.setAttribute('aria-label', 'Seat ' + seatId);
+        });
+      });
+
+      breakRows.forEach(function (breakEl) {
+        var atRow = parseInt(breakEl.getAttribute('data-seat-break-row') || '0', 10);
+        breakEl.hidden = hasBusiness || !(atRow === 9 || atRow === 22);
+        breakEl.style.display = breakEl.hidden ? 'none' : '';
+      });
+
+      facilityRows.forEach(function (facilityEl) {
+        if (!hasBusiness) {
+          facilityEl.hidden = false;
+          return;
+        }
+        var kind = facilityEl.getAttribute('data-seat-facility') || '';
+        facilityEl.hidden = !(kind === 'top-exit' || kind === 'top-toilet' || kind === 'bottom-exit');
+        facilityEl.style.display = facilityEl.hidden ? 'none' : '';
+      });
+
+      wingRows.forEach(function (wingEl) {
+        wingEl.hidden = hasBusiness;
+        wingEl.style.display = wingEl.hidden ? 'none' : '';
       });
     }
 
     function paintSeats() {
+      var isBusinessCabin = !!currentJourney().hasBusinessCabin;
       seatButtons.forEach(function (btn) {
+        if (btn.hidden) return;
         var id = btn.getAttribute('data-seat-id');
         btn.classList.remove(
           'seat-booking__seat--extra',
@@ -233,7 +311,7 @@
           btn.classList.add('seat-booking__seat--assigned');
           if (occ === selectedPax) btn.classList.add('seat-booking__seat--mine');
         } else {
-          applySeatKindClasses(btn, id);
+          applySeatKindClasses(btn, id, isBusinessCabin);
           btn.textContent = letter;
           btn.setAttribute('aria-label', 'Seat ' + id);
         }

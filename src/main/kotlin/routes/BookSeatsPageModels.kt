@@ -1,4 +1,6 @@
-package routes
+@file:Suppress("InvalidPackageDeclaration")
+
+package routes.flight
 
 import data.flight.FlightSearchRepository
 import data.flight.FlightSearchRepository.FlightScheduleRecord
@@ -6,13 +8,15 @@ import io.ktor.http.Parameters
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-private const val LIGHT_SEAT_SELECTION_FEE_GBP = 30 // keep in sync with BookPaymentPageModels.LIGHT_JOURNEY_SEAT_FEE_GBP
+private const val LIGHT_SEAT_SELECTION_FEE_GBP = 30
+private const val SEAT_ROW_COUNT = 30
 
 private data class SeatJourney(
     val key: String,
     val tabLabel: String,
     val row: FlightScheduleRecord,
     val isLightFare: Boolean,
+    val hasBusinessCabin: Boolean,
 ) {
     fun routeLine(): String {
         val o = row.originCode
@@ -21,8 +25,6 @@ private data class SeatJourney(
     }
 
     fun flightChain(): String = row.legFlightNumbers.joinToString(" · ")
-
-    fun hasBusinessCabin(): Boolean = row.durationMinutes >= 360 || row.stops > 0
 }
 
 internal fun bookSeatsModel(queryParams: Parameters): Map<String, Any?> {
@@ -63,7 +65,7 @@ internal fun bookSeatsModel(queryParams: Parameters): Map<String, Any?> {
         "showLightSeatFeeNote" to showLightSeatFeeNote,
         "lightSeatFeeGbp" to LIGHT_SEAT_SELECTION_FEE_GBP,
         "seatJourneysB64" to b64,
-        "seatRows" to (1..30).toList(),
+        "seatRows" to (1..SEAT_ROW_COUNT).toList(),
         "seatLettersLeft" to listOf("A", "B", "C"),
         "seatLettersRight" to listOf("D", "E", "F"),
     )
@@ -86,14 +88,15 @@ private fun buildSeatJourneys(queryParams: Parameters): List<SeatJourney> {
             },
         )
     val ibTier = effectiveFareTier(queryParams["fare"].orEmpty())
+    val businessCabin = CabinNormalization.normalizedCabinForBookingQuery(queryParams) == "business"
     val obLight = obTier.equals("light", ignoreCase = true)
     val ibLight = ibTier.equals("light", ignoreCase = true)
     return buildList {
         if (dual) {
-            add(SeatJourney("outbound", "Outbound", outboundRow!!, obLight))
-            add(SeatJourney("inbound", "Return", inboundRow, ibLight))
+            add(SeatJourney("outbound", "Outbound", outboundRow!!, obLight, businessCabin))
+            add(SeatJourney("inbound", "Return", inboundRow, ibLight, businessCabin))
         } else {
-            add(SeatJourney("outbound", "Outbound", inboundRow, obLight))
+            add(SeatJourney("outbound", "Outbound", inboundRow, obLight, businessCabin))
         }
     }
 }
@@ -120,7 +123,8 @@ private fun legsForSchedule(row: FlightScheduleRecord): List<Map<String, Any?>> 
 }
 
 private fun jsonEscape(s: String): String =
-    s.replace("\\", "\\\\")
+    s
+        .replace("\\", "\\\\")
         .replace("\"", "\\\"")
         .replace("\n", "\\n")
         .replace("\r", "\\r")
@@ -145,5 +149,5 @@ private fun seatJourneysToJson(journeys: List<SeatJourney>): String =
             journey.routeLine(),
         )},"flightChain":${jsonQuote(
             journey.flightChain(),
-        )},"hasBusinessCabin":${journey.hasBusinessCabin()},"isLightFare":${journey.isLightFare},"legs":[$legsJson]}"""
+        )},"hasBusinessCabin":${journey.hasBusinessCabin},"isLightFare":${journey.isLightFare},"legs":[$legsJson]}"""
     }

@@ -27,7 +27,7 @@
         </div>
         <div class="ticket-detail-tags">
             <span>{{ ticketFull.ticket.source }}</span>
-            <span>{{ ticketFull.ticket.status }}</span>
+            <span>{% if ticketFull.ticket.status == "IN_PROGRESS" %}IN PROGRESS{% else %}{{ ticketFull.ticket.status }}{% endif %}</span>
             <span>{{ ticketFull.ticket.priority }}</span>
         </div>
     </header>
@@ -75,7 +75,7 @@
         <label for="ticket-status">Status</label>
         <select id="ticket-status" name="status" onchange="this.form.requestSubmit()">
             <option value="OPEN" {% if ticketFull.ticket.status == "OPEN" %}selected{% endif %}>Open</option>
-            <option value="IN_PROGRESS" {% if ticketFull.ticket.status == "IN_PROGRESS" %}selected{% endif %}>In progress</option>
+            <option value="IN_PROGRESS" {% if ticketFull.ticket.status == "IN_PROGRESS" %}selected{% endif %}>In Progress</option>
             <option value="RESOLVED" {% if ticketFull.ticket.status == "RESOLVED" %}selected{% endif %}>Resolved</option>
             <option value="CLOSED" {% if ticketFull.ticket.status == "CLOSED" %}selected{% endif %}>Closed</option>
         </select>

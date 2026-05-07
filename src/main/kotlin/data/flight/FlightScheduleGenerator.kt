@@ -24,17 +24,26 @@ object FlightScheduleGenerator {
 
     fun ensureSeedData() {
         ensureCountryTimezoneColumn()
+        ensureFlightSearchIndexes()
         seedAirportsRoutesAndTemplates()
         generateMissingFlights()
     }
 
-    @Suppress("SqlNoDataSourceInspection", "SqlDialectInspection")
     private fun ensureCountryTimezoneColumn() {
         runCatching {
             TransactionManager.current().exec(
                 "ALTER TABLE countries ADD COLUMN timeZone VARCHAR(8) NOT NULL DEFAULT '+00:00'",
             )
         }
+    }
+
+    private fun ensureFlightSearchIndexes() {
+        TransactionManager.current().exec(
+            "CREATE INDEX IF NOT EXISTS idx_flights_departure_time ON flights(departureTime)",
+        )
+        TransactionManager.current().exec(
+            "CREATE INDEX IF NOT EXISTS idx_flights_route_departure_time ON flights(routeID, departureTime)",
+        )
     }
 
     private fun seedAirportsRoutesAndTemplates() {
@@ -77,7 +86,8 @@ object FlightScheduleGenerator {
                     routeFull.arrivalAirport.code,
                     durationMinutes,
                 )
-            FlightScheduleRules.weeklyDepartureTimes(routeIndex).forEach { departureTime ->
+            val departureTimes = FlightScheduleRules.weeklyDepartureTimes(routeIndex)
+            departureTimes.forEach { departureTime ->
                 ensureTemplate(
                     routeId = routeFull.route.routeID,
                     departureTime = departureTime,
@@ -198,6 +208,18 @@ object FlightScheduleGenerator {
                 it[FlightScheduleTemplates.durationMinutes] = durationMinutes
                 it[FlightScheduleTemplates.basePrice] = basePrice
                 it[daysOfWeek] = "1,2,3,4,5,6,7"
+                it[status] = ACTIVE_STATUS
+            }
+        } else {
+            FlightScheduleTemplates.update(
+                {
+                    (FlightScheduleTemplates.routeID eq routeId) and
+                        (FlightScheduleTemplates.departureHour eq departureTime.hour) and
+                        (FlightScheduleTemplates.departureMinute eq departureTime.minute)
+                },
+            ) {
+                it[FlightScheduleTemplates.durationMinutes] = durationMinutes
+                it[FlightScheduleTemplates.basePrice] = basePrice
                 it[status] = ACTIVE_STATUS
             }
         }

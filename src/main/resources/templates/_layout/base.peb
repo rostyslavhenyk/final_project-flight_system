@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Flight System{% endblock %}</title>
+    <link rel="icon" href="/static/images/LogoForTab.svg" type="image/svg+xml">
 
     <link rel="stylesheet" href="/static/css/base.css">
     {% block styles %}{% endblock %}
@@ -20,7 +21,9 @@
     {# Global top navigation #}
     <header id="navbar">
         <div class="brand">
-            <a href="/" class="brand-link">Glide Airways</a>
+            <a href="/" class="brand-link brand-link--logo" aria-label="Glide Airways home">
+                <img class="brand-logo brand-logo--user" src="/static/images/UserLogo.svg" alt="Glide Airways">
+            </a>
         </div>
         <nav>
             <ul class="main-links">
@@ -31,7 +34,11 @@
             <ul class="auth-links">
                 {% if loggedIn %}
                     <li><a href="/my-account">My Account</a></li>
-                    <li><a href="/logout">Log Out</a></li>
+                    <li>
+                        <form action="/logout" method="post" class="nav-inline-form">
+                            <button type="submit" class="nav-inline-button">Log Out</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li><a href="/signup">Sign Up</a></li>
                     <li><a href="/login">Log In</a></li>

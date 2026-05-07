@@ -12,16 +12,15 @@ internal object AirportCodeResolver {
         return if (cleaned.isBlank()) {
             null
         } else {
-            codeFromLabel(cleaned) ?: codeFromDirectInput(cleaned) ?: codeFromAirportName(cleaned)
+            Regex("\\(([A-Za-z0-9]{2,$MAX_AIRPORT_CODE_LENGTH})\\)")
+                .find(cleaned)
+                ?.groupValues
+                ?.get(1)
+                ?.uppercase(Locale.UK)
+                ?: codeFromDirectInput(cleaned)
+                ?: codeFromAirportName(cleaned)
         }
     }
-
-    private fun codeFromLabel(cleaned: String): String? =
-        Regex("\\(([A-Za-z0-9]{2,$MAX_AIRPORT_CODE_LENGTH})\\)")
-            .find(cleaned)
-            ?.groupValues
-            ?.get(1)
-            ?.uppercase(Locale.UK)
 
     private fun codeFromDirectInput(cleaned: String): String? {
         val direct = cleaned.uppercase(Locale.UK)

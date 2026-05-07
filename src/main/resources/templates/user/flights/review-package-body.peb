@@ -1,0 +1,19 @@
+{% if selectedTier == 'light' and isEconomyCabin %}
+<div class="fare-plan fare-plan--review-embed">
+    <div class="fare-plan__body">
+        {% include 'user/flights/review-blocks-light-economy.peb' %}
+    </div>
+</div>
+{% elseif selectedTier == 'essential' %}
+<div class="fare-plan fare-plan--review-embed{% if isBusinessCabin %} fare-plan--business{% endif %}">
+    <div class="fare-plan__body">
+        {% include 'user/flights/review-blocks-essential.peb' %}
+    </div>
+</div>
+{% else %}
+<div class="fare-plan fare-plan--review-embed{% if isBusinessCabin %} fare-plan--business{% endif %}">
+    <div class="fare-plan__body">
+        {% include 'user/flights/review-blocks-flex.peb' %}
+    </div>
+</div>
+{% endif %}

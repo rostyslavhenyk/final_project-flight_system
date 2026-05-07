@@ -6,12 +6,10 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import java.io.StringWriter
 import utils.jsMode
 import utils.timed
 import data.UserRepository
 import auth.UserSession
-import utils.baseModel
 
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
@@ -28,15 +26,7 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
             return@timed
         }
 
-        val model =
-            baseModel(
-                mapOf("title" to "Sign Up"),
-            )
-
-        val template = pebbleEngine.getTemplate("user/sign-up/index.peb")
-        val writer = StringWriter()
-        template.evaluate(writer, model)
-        respondText(writer.toString(), ContentType.Text.Html)
+        renderTemplate("user/sign-up/index.peb", mapOf("title" to "Sign Up"))
     }
 }
 

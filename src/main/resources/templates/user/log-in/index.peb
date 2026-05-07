@@ -1,18 +1,33 @@
 {% extends "_layout/base.peb" %}
 
 {% block content %}
-<h1 style="text-align: center;">Log In</h1>
+<section class="page-shell page-shell--narrow" aria-labelledby="login-heading">
+    <header class="page-header">
+        <p class="page-header__eyebrow">Account</p>
+        <h1 id="login-heading" class="page-header__title">Log in</h1>
+        <p class="page-header__text">Access your bookings, membership details, and support tickets.</p>
+    </header>
 
-<form class="login-form"
-    method="post"
-    action="/login"
-    hx-post="/login"
-    hx-target="#log-in-status"
-    hx-swap="innerHTML">
+    <div class="surface-card auth-card">
+        <form class="auth-form"
+            method="post"
+            action="/login"
+            hx-post="/login"
+            hx-target="#log-in-status"
+            hx-swap="innerHTML">
 
-    <input name="email" placeholder="Email">
-    <input name="password" type="password" placeholder="Password">
-    <button type="submit">Login</button>
-    <div id="log-in-status" role="status" aria-live="polite" aria-atomic="true"></div>
-</form>
+            <input type="hidden" name="redirect" value="{{ redirect }}">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input id="login-email" name="email" type="email" autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password">
+            </div>
+            <button type="submit">Log in</button>
+            <div id="log-in-status" role="status" aria-live="polite" aria-atomic="true"></div>
+        </form>
+    </div>
+</section>
 {% endblock %}

@@ -1,15 +1,40 @@
-package routes
+@file:Suppress(
+    "InvalidPackageDeclaration",
+    "LongMethod",
+    "CyclomaticComplexMethod",
+    "ReturnCount",
+    "LoopWithTooManyJumpStatements",
+    "MagicNumber",
+    "UnusedParameter",
+)
+
+package routes.flight
 
 import io.ktor.http.Parameters
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.nio.charset.StandardCharsets
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Base64
 import java.util.Locale
 
 private const val LIGHT_JOURNEY_SEAT_FEE_GBP = 30
 private const val MAX_ADULTS = 9
 private const val MAX_CHILDREN = 8
+
+private val PAY_TRAVEL_DATE_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.UK)
+
+private fun formatPayDateRecord(date: LocalDate): String = date.format(PAY_TRAVEL_DATE_FORMAT)
+
+private fun formatPayDateIso(raw: String?): String {
+    val trimmed = raw?.trim().orEmpty()
+    if (trimmed.isBlank()) return ""
+    return runCatching {
+        LocalDate.parse(trimmed).format(PAY_TRAVEL_DATE_FORMAT)
+    }.getOrElse { "" }
+}
 
 internal fun bookPaymentModel(queryParams: Parameters): Map<String, Any?> {
     val seatMap = decodeSeatSelection(queryParams["seatSel"])
@@ -58,7 +83,7 @@ internal fun bookPaymentModel(queryParams: Parameters): Map<String, Any?> {
     val returningRouteLine: String
 
     val dual = isReturn && outboundRow != null && inboundRow != null
-    if (dual && outboundRow != null && inboundRow != null) {
+    if (dual) {
         val obFares = cabinFareSet(outboundRow, cabinRaw)
         val ibFares = cabinFareSet(inboundRow, cabinRaw)
         outboundPerPerson = moneyForTier(obFares, outboundTier)
@@ -233,6 +258,31 @@ internal fun bookPaymentModel(queryParams: Parameters): Map<String, Any?> {
             grandTotal.divide(paxMultiplier, 2, RoundingMode.HALF_UP),
         )
 
+    val departingDateDisplay: String
+    val returningDateDisplay: String
+    if (dual) {
+        departingDateDisplay = formatPayDateRecord(outboundRow.departDate)
+        returningDateDisplay = formatPayDateRecord(inboundRow.departDate)
+    } else if (inboundRow != null) {
+        departingDateDisplay =
+            formatPayDateRecord(inboundRow.departDate)
+                .ifBlank { formatPayDateIso(queryParams["depart"]) }
+        returningDateDisplay = ""
+    } else {
+        departingDateDisplay =
+            if (isReturn) {
+                formatPayDateIso(queryParams["obDepart"])
+            } else {
+                formatPayDateIso(queryParams["depart"])
+            }
+        returningDateDisplay =
+            if (isReturn) {
+                formatPayDateIso(queryParams["return"]).ifBlank { formatPayDateIso(queryParams["depart"]) }
+            } else {
+                ""
+            }
+    }
+
     return mapOf(
         "title" to "Confirm and pay",
         "chooseFlightsHref" to backToFlightSearchHref(queryParams),
@@ -254,6 +304,8 @@ internal fun bookPaymentModel(queryParams: Parameters): Map<String, Any?> {
         "returningCard" to returningCard,
         "departingRouteLine" to departingRouteLine,
         "returningRouteLine" to returningRouteLine,
+        "departingDateDisplay" to departingDateDisplay,
+        "returningDateDisplay" to returningDateDisplay,
         "outboundPerPersonPlain" to formatGbpPlain(outboundPerPerson),
         "inboundPerPersonPlain" to formatGbpPlain(inboundPerPerson),
         "outboundLineTotalPlain" to formatGbpPlain(outboundLineTotal),
@@ -273,8 +325,8 @@ private fun buildPaymentPassengerRows(
     isReturn: Boolean,
     outboundLight: Boolean,
     inboundLight: Boolean,
-): List<Map<String, Any?>> {
-    return List(paxCount) { idx ->
+): List<Map<String, Any?>> =
+    List(paxCount) { idx ->
         val slot = idx + 1
         val nm = names[slot]?.trim().orEmpty().ifBlank { "Passenger $slot" }
         mapOf(
@@ -298,7 +350,6 @@ private fun buildPaymentPassengerRows(
                 },
         )
     }
-}
 
 private fun seatSlotsLine(
     legs: Map<String, Map<String, String>>?,
@@ -325,8 +376,7 @@ private fun parseGbpAmount(raw: String?): BigDecimal {
     return normalized.toBigDecimalOrNull()?.setScale(2, RoundingMode.HALF_UP) ?: BigDecimal.ZERO
 }
 
-private fun formatGbpPlain(amount: BigDecimal): String =
-    amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
+private fun formatGbpPlain(amount: BigDecimal): String = amount.setScale(2, RoundingMode.HALF_UP).toPlainString()
 
 private fun seatFeeRow(
     journeyLabel: String,
@@ -346,8 +396,7 @@ private fun seatFeeRow(
 private fun hasSeatsForJourney(
     seatMap: Map<String, Map<String, Map<String, String>>>,
     journeyKey: String,
-): Boolean =
-    seatMap[journeyKey]?.values?.any { paxMap -> paxMap.isNotEmpty() } == true
+): Boolean = seatMap[journeyKey]?.values?.any { paxMap -> paxMap.isNotEmpty() } == true
 
 private fun decodeSeatSelection(raw: String?): Map<String, Map<String, Map<String, String>>> {
     if (raw.isNullOrBlank()) return emptyMap()
@@ -367,7 +416,10 @@ private fun parseSeatJson(json: String): Map<String, Map<String, Map<String, Str
     return out
 }
 
-private fun extractInnerObject(json: String, key: String): String? {
+private fun extractInnerObject(
+    json: String,
+    key: String,
+): String? {
     val needle = "\"$key\""
     var from = 0
     while (from < json.length) {
@@ -429,7 +481,10 @@ private fun parsePaxMap(obj: String): Map<String, String> {
     return pax
 }
 
-private fun endOfMatchingBrace(s: String, openIdx: Int): Int {
+private fun endOfMatchingBrace(
+    s: String,
+    openIdx: Int,
+): Int {
     require(s[openIdx] == '{')
     var depth = 0
     var i = openIdx
@@ -451,7 +506,10 @@ private fun endOfMatchingBrace(s: String, openIdx: Int): Int {
     return s.lastIndex.coerceAtLeast(openIdx)
 }
 
-private fun skipJsonString(s: String, quoteIdx: Int): Int {
+private fun skipJsonString(
+    s: String,
+    quoteIdx: Int,
+): Int {
     var j = quoteIdx + 1
     while (j < s.length) {
         when (s[j]) {

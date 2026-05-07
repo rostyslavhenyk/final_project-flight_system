@@ -1,0 +1,33 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Enjoy 24-hour free cancellation · Glide Airways{% endblock %}
+
+{% block content %}
+<section class="page-shell" aria-labelledby="free-cancel-heading">
+    <header class="page-header">
+        <p class="page-header__eyebrow">Flights</p>
+        <h1 id="free-cancel-heading" class="page-header__title">Enjoy 24-hour free cancellation</h1>
+        <p class="page-header__text">Plans changed? You can cancel eligible bookings within 24 hours for a full refund.</p>
+    </header>
+
+    <section class="surface-card">
+        <div class="surface-card__body">
+            <h2>How it works</h2>
+            <ul>
+                <li>Free cancellation applies for the first 24 hours after booking confirmation.</li>
+                <li>The booking must be made directly on the Glide Airways website.</li>
+                <li>The original payment method is refunded once cancellation is processed.</li>
+            </ul>
+
+            <h2>Important notes</h2>
+            <ul>
+                <li>After 24 hours, normal fare rules and cancellation fees may apply.</li>
+                <li>Ancillary services already consumed are non-refundable.</li>
+                <li>Refund timing depends on your payment provider and bank processing.</li>
+            </ul>
+
+            <p><a href="/help">Need help with a cancellation?</a></p>
+        </div>
+    </section>
+</section>
+{% endblock %}
