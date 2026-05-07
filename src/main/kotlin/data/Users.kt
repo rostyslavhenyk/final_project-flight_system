@@ -119,26 +119,29 @@ object UserRepository {
                 .singleOrNull()
         }
 
-    fun normalizeStoredNames() {
+    fun updateName(
+        id: Int,
+        firstName: String,
+        lastName: String,
+    ): User? =
         transaction {
-            Users.selectAll().forEach { row ->
-                val normalizedFirstName = normalizePersonName(row[Users.firstname])
-                val normalizedLastName = normalizePersonName(row[Users.lastname])
-                val normalizedEmail = normalizeEmail(row[Users.email])
-                if (
-                    normalizedFirstName != row[Users.firstname] ||
-                    normalizedLastName != row[Users.lastname] ||
-                    normalizedEmail != row[Users.email]
-                ) {
-                    Users.update({ Users.id eq row[Users.id] }) {
-                        it[firstname] = normalizedFirstName
-                        it[lastname] = normalizedLastName
-                        it[email] = normalizedEmail
-                    }
+            val normalizedFirstName = normalizePersonName(firstName)
+            val normalizedLastName = normalizePersonName(lastName)
+            val updatedRows =
+                Users.update({ Users.id eq id }) {
+                    it[firstname] = normalizedFirstName
+                    it[lastname] = normalizedLastName
                 }
+            if (updatedRows == 0) {
+                null
+            } else {
+                Users
+                    .selectAll()
+                    .where { Users.id eq id }
+                    .map { it.toUser() }
+                    .singleOrNull()
             }
         }
-    }
 
     fun delete(id: Int): Boolean =
         transaction {
@@ -164,17 +167,50 @@ object UserRepository {
                 it[phone] = normalizePhone(newPhone)
             } > 0
         }
+}
 
-    internal fun ResultRow.toUser(): User =
-        User(
-            id = this[Users.id],
-            firstname = this[Users.firstname],
-            lastname = this[Users.lastname],
-            roleId = this[Users.roleId],
-            email = this[Users.email],
-            password = this[Users.password],
-            phone = this[Users.phone],
-        )
+internal fun ResultRow.toUser(): User =
+    User(
+        id = this[Users.id],
+        firstname = this[Users.firstname],
+        lastname = this[Users.lastname],
+        roleId = this[Users.roleId],
+        email = this[Users.email],
+        password = this[Users.password],
+        phone = this[Users.phone],
+    )
+
+object UserMaintenance {
+    fun normalizeStoredNames() {
+        transaction {
+            Users.selectAll().forEach { row ->
+                normalizeStoredNameRow(row)
+            }
+        }
+    }
+
+    private fun normalizeStoredNameRow(row: ResultRow) {
+        val normalizedFirstName = normalizePersonName(row[Users.firstname])
+        val normalizedLastName = normalizePersonName(row[Users.lastname])
+        val normalizedEmail = normalizeEmail(row[Users.email])
+        if (storedUserNeedsNormalizing(row, normalizedFirstName, normalizedLastName, normalizedEmail)) {
+            Users.update({ Users.id eq row[Users.id] }) {
+                it[firstname] = normalizedFirstName
+                it[lastname] = normalizedLastName
+                it[email] = normalizedEmail
+            }
+        }
+    }
+
+    private fun storedUserNeedsNormalizing(
+        row: ResultRow,
+        normalizedFirstName: String,
+        normalizedLastName: String,
+        normalizedEmail: String,
+    ): Boolean =
+        normalizedFirstName != row[Users.firstname] ||
+            normalizedLastName != row[Users.lastname] ||
+            normalizedEmail != row[Users.email]
 }
 
 private fun normalizeEmail(value: String): String = value.trim().lowercase(Locale.UK)

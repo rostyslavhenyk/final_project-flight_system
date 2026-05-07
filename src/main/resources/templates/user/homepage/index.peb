@@ -18,8 +18,8 @@
 {# Top action tabs (booking, check-in, etc.) #}
 <nav class="action-tabs" aria-label="Booking actions">
     <span class="action-tab action-tab--active" aria-current="page">Book a trip</span>
-    <a href="/flights" class="action-tab">Manage Booking</a>
-    <a href="/flights" class="action-tab">Check in</a>
+    <a href="{% if loggedIn %}/my-account#manage-booking{% else %}/login?redirect=/my-account%23manage-booking{% endif %}" class="action-tab">Manage Booking</a>
+    <a href="/check-in" class="action-tab">Check in</a>
     <a href="/flight-status" class="action-tab">Check flight status</a>
 </nav>
 
@@ -168,7 +168,7 @@
             <div class="promo-card__body">
                 <h3 class="promo-card__headline">Enjoy 24-hour free cancellation</h3>
                 <p class="promo-card__text">Book with confidence on eligible fares. Change your mind within a day and we’ll help you adjust or refund, subject to fare rules.</p>
-                <a href="/flights" class="promo-card__cta">View details →</a>
+                <a href="/offers/free-cancellation" class="promo-card__cta">View details →</a>
             </div>
         </article>
         <article class="promo-card">
@@ -178,7 +178,7 @@
             <div class="promo-card__body">
                 <h3 class="promo-card__headline">Student Fare</h3>
                 <p class="promo-card__text">Special savings for students on select routes. Verify your status and unlock fares designed for study breaks and term-time travel.</p>
-                <a href="/flights" class="promo-card__cta">Learn more →</a>
+                <a href="/offers/student-fare" class="promo-card__cta">Learn more →</a>
             </div>
         </article>
     </div>

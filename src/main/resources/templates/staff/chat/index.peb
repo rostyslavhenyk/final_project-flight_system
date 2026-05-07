@@ -2,33 +2,51 @@
 
 {% block content %}
 
-<h1>Customer Messages</h1>
+<section class="staff-shell">
+    <div class="staff-hero">
+        <p class="staff-hero__eyebrow">Support</p>
+        <h1>Customer Chat</h1>
+        <p>Messages sent from the live chat widget on the Help page appear here.</p>
+    </div>
 
-{% if conversations is empty %}
-    <p>No messages yet.</p>
-{% else %}
-    {% for convo in conversations %}
-    <div class="chat-convo-card">
-        <h3>{{ convo.userName }}</h3>
+    {% if conversations is empty %}
+        <div class="staff-empty-state">
+            <h2>No chat messages yet</h2>
+            <p>When a logged-in customer starts a live chat, their conversation will appear here.</p>
+        </div>
+    {% else %}
+        <div class="staff-chat-list">
+            {% for convo in conversations %}
+            <article class="chat-convo-card">
+                <div class="chat-convo-head">
+                    <div>
+                        <h2>{{ convo.userName }}</h2>
+                        <p>{{ convo.userEmail }}</p>
+                    </div>
+                    <span>{{ convo.messageCount }} messages</span>
+                </div>
 
-        <div class="chat-convo-messages">
-            {% for msg in convo.messages %}
-            <div class="chat-convo-msg {% if msg.isStaff %}staff{% else %}customer{% endif %}">
-                <span class="chat-convo-name">{{ msg.senderName }}</span>
-                <p>{{ msg.message }}</p>
-            </div>
+                <div class="chat-convo-messages" aria-label="Conversation with {{ convo.userName }}">
+                    {% for msg in convo.messages %}
+                    <div class="chat-convo-msg {% if msg.isStaff %}staff{% else %}customer{% endif %}">
+                        <span class="chat-convo-name">{{ msg.senderName }}</span>
+                        <p>{{ msg.message }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <form method="post" action="/staff/chat/reply" class="chat-reply-form">
+                    <input type="hidden" name="userId" value="{{ convo.userId }}">
+                    <div class="chat-reply-row">
+                        <label class="sr-only" for="reply-{{ convo.userId }}">Reply to {{ convo.userName }}</label>
+                        <input id="reply-{{ convo.userId }}" type="text" name="message" placeholder="Type a reply..." required>
+                        <button type="submit">Reply</button>
+                    </div>
+                </form>
+            </article>
             {% endfor %}
         </div>
-
-        <form method="post" action="/staff/chat/reply">
-            <input type="hidden" name="userId" value="{{ convo.userId }}">
-            <div class="chat-reply-row">
-                <input type="text" name="message" placeholder="Type a reply..." required>
-                <button type="submit">Reply</button>
-            </div>
-        </form>
-    </div>
-    {% endfor %}
-{% endif %}
+    {% endif %}
+</section>
 
 {% endblock %}

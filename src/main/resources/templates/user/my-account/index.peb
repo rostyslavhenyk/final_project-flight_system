@@ -1,4 +1,14 @@
-{% extends layout %}
+{% extends "_layout/base.peb" %}
+
+{% block extra_head %}
+{% if not isStaff %}
+<link rel="stylesheet" href="/static/css/users/flights/core.css">
+<link rel="stylesheet" href="/static/css/users/flights/review.css">
+<link rel="stylesheet" href="/static/css/users/flights/seats.css">
+<link rel="stylesheet" href="/static/css/users/account/manage-booking.css">
+<script src="/static/js/my-account-booking.js" defer></script>
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <section class="page-shell" aria-labelledby="account-heading">
@@ -8,27 +18,109 @@
         <p class="page-header__text">{% if isStaff %}Staff profile and workspace access.{% else %}Your customer profile and travel details.{% endif %}</p>
     </header>
 
+    {% if not isStaff %}
+    <div class="account-tabs" role="tablist" aria-label="Account sections">
+        <button type="button" id="tab-account-details" role="tab" class="account-tabs__btn" aria-selected="true" aria-controls="panel-account-details" data-account-tab="details">Account details</button>
+        <button type="button" id="tab-manage-booking" role="tab" class="account-tabs__btn" aria-selected="false" aria-controls="panel-manage-booking" data-account-tab="manage">Manage booking</button>
+    </div>
+
+    <div id="panel-account-details" role="tabpanel" class="account-tab-panel" aria-labelledby="tab-account-details">
+        <section class="surface-card" aria-labelledby="details-heading">
+            <div class="surface-card__body">
+                <h2 id="details-heading">Account details</h2>
+                {% if nameStatus == "updated" %}
+                <p class="account-name-status account-name-status--success" role="status">Your name has been updated.</p>
+                {% elseif nameStatus == "missing" %}
+                <p class="account-name-status account-name-status--error" role="alert">Please enter both first name and surname.</p>
+                {% elseif nameStatus == "error" %}
+                <p class="account-name-status account-name-status--error" role="alert">We could not update your name. Please try again.</p>
+                {% endif %}
+                <dl class="detail-list">
+                    <dt>Name</dt>
+                    <dd>{{ account.firstname }} {{ account.lastname }}</dd>
+                    <dt>Email</dt>
+                    <dd>{{ account.email }}</dd>
+                    <dt>Membership number</dt>
+                    <dd>{{ membershipNumber }}</dd>
+                    <dt>Account type</dt>
+                    <dd>Customer</dd>
+                </dl>
+                <button type="button" class="account-edit-toggle" id="account-name-edit-toggle" aria-controls="account-name-edit-form" aria-expanded="false">Edit name</button>
+                <form id="account-name-edit-form" class="account-name-form" action="/my-account/name" method="post" hidden>
+                    <div class="account-name-form__grid">
+                        <label class="account-name-form__field">
+                            <span>First name</span>
+                            <input type="text" name="firstName" value="{{ account.firstname }}" autocomplete="given-name" required maxlength="128">
+                        </label>
+                        <label class="account-name-form__field">
+                            <span>Surname</span>
+                            <input type="text" name="lastName" value="{{ account.lastname }}" autocomplete="family-name" required maxlength="128">
+                        </label>
+                    </div>
+                    <div class="account-name-form__actions">
+                        <button type="submit" class="account-name-save">Save name</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <div id="panel-manage-booking" role="tabpanel" class="account-tab-panel" aria-labelledby="tab-manage-booking" hidden data-account-id="{{ account.id }}">
+        <section class="surface-card account-section" aria-labelledby="manage-heading">
+            <div class="surface-card__body">
+                <h2 id="manage-heading">Manage booking</h2>
+                <p id="manage-booking-empty" class="empty-state"{% if serverBookings is not empty %} hidden{% endif %}>After you complete a booking and pay on our site, your trip summaries will appear here, ordered by outbound departure date.</p>
+                <div id="manage-booking-list" class="manage-booking-list"{% if serverBookings is empty %} hidden{% endif %}>
+                    {% for booking in serverBookings %}
+                    <button type="button" class="manage-booking-card" data-fare-summary-href="{{ booking.href }}" aria-label="Open fare summary for {{ booking.label }}">
+                        <p class="manage-booking-card__eyebrow">{{ booking.label }}</p>
+                        <p class="manage-booking-card__route">{{ booking.route }}</p>
+                        <p class="manage-booking-card__meta">{{ booking.meta }}</p>
+                    </button>
+                    {% endfor %}
+                </div>
+                <details class="past-bookings-dropdown">
+                    <summary>Past bookings</summary>
+                    {% if pastBookings is empty %}
+                    <p class="empty-state past-bookings-dropdown__empty">You have no old bookings.</p>
+                    {% else %}
+                    <div class="manage-booking-list past-bookings-dropdown__list">
+                        {% for booking in pastBookings %}
+                        <button type="button" class="manage-booking-card" data-fare-summary-href="{{ booking.href }}" aria-label="Open fare summary for {{ booking.label }}">
+                            <p class="manage-booking-card__eyebrow">{{ booking.label }}</p>
+                            <p class="manage-booking-card__route">{{ booking.route }}</p>
+                            <p class="manage-booking-card__meta">{{ booking.meta }}</p>
+                        </button>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </details>
+            </div>
+        </section>
+    </div>
+    {% else %}
     <section class="surface-card" aria-labelledby="details-heading">
         <div class="surface-card__body">
-            <h2 id="details-heading">{% if isStaff %}Staff details{% else %}Account details{% endif %}</h2>
+            <h2 id="details-heading">Staff details</h2>
             <dl class="detail-list">
                 <dt>Name</dt>
                 <dd>{{ account.firstname }} {{ account.lastname }}</dd>
                 <dt>Email</dt>
                 <dd>{{ account.email }}</dd>
                 <dt>Account type</dt>
-                <dd>{% if isStaff %}Staff{% else %}Customer{% endif %}</dd>
+                <dd>Staff</dd>
             </dl>
-        </div>
-    </section>
-
-    {% if not isStaff %}
-    <section class="surface-card account-section" aria-labelledby="booked-flights-heading">
-        <div class="surface-card__body">
-            <h2 id="booked-flights-heading">Booked flights</h2>
-            <p class="empty-state">Booked flights will appear here after you complete a reservation.</p>
         </div>
     </section>
     {% endif %}
 </section>
+
+{% if not isStaff %}
+<dialog id="fare-summary-dialog" class="fare-summary-dialog" aria-labelledby="fare-summary-heading">
+    <div class="fare-summary-dialog__head">
+        <button type="button" class="fare-summary-dialog__btn" id="fare-summary-close-btn">Close</button>
+    </div>
+    <div class="fare-summary-dialog__scroll" id="fare-summary-dialog-body"></div>
+</dialog>
+{% endif %}
 {% endblock %}

@@ -321,6 +321,14 @@
     align-self: flex-end;
 }
 
+.chat-msg.system {
+    max-width: 100%;
+    background-color: var(--primary-soft-color);
+    color: var(--muted-text-color);
+    align-self: stretch;
+    text-align: center;
+}
+
 .chat-input-row {
     display: flex;
     border-top: 1px solid var(--primary-border-color);

@@ -3,6 +3,8 @@ package routes.flight
 import data.flight.FlightSearchRepository
 import data.flight.FlightSearchRepository.FlightScheduleRecord
 import data.flight.FlightSearchRepository.FlightSortOption
+import data.FlightRepository
+import data.flight.FlightRecordMapper
 import io.ktor.http.Parameters
 import java.math.BigDecimal
 import java.net.URLEncoder
@@ -11,6 +13,7 @@ import java.time.LocalDate
 import java.util.Locale
 
 private const val BOOKING_SEARCH_PAGE_SIZE = 400
+private val bookingFlightNumberRegex = Regex("""GA\d{1,6}""")
 
 private val bookingQueryKeys =
     listOf(
@@ -39,6 +42,9 @@ private val bookingQueryKeys =
         "segArrPlus",
         "segOrig",
         "segDest",
+        "seatSel",
+        "paxSel",
+        "extras",
     )
 
 /** Preserves booking state across /book/... steps. */
@@ -95,9 +101,26 @@ internal fun findRecordForRouteAndFlightId(
     return if (flightId.isBlank() || missingRoutePart) {
         null
     } else {
-        searchRouteRecord(origin, destination, departureDate, flightId)
+        directFlightRecord(departureDate, flightId)
+            ?: searchRouteRecord(origin, destination, departureDate, flightId)
     }
 }
+
+internal fun findRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
+    findRecordForRouteAndFlightId(
+        fromRaw = queryParams["from"].orEmpty(),
+        toRaw = queryParams["to"].orEmpty(),
+        departRaw = queryParams["depart"].orEmpty(),
+        flightId = queryParams["flight"].orEmpty(),
+    )
+
+internal fun findOutboundRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
+    findRecordForRouteAndFlightId(
+        fromRaw = queryParams["obFrom"].orEmpty(),
+        toRaw = queryParams["obTo"].orEmpty(),
+        departRaw = queryParams["obDepart"].orEmpty(),
+        flightId = queryParams["obFlight"].orEmpty(),
+    )
 
 private fun searchRouteRecord(
     origin: String,
@@ -129,6 +152,21 @@ private fun searchRouteRecord(
                 )
             rowFlightId == flightId
         }
+
+private fun directFlightRecord(
+    departureDate: LocalDate,
+    flightId: String,
+): FlightScheduleRecord? {
+    val flightNumbers = bookingFlightNumberRegex.findAll(flightId).map { match -> match.value }.toList()
+    val selectedFlightId = flightNumbers.singleOrNull()?.flightIdFromNumber()
+    val flight =
+        selectedFlightId?.let { id ->
+            FlightRepository
+                .allFull(firstDateInclusive = departureDate, lastDateInclusive = departureDate)
+                .find { full -> full.flight.flightID == id }
+        }
+    return flight?.let { full -> FlightRecordMapper.recordsForDate(departureDate, listOf(full)).singleOrNull() }
+}
 
 /** Human label e.g. `Economy Light`, `Business Flex`. */
 internal fun farePackageDisplayName(

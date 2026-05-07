@@ -1,0 +1,194 @@
+package routes.flight
+
+import data.flight.FlightSearchRepository
+import data.flight.FlightSearchRepository.FlightScheduleRecord
+import io.ktor.http.Parameters
+import java.nio.charset.StandardCharsets
+import java.util.Base64
+
+private const val LIGHT_SEAT_SELECTION_FEE_GBP = 10
+private const val SEAT_ROW_COUNT = 30
+private const val CHECKED_BAG_PRICE_GBP = 25
+private const val PRIORITY_BOARDING_PRICE_GBP = 8
+private const val TRAVEL_INSURANCE_PRICE_GBP = 14
+
+private data class BookingExtraOption(
+    val id: String,
+    val label: String,
+    val description: String,
+    val priceGbp: Int,
+)
+
+private val bookingExtraOptions =
+    listOf(
+        BookingExtraOption("checked-bag", "Checked bag", "20kg hold luggage", CHECKED_BAG_PRICE_GBP),
+        BookingExtraOption(
+            "priority-boarding",
+            "Priority boarding",
+            "Board earlier with cabin bags",
+            PRIORITY_BOARDING_PRICE_GBP,
+        ),
+        BookingExtraOption(
+            "travel-insurance",
+            "Travel insurance",
+            "Basic cover for this booking",
+            TRAVEL_INSURANCE_PRICE_GBP,
+        ),
+    )
+
+private data class SeatJourney(
+    val key: String,
+    val tabLabel: String,
+    val row: FlightScheduleRecord,
+    val isLightFare: Boolean,
+    val hasBusinessCabin: Boolean,
+) {
+    fun routeLine(): String {
+        val o = row.originCode
+        val d = row.destCode
+        return "${FlightSearchRepository.cityForCode(o)} ($o) to ${FlightSearchRepository.cityForCode(d)} ($d)"
+    }
+
+    fun flightChain(): String = row.legFlightNumbers.joinToString(" · ")
+}
+
+internal fun bookSeatsModel(queryParams: Parameters): Map<String, Any?> {
+    val passengerRows = bookingPassengerRowModels(queryParams)
+    val journeys = buildSeatJourneys(queryParams)
+    val json = seatJourneysToJson(journeys)
+    val b64 = Base64.getEncoder().encodeToString(json.toByteArray(StandardCharsets.UTF_8))
+    val dualReturn = journeys.size > 1
+    val outboundTier =
+        effectiveFareTier(
+            if (dualReturn) {
+                queryParams["obFare"].orEmpty()
+            } else {
+                queryParams["fare"].orEmpty()
+            },
+        )
+    val returnTier = effectiveFareTier(queryParams["fare"].orEmpty())
+    val outboundLight = outboundTier.equals("light", ignoreCase = true)
+    val inboundLight = returnTier.equals("light", ignoreCase = true)
+    val showLightSeatFeeNote = outboundLight || (dualReturn && inboundLight)
+    val selectedBookingExtraIds =
+        queryParams["extras"]
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.toSet()
+            .orEmpty()
+    val seatJourneySummaries =
+        journeys.map { j ->
+            mapOf(
+                "key" to j.key,
+                "flightsLine" to "FLIGHT ${j.flightChain()}",
+                "routeLine" to j.routeLine(),
+            )
+        }
+    return mapOf(
+        "title" to "Seat and extras",
+        "chooseFlightsHref" to backToFlightSearchHref(queryParams),
+        "passengersHref" to bookingHref("/book/passengers", queryParams),
+        "continuePaymentHref" to bookingHref("/book/payment", queryParams),
+        "passengerRows" to passengerRows,
+        "hasReturnJourneys" to dualReturn,
+        "hasSeatContext" to journeys.isNotEmpty(),
+        "seatJourneySummaries" to seatJourneySummaries,
+        "showLightSeatFeeNote" to showLightSeatFeeNote,
+        "lightSeatFeeGbp" to LIGHT_SEAT_SELECTION_FEE_GBP,
+        "bookingExtraOptions" to
+            bookingExtraOptions.map { option ->
+                mapOf(
+                    "id" to option.id,
+                    "label" to option.label,
+                    "description" to option.description,
+                    "priceGbp" to option.priceGbp,
+                    "selected" to (option.id in selectedBookingExtraIds),
+                )
+            },
+        "seatJourneysB64" to b64,
+        "seatRows" to (1..SEAT_ROW_COUNT).toList(),
+        "seatLettersLeft" to listOf("A", "B", "C"),
+        "seatLettersRight" to listOf("D", "E", "F"),
+    )
+}
+
+private fun buildSeatJourneys(queryParams: Parameters): List<SeatJourney> {
+    val inboundRow = findRecordForBooking(queryParams)
+    val outboundRow = findOutboundRecordForBooking(queryParams)
+    val dual =
+        queryParams["trip"].equals("return", ignoreCase = true) &&
+            outboundRow != null &&
+            inboundRow != null
+    if (inboundRow == null) return emptyList()
+    val obTier =
+        effectiveFareTier(
+            if (dual) {
+                queryParams["obFare"].orEmpty()
+            } else {
+                queryParams["fare"].orEmpty()
+            },
+        )
+    val ibTier = effectiveFareTier(queryParams["fare"].orEmpty())
+    val businessCabin = CabinNormalization.normalizedCabinForBookingQuery(queryParams) == "business"
+    val obLight = obTier.equals("light", ignoreCase = true)
+    val ibLight = ibTier.equals("light", ignoreCase = true)
+    return buildList {
+        if (dual) {
+            add(SeatJourney("outbound", "Outbound", outboundRow!!, obLight, businessCabin))
+            add(SeatJourney("inbound", "Return", inboundRow, ibLight, businessCabin))
+        } else {
+            add(SeatJourney("outbound", "Outbound", inboundRow, obLight, businessCabin))
+        }
+    }
+}
+
+private fun legsForSchedule(row: FlightScheduleRecord): List<Map<String, Any?>> {
+    val codes =
+        buildList {
+            add(row.originCode)
+            addAll(row.stopoverCodes)
+            add(row.destCode)
+        }
+    return List(row.stops + 1) { legIndex ->
+        val fromC = codes[legIndex]
+        val toC = codes[legIndex + 1]
+        val fn = row.legFlightNumbers[legIndex]
+        mapOf(
+            "index" to legIndex,
+            "flightNumber" to fn,
+            "fromCode" to fromC,
+            "toCode" to toC,
+            "legLabel" to "FLIGHT $fn | $fromC to $toC",
+        )
+    }
+}
+
+private fun jsonEscape(s: String): String =
+    s
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+
+private fun jsonQuote(s: String): String = "\"" + jsonEscape(s) + "\""
+
+private fun seatJourneysToJson(journeys: List<SeatJourney>): String =
+    journeys.joinToString(prefix = "[", postfix = "]") { journey ->
+        val legs = legsForSchedule(journey.row)
+        val legsJson =
+            legs.joinToString(",") { leg ->
+                val idx = leg["index"] as Int
+                val fn = leg["flightNumber"] as String
+                val fromC = leg["fromCode"] as String
+                val toC = leg["toCode"] as String
+                val lbl = leg["legLabel"] as String
+                """{"index":$idx,"flightNumber":${jsonQuote(fn)},"fromCode":${jsonQuote(fromC)},"toCode":${jsonQuote(
+                    toC,
+                )},"legLabel":${jsonQuote(lbl)}}"""
+            }
+        """{"key":${jsonQuote(journey.key)},"tabLabel":${jsonQuote(journey.tabLabel)},"routeLine":${jsonQuote(
+            journey.routeLine(),
+        )},"flightChain":${jsonQuote(
+            journey.flightChain(),
+        )},"hasBusinessCabin":${journey.hasBusinessCabin},"isLightFare":${journey.isLightFare},"legs":[$legsJson]}"""
+    }

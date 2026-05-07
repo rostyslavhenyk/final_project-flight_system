@@ -110,27 +110,27 @@
                         <div class="bp-wf-phone-line">
                             <div class="bp-wf-field" data-bp-dial-shell>
                                 <label class="bp-wf-label" for="bp-contact-dial">Country code</label>
-                                <input type="hidden" name="contactDialCode" id="bp-contact-dial-hidden" value="+">
+                                <input type="hidden" name="contactDialCode" id="bp-contact-dial-hidden" value="{% if contactPhoneDialValue %}+{{ contactPhoneDialValue }}{% else %}+{% endif %}">
                                 <div class="bp-wf-dial-row">
                                     <span class="bp-wf-dial-prefix" aria-hidden="true">+</span>
-                                    <input id="bp-contact-dial" type="text" class="bp-wf-input bp-wf-input--tall bp-wf-dial-input" inputmode="numeric" placeholder="44" autocomplete="tel-country-code" title="Digits only">
+                                    <input id="bp-contact-dial" type="text" class="bp-wf-input bp-wf-input--tall bp-wf-dial-input" inputmode="numeric" placeholder="44" autocomplete="tel-country-code" title="Digits only"{% if contactPhoneDialValue %} value="{{ contactPhoneDialValue }}"{% endif %}>
                                 </div>
                                 <p id="bp-err-contact-dial" class="bp-wf-inline-error" role="alert" hidden></p>
                             </div>
                             <div class="bp-wf-field">
                                 <label class="bp-wf-label" for="bp-contact-phone">Phone number</label>
-                                <input id="bp-contact-phone" name="contactPhone" type="tel" class="bp-wf-input bp-wf-input--tall" inputmode="numeric" autocomplete="tel-national" title="Digits only">
+                                <input id="bp-contact-phone" name="contactPhone" type="tel" class="bp-wf-input bp-wf-input--tall" inputmode="numeric" autocomplete="tel-national" title="Digits only"{% if contactPhoneValue %} value="{{ contactPhoneValue }}"{% endif %}>
                                 <p id="bp-err-contact-phone" class="bp-wf-inline-error" role="alert" hidden></p>
                             </div>
                         </div>
                         <div class="bp-wf-field">
                             <label class="bp-wf-label" for="bp-contact-email">Email</label>
-                            <input id="bp-contact-email" name="contactEmail" type="email" class="bp-wf-input bp-wf-input--tall" autocomplete="email" title="Must include @">
+                            <input id="bp-contact-email" name="contactEmail" type="email" class="bp-wf-input bp-wf-input--tall" autocomplete="email" title="Must include @"{% if loggedIn and contactEmailValue %} value="{{ contactEmailValue }}"{% endif %}>
                             <p id="bp-err-contact-email" class="bp-wf-inline-error" role="alert" hidden></p>
                         </div>
                         <div class="bp-wf-field">
                             <label class="bp-wf-label" for="bp-membership-number">Membership Number</label>
-                    <input id="bp-membership-number" name="membershipNumber" type="text" class="bp-wf-input bp-wf-input--tall{% if not loggedIn %} bp-wf-input--membership-locked{% endif %}" autocomplete="off"{% if not loggedIn %} readonly{% endif %}{% if not loggedIn %} value="N/A"{% else %} value="{{ membershipValue }}"{% endif %}>
+                    <input id="bp-membership-number" name="membershipNumber" type="text" class="bp-wf-input bp-wf-input--tall bp-wf-input--membership-locked" autocomplete="off" readonly aria-readonly="true"{% if not loggedIn %} value="N/A"{% else %} value="{{ membershipValue }}"{% endif %}>
                         </div>
                         </div>
                     </div>

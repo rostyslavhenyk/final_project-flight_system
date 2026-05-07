@@ -172,7 +172,7 @@ internal fun cabinFareSet(
     val fares =
         when (cabinRaw) {
             "business" -> {
-                val businessEssential = (economyLight * BigDecimal("5.00")).setScale(2, RoundingMode.HALF_UP)
+                val businessEssential = (economyLight * BigDecimal("3.00")).setScale(2, RoundingMode.HALF_UP)
                 val businessFlex =
                     (businessEssential + maxOf(BigDecimal("150.00"), economyLight * BigDecimal("1.10")))
                         .setScale(2, RoundingMode.HALF_UP)

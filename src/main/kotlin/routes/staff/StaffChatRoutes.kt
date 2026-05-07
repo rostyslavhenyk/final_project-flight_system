@@ -11,6 +11,8 @@ import data.ChatRepository
 import data.UserRepository
 import routes.pebbleEngine
 import utils.baseModel
+import utils.jsMode
+import utils.timed
 import java.io.StringWriter
 
 // staff chat routes
@@ -20,61 +22,73 @@ fun Route.staffChatRoutes() {
 }
 
 private suspend fun ApplicationCall.handleStaffChatLoad() {
-    val allMessages = ChatRepository.getAll()
+    timed("T4_staff_chat_load", jsMode()) {
+        val allMessages = ChatRepository.getAll()
 
-    // group messages by user id
-    val grouped = allMessages.groupBy { it.userId }
+        val conversations =
+            allMessages
+                .groupBy { it.userId }
+                .map { (userId, messages) ->
+                    val user = UserRepository.get(userId)
+                    mapOf(
+                        "userId" to userId,
+                        "userName" to user.displayName(),
+                        "userEmail" to (user?.email ?: "Unknown account"),
+                        "messageCount" to messages.size,
+                        "lastMessageAt" to (messages.maxOfOrNull { it.timestamp } ?: 0L),
+                        "messages" to
+                            messages.map { msg ->
+                                mapOf(
+                                    "id" to msg.id,
+                                    "senderName" to msg.senderName,
+                                    "message" to msg.message,
+                                    "isStaff" to msg.isStaff,
+                                    "timestamp" to msg.timestamp,
+                                )
+                            },
+                    )
+                }.sortedByDescending { it["lastMessageAt"] as Long }
 
-    val conversations =
-        grouped.map { (userId, messages) ->
-            val user = UserRepository.get(userId)
-            mapOf(
-                "userId" to userId,
-                "userName" to (user?.firstname ?: "Unknown"),
-                "messages" to
-                    messages.map { msg ->
-                        mapOf(
-                            "id" to msg.id,
-                            "senderName" to msg.senderName,
-                            "message" to msg.message,
-                            "isStaff" to msg.isStaff,
-                            "timestamp" to msg.timestamp,
-                        )
-                    },
+        val model =
+            baseModel(
+                mapOf(
+                    "title" to "Staff Chat",
+                    "conversations" to conversations,
+                ),
             )
-        }
 
-    val model =
-        baseModel(
-            mapOf(
-                "title" to "Staff Chat",
-                "conversations" to conversations,
-            ),
-        )
-
-    val template = pebbleEngine.getTemplate("staff/chat/index.peb")
-    val writer = StringWriter()
-    template.evaluate(writer, model)
-    respondText(writer.toString(), ContentType.Text.Html)
+        val template = pebbleEngine.getTemplate("staff/chat/index.peb")
+        val writer = StringWriter()
+        template.evaluate(writer, model)
+        respondText(writer.toString(), ContentType.Text.Html)
+    }
 }
 
 private suspend fun ApplicationCall.handleStaffReply() {
-    val session = sessions.get<UserSession>()
+    timed("T4_staff_chat_reply", jsMode()) {
+        val session = sessions.get<UserSession>()
 
-    if (session == null) {
-        respond(HttpStatusCode.Unauthorized)
-        return
+        if (session == null) {
+            respond(HttpStatusCode.Unauthorized)
+            return@timed
+        }
+
+        val params = receiveParameters()
+        val userId = params["userId"]?.toIntOrNull()
+        val message = params["message"]
+
+        if (userId == null || message.isNullOrBlank()) {
+            respond(HttpStatusCode.BadRequest)
+            return@timed
+        }
+
+        ChatRepository.add(userId, "Support Team", message, true)
+        respondRedirect("/staff/chat")
     }
-
-    val params = receiveParameters()
-    val userId = params["userId"]?.toIntOrNull()
-    val message = params["message"]
-
-    if (userId == null || message.isNullOrBlank()) {
-        respond(HttpStatusCode.BadRequest)
-        return
-    }
-
-    ChatRepository.add(userId, "Support Team", message, true)
-    respondRedirect("/staff/chat")
 }
+
+private fun data.User?.displayName(): String =
+    this
+        ?.let { "${it.firstname} ${it.lastname}".trim() }
+        ?.takeIf { it.isNotBlank() }
+        ?: "Unknown customer"

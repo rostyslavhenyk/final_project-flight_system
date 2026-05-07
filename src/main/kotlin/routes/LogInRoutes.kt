@@ -16,15 +16,19 @@ import org.mindrot.jbcrypt.BCrypt
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
     post("/login") { call.handleLogInPost() }
-    get("/logout") { call.handleLogOut() }
+    post("/logout") { call.handleLogOut() }
+    get("/logout") { call.respondRedirect("/") }
 }
 
 fun ApplicationCall.createLoginStatus(message: String): String =
-    """<div id="log-in-status" class="auth-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
+    """
+    <div id="log-in-status" class="auth-status" hx-swap-oob="true" role="status"
+         aria-live="polite" aria-atomic="true">$message</div>
+    """.trimIndent()
 
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T1_login_load", jsMode()) {
-        val redirectUrl = safeLoginRedirect(request.queryParameters["redirect"])
+        val redirectUrl = safeLoginRedirectParam(request.queryParameters)
         if (sessions.get<UserSession>() != null) {
             respondRedirect(redirectUrl)
             return@timed
@@ -40,7 +44,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
         val params = receiveParameters()
         val email = params["email"]
         val password = params["password"]
-        val redirectUrl = safeLoginRedirect(params["redirect"])
+        val redirectUrl = safeLoginRedirectParam(params)
 
         if (email == null || password == null) {
             respondText(
@@ -96,4 +100,9 @@ private fun safeLoginRedirect(rawRedirect: String?): String {
             redirect == "/login" ||
             redirect.startsWith("/login?")
     return if (unsafeRedirect) "/" else redirect
+}
+
+private fun safeLoginRedirectParam(params: Parameters): String {
+    val rawRedirect = params["redirect"] ?: params["returnUrl"]
+    return safeLoginRedirect(rawRedirect)
 }

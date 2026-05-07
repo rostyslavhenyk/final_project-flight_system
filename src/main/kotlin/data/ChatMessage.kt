@@ -10,10 +10,13 @@ import org.jetbrains.exposed.sql.SortOrder
 
 // chat messages table
 object ChatMessages : Table("chat_messages") {
+    private const val SENDER_NAME_LENGTH = 128
+    private const val MESSAGE_LENGTH = 1000
+
     val id = integer("id").autoIncrement()
     val userId = integer("userId")
-    val senderName = varchar("senderName", 128)
-    val message = varchar("message", 1000)
+    val senderName = varchar("senderName", SENDER_NAME_LENGTH)
+    val message = varchar("message", MESSAGE_LENGTH)
     val isStaff = bool("isStaff").default(false)
     val timestamp = long("timestamp")
 
@@ -38,16 +41,17 @@ object ChatRepository {
         isStaff: Boolean,
     ): ChatMessage =
         transaction {
+            val timestamp = System.currentTimeMillis()
             val id =
                 ChatMessages.insert {
                     it[ChatMessages.userId] = userId
                     it[ChatMessages.senderName] = senderName
                     it[ChatMessages.message] = message
                     it[ChatMessages.isStaff] = isStaff
-                    it[ChatMessages.timestamp] = System.currentTimeMillis()
+                    it[ChatMessages.timestamp] = timestamp
                 } get ChatMessages.id
 
-            ChatMessage(id, userId, senderName, message, isStaff, System.currentTimeMillis())
+            ChatMessage(id, userId, senderName, message, isStaff, timestamp)
         }
 
     fun getByUser(userId: Int): List<ChatMessage> =

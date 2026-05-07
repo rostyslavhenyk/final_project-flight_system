@@ -10,6 +10,8 @@ import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Purchases : Table("purchases") {
+    private const val BOOKING_QUERY_LENGTH = 8192
+
     val id = integer("id").autoIncrement()
 
     val userID = integer("userID").references(Users.id)
@@ -17,6 +19,8 @@ object Purchases : Table("purchases") {
     val amount = double("amount")
 
     val createdAt = long("createdAt")
+
+    val bookingQuery = varchar("bookingQuery", BOOKING_QUERY_LENGTH).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }
@@ -26,6 +30,7 @@ data class Purchase(
     val userID: Int,
     val amount: Double,
     val createdAt: Long,
+    val bookingQuery: String?,
 )
 
 object PurchaseRepository {
@@ -35,6 +40,7 @@ object PurchaseRepository {
             userID = this[Purchases.userID],
             amount = this[Purchases.amount],
             createdAt = this[Purchases.createdAt],
+            bookingQuery = this[Purchases.bookingQuery],
         )
 
     fun all(): List<Purchase> =
@@ -68,6 +74,7 @@ object PurchaseRepository {
         userID: Int,
         amount: Double,
         createdAt: Long = System.currentTimeMillis(),
+        bookingQuery: String? = null,
     ): Purchase =
         transaction {
             val id =
@@ -75,9 +82,18 @@ object PurchaseRepository {
                     it[Purchases.userID] = userID
                     it[Purchases.amount] = amount
                     it[Purchases.createdAt] = createdAt
+                    it[Purchases.bookingQuery] = bookingQuery
                 } get Purchases.id
 
-            Purchase(id, userID, amount, createdAt)
+            Purchase(id, userID, amount, createdAt, bookingQuery)
+        }
+
+    fun allByUser(userID: Int): List<Purchase> =
+        transaction {
+            Purchases
+                .selectAll()
+                .where { Purchases.userID eq userID }
+                .map { it.toPurchase() }
         }
 
     fun get(id: Int): Purchase? =

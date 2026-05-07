@@ -1,0 +1,195 @@
+{# Shared between /book/payment and account fare-summary fragment: flight + seating tables + receipt (no stepper, no Pay CTA). #}
+{# ——— Step 1 — flights recap ——— #}
+<section class="seat-booking__panel" aria-labelledby="pay-step1-heading">
+    <h2 id="pay-step1-heading" class="seat-booking__pay-step-title">Step 1 — Choose flights</h2>
+
+    {% if dualLeg %}
+    <section class="seat-booking__pay-leg" aria-labelledby="pay-dep-heading">
+        <h3 class="seat-booking__pay-leg-title" id="pay-dep-heading">Outbound</h3>
+        <p class="seat-booking__pay-route">{{ departingRouteLine }}</p>
+        {% if departingDateDisplay %}
+        <p class="seat-booking__pay-date">Departs {{ departingDateDisplay }}</p>
+        {% endif %}
+        {% if hasDepartingCard %}
+        <article class="flight-card flight-card--review-wf seat-booking__pay-flight-card">
+            {% include 'user/flights/book-review-flight-panel.peb' with {"card": departingCard} %}
+        </article>
+        {% endif %}
+        <div class="seat-booking__fare-line-group">
+            <div class="seat-booking__fare-line-row seat-booking__fare-line-row--spread">
+                <p class="seat-booking__package-name-pay">{{ outboundPackageName }}</p>
+                <p class="seat-booking__price-per-person-only">GBP {{ outboundPerPersonPlain }} <span class="seat-booking__price-per-person-suffix">per person</span></p>
+            </div>
+        </div>
+    </section>
+
+    <hr class="seat-booking__pay-leg-divider" aria-hidden="true">
+
+    <section class="seat-booking__pay-leg" aria-labelledby="pay-ret-heading">
+        <h3 class="seat-booking__pay-leg-title" id="pay-ret-heading">Return</h3>
+        <p class="seat-booking__pay-route">{{ returningRouteLine }}</p>
+        {% if returningDateDisplay %}
+        <p class="seat-booking__pay-date">Departs {{ returningDateDisplay }}</p>
+        {% endif %}
+        {% if hasReturningCard %}
+        <article class="flight-card flight-card--review-wf seat-booking__pay-flight-card">
+            {% include 'user/flights/book-review-flight-panel.peb' with {"card": returningCard} %}
+        </article>
+        {% endif %}
+        <div class="seat-booking__fare-line-group">
+            <div class="seat-booking__fare-line-row seat-booking__fare-line-row--spread">
+                <p class="seat-booking__package-name-pay">{{ inboundPackageName }}</p>
+                <p class="seat-booking__price-per-person-only">GBP {{ inboundPerPersonPlain }} <span class="seat-booking__price-per-person-suffix">per person</span></p>
+            </div>
+        </div>
+    </section>
+    {% elseif hasDepartingCard %}
+    <section class="seat-booking__pay-leg" aria-labelledby="pay-single-heading">
+        <h3 class="seat-booking__pay-leg-title" id="pay-single-heading">Your flight</h3>
+        <p class="seat-booking__pay-route">{{ departingRouteLine }}</p>
+        {% if departingDateDisplay %}
+        <p class="seat-booking__pay-date">Departs {{ departingDateDisplay }}</p>
+        {% endif %}
+        <article class="flight-card flight-card--review-wf seat-booking__pay-flight-card">
+            {% include 'user/flights/book-review-flight-panel.peb' with {"card": departingCard} %}
+        </article>
+        <div class="seat-booking__fare-line-group">
+            <div class="seat-booking__fare-line-row seat-booking__fare-line-row--spread">
+                <p class="seat-booking__package-name-pay">{{ outboundPackageName }}</p>
+                <p class="seat-booking__price-per-person-only">GBP {{ outboundPerPersonPlain }} <span class="seat-booking__price-per-person-suffix">per person</span></p>
+            </div>
+        </div>
+    </section>
+    {% else %}
+    <p class="flights-hero__hint">We couldn’t reload full flight timings from your link; fare lines still use saved prices.</p>
+    {% if departingDateDisplay %}
+    <p class="seat-booking__pay-date">Departs {{ departingDateDisplay }}</p>
+    {% endif %}
+    {% if isReturn and returningDateDisplay %}
+    <p class="seat-booking__pay-date">Return departs {{ returningDateDisplay }}</p>
+    {% endif %}
+    {% endif %}
+
+    <table class="seat-booking__fee-table seat-booking__fee-table--step1-subtotal seat-booking__fee-table--price-right" role="region" aria-label="Step 1 subtotal, per person">
+        <thead>
+            <tr>
+                <th scope="col">Item</th>
+                <th scope="col">Price (per person)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in step1BreakdownRows %}
+            <tr>
+                <td>{{ r.label }}</td>
+                <td>GBP {{ r.amountPlain }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th scope="row">Subtotal (flights)</th>
+                <td>GBP {{ step1FlightsPerPersonSubtotalPlain }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</section>
+
+{# ——— Step 2 — passengers, seats & fees ——— #}
+<section class="seat-booking__panel" aria-labelledby="pay-step2-heading">
+    <h2 id="pay-step2-heading" class="seat-booking__pay-step-title">Step 2 — Passengers &amp; seating</h2>
+
+    <h3 class="seat-booking__pay-table-heading">Passenger seats</h3>
+    <table class="seat-booking__fee-table seat-booking__fee-table--pax-pay">
+        <thead>
+            <tr>
+                <th scope="col">Passenger</th>
+                <th scope="col">{% if isReturn %}Outbound seats{% else %}Seats{% endif %}</th>
+                {% if isReturn %}
+                <th scope="col">Return seats</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in passengerRows %}
+            <tr>
+                <td class="seat-booking__fee-table-pax-cell" data-pay-pax-slot="{{ row.slot }}">
+                    <div class="seat-booking__pax-head seat-booking__pax-head--pay-summary">
+                        <p class="seat-booking__pax-name" data-pay-pax-name-text>{{ row.displayName }}</p>
+                        <span class="seat-booking__pax-badge">Passenger {{ row.slot }}</span>
+                    </div>
+                </td>
+                <td>{{ row.outboundSeats }}</td>
+                {% if isReturn %}
+                <td>{{ row.returnSeats }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3 class="seat-booking__pay-table-heading">Seat fees</h3>
+    <p class="flights-hero__hint seat-booking__fee-hint">Economy Light: seat fee applies once per flight segment where you choose a seat.</p>
+    <table class="seat-booking__fee-table seat-booking__fee-table--price-right">
+        <thead>
+            <tr>
+                <th scope="col">Journey</th>
+                <th scope="col">Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in feeRows %}
+            <tr>
+                <td>{{ row.journeyLabel }}</td>
+                <td>{% if row.feeGbp == 0 %}<span class="seat-booking__fee-free">Free of charge</span>{% else %}GBP {{ row.feeGbp }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th scope="row">Seat fees subtotal</th>
+                <td>{% if totalSeatFeeGbp == 0 %}<span class="seat-booking__fee-free">Free of charge</span>{% else %}GBP {{ seatFeesSubtotalPlain }}{% endif %}</td>
+            </tr>
+        </tfoot>
+    </table>
+    {% if not hasSeatSelection %}
+    <p class="flights-hero__hint seat-booking__fee-missing">No seat selections were detected in this browser session.</p>
+    {% endif %}
+
+    <h3 class="seat-booking__pay-table-heading">Booking extras</h3>
+    {% if hasBookingExtras %}
+    <table class="seat-booking__fee-table seat-booking__fee-table--price-right">
+        <thead>
+            <tr>
+                <th scope="col">Extra</th>
+                <th scope="col">Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in bookingExtraRows %}
+            <tr>
+                <td>{{ row.label }}</td>
+                <td>GBP {{ row.amountPlain }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th scope="row">Booking extras subtotal</th>
+                <td>GBP {{ bookingExtrasSubtotalPlain }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    {% else %}
+    <p class="flights-hero__hint seat-booking__fee-missing">No booking extras selected.</p>
+    {% endif %}
+
+    <table class="seat-booking__fee-table seat-booking__fee-table--price-right">
+        <tbody>
+            <tr>
+                <th scope="row">Step 2 subtotal</th>
+                <td>{% if totalStep2ExtrasGbp == 0 %}<span class="seat-booking__fee-free">Free of charge</span>{% else %}GBP {{ step2ExtrasSubtotalPlain }}{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
