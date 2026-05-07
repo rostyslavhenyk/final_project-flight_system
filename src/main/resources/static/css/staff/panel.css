@@ -116,6 +116,7 @@
 }
 
 .staff-pie {
+  --pie-main: 0%;
   width: min(100%, 11rem);
   aspect-ratio: 1;
   border-radius: 50%;
@@ -544,6 +545,34 @@
   color: var(--primary-color);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.chat-convo-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.chat-convo-actions form {
+  margin: 0;
+}
+
+.chat-convo-actions button {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--primary-border-color);
+  border-radius: 6px;
+  background: var(--page-white);
+  color: var(--primary-color);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chat-convo-actions button:hover {
+  border-color: var(--primary-color);
+  background: var(--primary-soft-color);
 }
 
 .chat-reply-form {

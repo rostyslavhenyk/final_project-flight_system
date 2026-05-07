@@ -5,15 +5,15 @@
 (function () {
   'use strict';
 
-  var STORAGE_ASSIGN = 'glideSeatAssignmentsV1';
-  var STORAGE_ASSIGN_FALLBACK = 'glideSeatAssignmentsV1Local';
-  var STORAGE_PAX = 'glideBookingPaxNames';
-  var STORAGE_SEAT_RESET_ON_LOAD = 'glideSeatResetOnNextLoad';
+  let STORAGE_ASSIGN = 'glideSeatAssignmentsV1';
+  let STORAGE_ASSIGN_FALLBACK = 'glideSeatAssignmentsV1Local';
+  let STORAGE_PAX = 'glideBookingPaxNames';
+  let STORAGE_SEAT_RESET_ON_LOAD = 'glideSeatResetOnNextLoad';
 
   function decodeB64Utf8(b64) {
-    var binary = atob(b64);
-    var bytes = new Uint8Array(binary.length);
-    for (var i = 0; i < binary.length; i++) {
+    let binary = atob(b64);
+    let bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
       bytes[i] = binary.charCodeAt(i);
     }
     return new TextDecoder('utf-8').decode(bytes);
@@ -21,9 +21,9 @@
 
   function loadSeatMap() {
     try {
-      var raw = sessionStorage.getItem(STORAGE_ASSIGN) || localStorage.getItem(STORAGE_ASSIGN_FALLBACK);
+      let raw = sessionStorage.getItem(STORAGE_ASSIGN) || localStorage.getItem(STORAGE_ASSIGN_FALLBACK);
       if (!raw) return {};
-      var o = JSON.parse(raw);
+      let o = JSON.parse(raw);
       return typeof o === 'object' && o !== null ? o : {};
     } catch (e) {
       return {};
@@ -32,7 +32,7 @@
 
   function saveSeatMap(map) {
     try {
-      var encoded = JSON.stringify(map);
+      let encoded = JSON.stringify(map);
       sessionStorage.setItem(STORAGE_ASSIGN, encoded);
       localStorage.setItem(STORAGE_ASSIGN_FALLBACK, encoded);
     } catch (e) {}
@@ -46,14 +46,19 @@
   }
 
   function toBase64UrlUtf8(text) {
-    var encoded = btoa(unescape(encodeURIComponent(text)));
+    let bytes = new TextEncoder().encode(text);
+    let binary = '';
+    bytes.forEach(function (byte) {
+      binary += String.fromCharCode(byte);
+    });
+    let encoded = btoa(binary);
     return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
   }
 
   function hashUnavailable(journeyKey, legIndex, seatId) {
-    var s = journeyKey + '|' + legIndex + '|' + seatId;
-    var h = 2166136261;
-    for (var i = 0; i < s.length; i++) {
+    let s = journeyKey + '|' + legIndex + '|' + seatId;
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
       h ^= s.charCodeAt(i);
       h = Math.imul(h, 16777619);
     }
@@ -61,13 +66,13 @@
   }
 
   function seatRowNumber(seatId) {
-    var m = /^(\d+)/.exec(String(seatId));
+    let m = /^(\d+)/.exec(String(seatId));
     return m ? parseInt(m[1], 10) : 0;
   }
 
   /** Economy: row 11 priority; rows 19 and 32 extra legroom. Business: no extra-legroom classing. */
   function applySeatKindClasses(btn, seatId, isBusinessCabin) {
-    var row = seatRowNumber(seatId);
+    let row = seatRowNumber(seatId);
     if (isBusinessCabin) {
       btn.classList.add('seat-booking__seat--regular');
       return;
@@ -84,7 +89,7 @@
   }
 
   function clearSeatFromOthers(map, journeyKey, legIndex, seatId, exceptSlot) {
-    var leg = map[journeyKey] && map[journeyKey][String(legIndex)];
+    let leg = map[journeyKey] && map[journeyKey][String(legIndex)];
     if (!leg) return;
     Object.keys(leg).forEach(function (slotStr) {
       if (parseInt(slotStr, 10) === exceptSlot) return;
@@ -93,16 +98,16 @@
   }
 
   function countMissingAssignments(map, journeysList, paxCount) {
-    var missing = 0;
-    for (var ji = 0; ji < journeysList.length; ji++) {
-      var j = journeysList[ji];
+    let missing = 0;
+    for (let ji = 0; ji < journeysList.length; ji++) {
+      let j = journeysList[ji];
       if (j.isLightFare) continue;
-      for (var li = 0; li < j.legs.length; li++) {
-        var leg = j.legs[li];
-        var legIdx = leg.index;
-        for (var s = 1; s <= paxCount; s++) {
-          var legMap = map[j.key] && map[j.key][String(legIdx)];
-          var picked = legMap && legMap[String(s)];
+      for (let li = 0; li < j.legs.length; li++) {
+        let leg = j.legs[li];
+        let legIdx = leg.index;
+        for (let s = 1; s <= paxCount; s++) {
+          let legMap = map[j.key] && map[j.key][String(legIdx)];
+          let picked = legMap && legMap[String(s)];
           if (!picked) missing++;
         }
       }
@@ -111,9 +116,9 @@
   }
 
   function findOccupant(map, journeyKey, legIndex, seatId) {
-    var leg = map[journeyKey] && map[journeyKey][String(legIndex)];
+    let leg = map[journeyKey] && map[journeyKey][String(legIndex)];
     if (!leg) return 0;
-    var slotStr;
+    let slotStr;
     for (slotStr in leg) {
       if (leg[slotStr] === seatId) return parseInt(slotStr, 10);
     }
@@ -125,7 +130,7 @@
   }
 
   function postSeatAction(action, journeyKey, legIndex, seatId) {
-    var body = new URLSearchParams();
+    let body = new URLSearchParams();
     body.set('journeyKey', journeyKey);
     body.set('legIndex', String(legIndex));
     body.set('seatId', seatId);
@@ -137,7 +142,7 @@
   }
 
   function mapUnavailableSeats(payload) {
-    var mapped = {};
+    let mapped = {};
     if (!payload || !Array.isArray(payload.seats)) return mapped;
     payload.seats.forEach(function (entry) {
       if (!entry) return;
@@ -147,10 +152,10 @@
   }
 
   function init() {
-    var cfgEl = document.getElementById('seat-booking-config');
+    let cfgEl = document.getElementById('seat-booking-config');
     if (!cfgEl || !cfgEl.dataset.journeysB64) return;
 
-    var journeys;
+    let journeys;
     try {
       journeys = JSON.parse(decodeB64Utf8(cfgEl.dataset.journeysB64));
     } catch (e) {
@@ -158,7 +163,7 @@
     }
     if (!journeys || !journeys.length) return;
 
-    var resetFromPassengerStep = false;
+    let resetFromPassengerStep = false;
     try {
       resetFromPassengerStep = sessionStorage.getItem(STORAGE_SEAT_RESET_ON_LOAD) === '1';
       if (resetFromPassengerStep) sessionStorage.removeItem(STORAGE_SEAT_RESET_ON_LOAD);
@@ -168,29 +173,29 @@
       clearSavedSeatMap();
     }
 
-    var seatMap = loadSeatMap();
-    var serverUnavailableSeats = {};
-    var journeyKey = journeys[0].key;
-    var legIndex = 0;
-    var selectedPax = 1;
+    let seatMap = loadSeatMap();
+    let serverUnavailableSeats = {};
+    let journeyKey = journeys[0].key;
+    let legIndex = 0;
+    let selectedPax = 1;
 
-    var legTabsEl = document.querySelector('[data-leg-tabs]');
-    var journeyPickers = document.querySelectorAll('[data-summary-picker][data-trip-key]');
-    var paxButtons = document.querySelectorAll('[data-pax-slot]');
-    var seatGrid = document.querySelector('[data-seat-grid]');
-    var mapShell = document.querySelector('.seat-booking__map-shell');
-    var seatButtons = document.querySelectorAll('[data-seat-id]');
-    var seatRows = document.querySelectorAll('[data-row-index]');
-    var breakRows = document.querySelectorAll('[data-seat-break-row]');
-    var facilityRows = document.querySelectorAll('[data-seat-facility]');
-    var wingRows = document.querySelectorAll('[data-seat-wing-row]');
-    var extraInputs = document.querySelectorAll('[data-booking-extra]');
-    var continueBtn = document.getElementById('seat-continue-placeholder');
+    let legTabsEl = document.querySelector('[data-leg-tabs]');
+    let journeyPickers = document.querySelectorAll('[data-summary-picker][data-trip-key]');
+    let paxButtons = document.querySelectorAll('[data-pax-slot]');
+    let seatGrid = document.querySelector('[data-seat-grid]');
+    let mapShell = document.querySelector('.seat-booking__map-shell');
+    let seatButtons = document.querySelectorAll('[data-seat-id]');
+    let seatRows = document.querySelectorAll('[data-row-index]');
+    let breakRows = document.querySelectorAll('[data-seat-break-row]');
+    let facilityRows = document.querySelectorAll('[data-seat-facility]');
+    let wingRows = document.querySelectorAll('[data-seat-wing-row]');
+    let extraInputs = document.querySelectorAll('[data-booking-extra]');
+    let continueBtn = document.getElementById('seat-continue-placeholder');
 
     if (!legTabsEl || !seatGrid) return;
 
     function currentJourney() {
-      for (var i = 0; i < journeys.length; i++) {
+      for (let i = 0; i < journeys.length; i++) {
         if (journeys[i].key === journeyKey) return journeys[i];
       }
       return journeys[0];
@@ -198,7 +203,7 @@
 
     function updateJourneyPickersUI() {
       journeyPickers.forEach(function (btn) {
-        var active = btn.getAttribute('data-trip-key') === journeyKey;
+        let active = btn.getAttribute('data-trip-key') === journeyKey;
         btn.classList.toggle('seat-booking__summary-btn--active', active);
         if (active) btn.setAttribute('aria-current', 'true');
         else btn.removeAttribute('aria-current');
@@ -207,17 +212,17 @@
 
     function updateContinueHref() {
       if (!continueBtn) return;
-      var baseHref = continueBtn.getAttribute('data-base-href') || continueBtn.getAttribute('href') || '#';
+      let baseHref = continueBtn.getAttribute('data-base-href') || continueBtn.getAttribute('href') || '#';
       if (baseHref === '#') return;
       try {
-        var url = new URL(baseHref, window.location.origin);
-        var encoded = toBase64UrlUtf8(JSON.stringify(seatMap));
+        let url = new URL(baseHref, window.location.origin);
+        let encoded = toBase64UrlUtf8(JSON.stringify(seatMap));
         if (encoded) url.searchParams.set('seatSel', encoded);
         try {
-          var rawPax = sessionStorage.getItem(STORAGE_PAX);
+          let rawPax = sessionStorage.getItem(STORAGE_PAX);
           if (rawPax) url.searchParams.set('paxSel', toBase64UrlUtf8(rawPax));
         } catch (ep) {}
-        var extras = [];
+        let extras = [];
         extraInputs.forEach(function (input) {
           if (input.checked && input.value) extras.push(input.value);
         });
@@ -228,7 +233,7 @@
     }
 
     function buildLegTabs() {
-      var j = currentJourney();
+      let j = currentJourney();
       if (j.legs.length <= 1) {
         legTabsEl.hidden = true;
         legTabsEl.innerHTML = '';
@@ -237,13 +242,13 @@
       legTabsEl.hidden = false;
       legTabsEl.innerHTML = '';
       j.legs.forEach(function (leg) {
-        var btn = document.createElement('button');
+        let btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'seat-booking__leg-tab';
         btn.setAttribute('role', 'tab');
         btn.setAttribute('data-leg-index', String(leg.index));
         btn.textContent = leg.legLabel;
-        var isActive = leg.index === legIndex;
+        let isActive = leg.index === legIndex;
         if (isActive) btn.classList.add('seat-booking__leg-tab--active');
         btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
         legTabsEl.appendChild(btn);
@@ -251,27 +256,27 @@
     }
 
     function applyCabinLayout() {
-      var hasBusiness = !!currentJourney().hasBusinessCabin;
+      let hasBusiness = !!currentJourney().hasBusinessCabin;
       if (mapShell) {
         mapShell.classList.toggle('seat-booking__map-shell--business', hasBusiness);
       }
       seatRows.forEach(function (rowEl) {
-        var idx = parseInt(rowEl.getAttribute('data-row-index') || '0', 10);
-        var shownInBusiness = idx >= 1 && idx <= 10;
-        var showRow = hasBusiness ? shownInBusiness : idx >= 1;
+        let idx = parseInt(rowEl.getAttribute('data-row-index') || '0', 10);
+        let shownInBusiness = idx >= 1 && idx <= 10;
+        let showRow = hasBusiness ? shownInBusiness : idx >= 1;
         rowEl.hidden = !showRow;
         rowEl.style.display = showRow ? '' : 'none';
 
-        var displayRow = hasBusiness ? idx : idx + 10;
-        var rowLabelEl = rowEl.querySelector('.seat-booking__row-label');
+        let displayRow = hasBusiness ? idx : idx + 10;
+        let rowLabelEl = rowEl.querySelector('.seat-booking__row-label');
         if (rowLabelEl && showRow) rowLabelEl.textContent = String(displayRow);
 
         rowEl.classList.toggle('seat-booking__row--business', hasBusiness);
         rowEl.classList.toggle('seat-booking__row--economy', !hasBusiness);
 
         rowEl.querySelectorAll('[data-seat-letter]').forEach(function (seatBtn) {
-          var letter = seatBtn.getAttribute('data-seat-letter') || '';
-          var hideBusinessMiddle = hasBusiness && (letter === 'B' || letter === 'E');
+          let letter = seatBtn.getAttribute('data-seat-letter') || '';
+          let hideBusinessMiddle = hasBusiness && (letter === 'B' || letter === 'E');
           seatBtn.hidden = !showRow || hideBusinessMiddle;
           seatBtn.style.display = seatBtn.hidden ? 'none' : '';
           if (hideBusinessMiddle) {
@@ -282,14 +287,14 @@
             seatBtn.disabled = true;
             return;
           }
-          var seatId = String(displayRow) + letter;
+          let seatId = String(displayRow) + letter;
           seatBtn.setAttribute('data-seat-id', seatId);
           seatBtn.setAttribute('aria-label', 'Seat ' + seatId);
         });
       });
 
       breakRows.forEach(function (breakEl) {
-        var atRow = parseInt(breakEl.getAttribute('data-seat-break-row') || '0', 10);
+        let atRow = parseInt(breakEl.getAttribute('data-seat-break-row') || '0', 10);
         breakEl.hidden = hasBusiness || !(atRow === 9 || atRow === 22);
         breakEl.style.display = breakEl.hidden ? 'none' : '';
       });
@@ -299,7 +304,7 @@
           facilityEl.hidden = false;
           return;
         }
-        var kind = facilityEl.getAttribute('data-seat-facility') || '';
+        let kind = facilityEl.getAttribute('data-seat-facility') || '';
         facilityEl.hidden = !(kind === 'top-exit' || kind === 'top-toilet' || kind === 'bottom-exit');
         facilityEl.style.display = facilityEl.hidden ? 'none' : '';
       });
@@ -311,10 +316,10 @@
     }
 
     function paintSeats() {
-      var isBusinessCabin = !!currentJourney().hasBusinessCabin;
+      let isBusinessCabin = !!currentJourney().hasBusinessCabin;
       seatButtons.forEach(function (btn) {
         if (btn.hidden) return;
-        var id = btn.getAttribute('data-seat-id');
+        let id = btn.getAttribute('data-seat-id');
         btn.classList.remove(
           'seat-booking__seat--extra',
           'seat-booking__seat--priority',
@@ -325,7 +330,7 @@
         );
         btn.disabled = false;
 
-        var letter = btn.getAttribute('data-seat-letter') || String(id).slice(-1);
+        let letter = btn.getAttribute('data-seat-letter') || String(id).slice(-1);
 
         if (hashUnavailable(journeyKey, legIndex, id)) {
           btn.classList.add('seat-booking__seat--unavailable');
@@ -343,7 +348,7 @@
           return;
         }
 
-        var occ = findOccupant(seatMap, journeyKey, legIndex, id);
+        let occ = findOccupant(seatMap, journeyKey, legIndex, id);
         if (occ) {
           btn.textContent = 'P' + occ;
           btn.setAttribute(
@@ -376,8 +381,8 @@
 
     function validateSelectedSeats() {
       updateContinueHref();
-      var href = continueBtn && continueBtn.getAttribute('href');
-      var query = href && href.indexOf('?') !== -1 ? href.slice(href.indexOf('?')) : window.location.search;
+      let href = continueBtn && continueBtn.getAttribute('href');
+      let query = href && href.indexOf('?') !== -1 ? href.slice(href.indexOf('?')) : window.location.search;
       return fetch('/book/seats/validate' + query)
         .then(function (response) {
           if (!response.ok) return null;
@@ -389,13 +394,13 @@
     }
 
     function selectedUnavailableKeys() {
-      var blocked = [];
+      let blocked = [];
       Object.keys(seatMap).forEach(function (selectedJourneyKey) {
         Object.keys(seatMap[selectedJourneyKey] || {}).forEach(function (selectedLegIndex) {
-          var leg = seatMap[selectedJourneyKey][selectedLegIndex] || {};
+          let leg = seatMap[selectedJourneyKey][selectedLegIndex] || {};
           Object.keys(leg).forEach(function (slot) {
-            var seatId = leg[slot];
-            var key = unavailableKey(selectedJourneyKey, selectedLegIndex, seatId);
+            let seatId = leg[slot];
+            let key = unavailableKey(selectedJourneyKey, selectedLegIndex, seatId);
             if (serverUnavailableSeats[key]) blocked.push(key);
           });
         });
@@ -406,9 +411,9 @@
     function removeUnavailableSelections() {
       Object.keys(seatMap).forEach(function (selectedJourneyKey) {
         Object.keys(seatMap[selectedJourneyKey] || {}).forEach(function (selectedLegIndex) {
-          var leg = seatMap[selectedJourneyKey][selectedLegIndex] || {};
+          let leg = seatMap[selectedJourneyKey][selectedLegIndex] || {};
           Object.keys(leg).forEach(function (slot) {
-            var seatId = leg[slot];
+            let seatId = leg[slot];
             if (serverUnavailableSeats[unavailableKey(selectedJourneyKey, selectedLegIndex, seatId)]) {
               delete leg[slot];
             }
@@ -421,12 +426,12 @@
 
     function showSeatUnavailableMessage() {
       if (!continueBtn || !continueBtn.parentNode) return;
-      var existing = document.getElementById('seat-unavailable-error');
+      let existing = document.getElementById('seat-unavailable-error');
       if (existing) {
         existing.hidden = false;
         return;
       }
-      var msg = document.createElement('p');
+      let msg = document.createElement('p');
       msg.id = 'seat-unavailable-error';
       msg.className = 'flights-hero__hint';
       msg.setAttribute('role', 'alert');
@@ -435,14 +440,14 @@
     }
 
     function hideSeatUnavailableMessage() {
-      var existing = document.getElementById('seat-unavailable-error');
+      let existing = document.getElementById('seat-unavailable-error');
       if (existing) existing.hidden = true;
     }
 
     function proceedToPayment() {
       saveSeatMap(seatMap);
       updateContinueHref();
-      var href = continueBtn && continueBtn.getAttribute('href');
+      let href = continueBtn && continueBtn.getAttribute('href');
       if (href && href !== '#') window.location.href = href;
     }
 
@@ -452,7 +457,7 @@
       Promise.all([loadUnavailableSeats(), validateSelectedSeats()])
         .then(function (results) {
           continueBtn.removeAttribute('aria-busy');
-          var selectedBlockedSeats = results[1] || {};
+          let selectedBlockedSeats = results[1] || {};
           Object.keys(selectedBlockedSeats).forEach(function (key) {
             serverUnavailableSeats[key] = true;
           });
@@ -466,7 +471,7 @@
             return;
           }
           hideSeatUnavailableMessage();
-          var missing = countMissingAssignments(seatMap, journeys, paxButtons.length);
+          let missing = countMissingAssignments(seatMap, journeys, paxButtons.length);
           if (missing > 0 && showMissingDialog && continueDialog && typeof continueDialog.showModal === 'function') {
             continueDialog.showModal();
             return;
@@ -480,21 +485,21 @@
 
     function syncPaxPanel() {
       paxButtons.forEach(function (btn) {
-        var slot = parseInt(btn.getAttribute('data-pax-slot'), 10);
-        var seatLine = btn.querySelector('[data-pax-seat-line]');
-        var leg = seatMap[journeyKey] && seatMap[journeyKey][String(legIndex)];
-        var seatId = leg && leg[String(slot)] ? leg[String(slot)] : '';
+        let slot = parseInt(btn.getAttribute('data-pax-slot'), 10);
+        let seatLine = btn.querySelector('[data-pax-seat-line]');
+        let leg = seatMap[journeyKey] && seatMap[journeyKey][String(legIndex)];
+        let seatId = leg && leg[String(slot)] ? leg[String(slot)] : '';
         if (seatLine) seatLine.textContent = seatId ? seatId : 'Not selected';
         btn.classList.toggle('seat-booking__pax-card--selected', slot === selectedPax);
       });
     }
 
     function applyPaxNames() {
-      var bySlot = {};
+      let bySlot = {};
       try {
-        var raw = sessionStorage.getItem(STORAGE_PAX);
+        let raw = sessionStorage.getItem(STORAGE_PAX);
         if (raw) {
-          var list = JSON.parse(raw);
+          let list = JSON.parse(raw);
           if (Array.isArray(list)) {
             list.forEach(function (entry) {
               if (entry && entry.slot) {
@@ -505,17 +510,17 @@
         }
       } catch (e) {}
       paxButtons.forEach(function (btn) {
-        var slot = parseInt(btn.getAttribute('data-pax-slot'), 10);
-        var card = document.getElementById('seat-pax-' + slot);
-        var nameEl = card && card.querySelector('[data-pax-name]');
+        let slot = parseInt(btn.getAttribute('data-pax-slot'), 10);
+        let card = document.getElementById('seat-pax-' + slot);
+        let nameEl = card && card.querySelector('[data-pax-name]');
         if (!nameEl) return;
-        var name = bySlot[slot];
+        let name = bySlot[slot];
         nameEl.textContent = name ? name : 'Passenger ' + slot;
       });
     }
 
     legTabsEl.addEventListener('click', function (e) {
-      var t = e.target.closest('[data-leg-index]');
+      let t = e.target.closest('[data-leg-index]');
       if (!t) return;
       legIndex = parseInt(t.getAttribute('data-leg-index'), 10);
       buildLegTabs();
@@ -536,9 +541,9 @@
         updateContinueHref();
       });
     });
-    var continueDialog = document.getElementById('seat-continue-dialog');
-    var dialogBack = document.getElementById('seat-dialog-back');
-    var dialogConfirm = document.getElementById('seat-dialog-confirm');
+    let continueDialog = document.getElementById('seat-continue-dialog');
+    let dialogBack = document.getElementById('seat-dialog-back');
+    let dialogConfirm = document.getElementById('seat-dialog-confirm');
 
     if (continueBtn) {
       continueBtn.addEventListener('click', function (e) {
@@ -565,14 +570,14 @@
     });
 
     seatGrid.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-seat-id]');
+      let btn = e.target.closest('[data-seat-id]');
       if (!btn || btn.disabled) return;
-      var seatId = btn.getAttribute('data-seat-id');
+      let seatId = btn.getAttribute('data-seat-id');
       if (!seatMap[journeyKey]) seatMap[journeyKey] = {};
       if (!seatMap[journeyKey][String(legIndex)]) seatMap[journeyKey][String(legIndex)] = {};
-      var leg = seatMap[journeyKey][String(legIndex)];
+      let leg = seatMap[journeyKey][String(legIndex)];
       if (leg[String(selectedPax)] === seatId) {
-        postSeatAction('release', journeyKey, legIndex, seatId).finally(function () {
+        void postSeatAction('release', journeyKey, legIndex, seatId).finally(function () {
           delete leg[String(selectedPax)];
           if (Object.keys(leg).length === 0) delete seatMap[journeyKey][String(legIndex)];
           if (Object.keys(seatMap[journeyKey]).length === 0) delete seatMap[journeyKey];
@@ -583,12 +588,14 @@
           hideSeatUnavailableMessage();
         });
       } else {
-        var previousSeat = leg[String(selectedPax)] || '';
+        let previousSeat = leg[String(selectedPax)] || '';
         btn.disabled = true;
-        postSeatAction('hold', journeyKey, legIndex, seatId)
+        void postSeatAction('hold', journeyKey, legIndex, seatId)
           .then(function (response) {
             if (!response.ok) throw new Error('seat-unavailable');
-            if (previousSeat) postSeatAction('release', journeyKey, legIndex, previousSeat);
+            if (previousSeat) {
+              void postSeatAction('release', journeyKey, legIndex, previousSeat).catch(function () {});
+            }
             clearSeatFromOthers(seatMap, journeyKey, legIndex, seatId, selectedPax);
             leg[String(selectedPax)] = seatId;
             saveSeatMap(seatMap);
@@ -623,7 +630,7 @@
     buildLegTabs();
     applyCabinLayout();
     paintSeats();
-    loadUnavailableSeats();
+    void loadUnavailableSeats();
     syncPaxPanel();
     updateContinueHref();
   }
@@ -634,3 +641,4 @@
     init();
   }
 })();
+

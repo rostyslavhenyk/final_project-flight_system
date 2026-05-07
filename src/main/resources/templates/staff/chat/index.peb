@@ -23,7 +23,13 @@
                         <h2>{{ convo.userName }}</h2>
                         <p>{{ convo.userEmail }}</p>
                     </div>
-                    <span>{{ convo.messageCount }} messages</span>
+                    <div class="chat-convo-actions">
+                        <span>{{ convo.messageCount }} messages</span>
+                        <form method="post" action="/staff/chat/close">
+                            <input type="hidden" name="userId" value="{{ convo.userId }}">
+                            <button type="submit">Close</button>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="chat-convo-messages" aria-label="Conversation with {{ convo.userName }}">

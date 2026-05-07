@@ -21,8 +21,8 @@
         <p class="login-subtitle">Sign in to your account</p>
 
         <form method="post"
-            action="/login"
-            hx-post="/login"
+            action="/login?redirect={{ redirectParam }}"
+            hx-post="/login?redirect={{ redirectParam }}"
             hx-target="#log-in-status"
             hx-swap="innerHTML"
             novalidate>

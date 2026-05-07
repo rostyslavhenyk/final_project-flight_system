@@ -22,7 +22,7 @@
             <label for="reset-phone">Phone Number</label>
             <input type="tel" id="reset-phone" placeholder="+44 7000 000000">
         </div>
-        <button onclick="sendResetCode()">Send Code</button>
+        <button id="send-reset-code-button">Send Code</button>
         <div id="verify-status" class="auth-status" role="status" aria-live="polite"></div>
     </div>
 
@@ -31,7 +31,7 @@
             <label for="reset-code">Enter the 6-digit code we sent you</label>
             <input type="text" id="reset-code" placeholder="123456" maxlength="6">
         </div>
-        <button onclick="verifyResetCode()">Verify Code</button>
+        <button id="verify-reset-code-button">Verify Code</button>
     </div>
 
     <div id="step3" hidden>
@@ -43,7 +43,7 @@
             <label for="confirm-password">Confirm Password</label>
             <input type="password" id="confirm-password" placeholder="Confirm password">
         </div>
-        <button onclick="resetPassword()">Reset Password</button>
+        <button id="reset-password-button">Reset Password</button>
     </div>
 </div>
 

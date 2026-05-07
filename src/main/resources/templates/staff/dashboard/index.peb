@@ -4,7 +4,7 @@
 <section class="staff-shell">
     <header class="staff-hero">
         <h1>Staff Dashboard</h1>
-        <p>Welcome {{ user.firstname }}. Choose a workspace below.</p>
+        <p>Welcome, {{ user.firstname }}!</p>
     </header>
 
     <section class="staff-dashboard-grid" aria-label="Dashboard metrics">

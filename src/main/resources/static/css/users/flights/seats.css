@@ -1,10 +1,10 @@
-/* Seat step (/book/seats) — uses colours from base.css :root */
+/* Seat step (/book/seats) - uses colours from base.css :root */
 
 .seat-booking-page {
   padding-bottom: 0;
 }
 
-/* Seat map step: stack content naturally — avoid min-height + flex-grow that left a gap above the footer */
+/* Seat map step: stack content naturally - avoid min-height + flex-grow that left a gap above the footer */
 .seat-booking-page.seat-booking-page--seat-step {
   display: flex;
   flex-direction: column;
@@ -71,7 +71,7 @@
   }
 }
 
-/* SSR journey cards — pick outbound vs return, or solo (non-interactive) */
+/* SSR journey cards - pick outbound vs return, or solo (non-interactive) */
 .seat-booking__summary-btn {
   display: block;
   width: 100%;
@@ -154,7 +154,7 @@
   margin: 0 0 1.35rem;
 }
 
-/* Per-segment flight buttons — distinct from summary strip */
+/* Per-segment flight buttons - distinct from summary strip */
 .seat-booking__leg-tab {
   cursor: pointer;
   padding: 0.42rem 0.76rem;
@@ -194,7 +194,7 @@
 
 /*
  * Height comes only from the passenger column (in-flow). The map is absolutely
- * positioned to that height so the grey shell matches the white passenger card —
+ * positioned to that height so the grey shell matches the white passenger card -
  * seats scroll inside .seat-booking__grid-scroll instead of stretching the shell.
  */
 .seat-booking__main {
@@ -413,10 +413,8 @@
   justify-content: center;
   gap: 0.22rem 0.3rem;
   align-items: center;
-  margin-bottom: 0.26rem;
+  margin: 0 auto 0.26rem;
   width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .seat-booking__row:last-child {
@@ -467,10 +465,8 @@
   grid-template-columns: var(--seat-col-width) var(--seat-mid-width) var(--seat-col-width);
   justify-content: center;
   align-items: center;
-  margin: 0.42rem 0 0.36rem;
+  margin: 0.42rem auto 0.36rem;
   width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .seat-booking__facility-mid {
@@ -534,10 +530,8 @@
   grid-template-columns: var(--seat-col-width) var(--seat-mid-width) var(--seat-col-width);
   justify-content: center;
   align-items: flex-end;
-  margin: 0.42rem 0 0.28rem;
+  margin: 0.42rem auto 0.28rem;
   width: fit-content;
-  margin-left: auto;
-  margin-right: auto;
   font-size: 0.67rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -607,7 +601,7 @@
   color: var(--primary-color);
 }
 
-/* Hover: no outer “ring” — priority goes dashed → solid at same 2px; extra keeps inset bar only */
+/* Hover: no outer "ring" - priority goes dashed to solid at same 2px; extra keeps inset bar only */
 .seat-booking__seat--regular:not(.seat-booking__seat--unavailable):not(.seat-booking__seat--assigned):not(:disabled):hover {
   border-width: 2px;
   border-style: solid;
@@ -646,7 +640,7 @@
   font-size: 0;
 }
 
-/* Taken seats (P1–P9…): same green fill whether or not this passenger is active */
+/* Taken seats (P1-P9...): same green fill whether or not this passenger is active */
 .seat-booking__seat--assigned,
 .seat-booking__seat--mine {
   border: 1px solid var(--primary-color);
@@ -914,7 +908,7 @@
   color: var(--text-color);
 }
 
-/* Solid green CTA — do not combine with .review-wf-continue (that class forces green text for outline buttons). */
+/* Solid green CTA - do not combine with .review-wf-continue (that class forces green text for outline buttons). */
 .seat-booking__dialog-btn--primary {
   min-width: 11rem;
   padding: 0.65rem 1.35rem;
@@ -1031,7 +1025,7 @@
   color: var(--text-color);
 }
 
-/* Name in column 1, badge in column 2 — badges share one vertical alignment (no zigzag) */
+/* Name in column 1, badge in column 2 - badges share one vertical alignment (no zigzag) */
 .seat-booking__pax-head.seat-booking__pax-head--pay-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

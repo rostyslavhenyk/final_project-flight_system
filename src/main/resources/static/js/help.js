@@ -1,192 +1,246 @@
-// FAQ accordion
-var faqButtons = document.querySelectorAll('.faq-question')
+(function () {
+    'use strict';
 
-for (var i = 0; i < faqButtons.length; i++) {
-    faqButtons[i].addEventListener('click', function () {
-        var answerId = this.getAttribute('aria-controls')
-        var answer = document.getElementById(answerId)
+    let chatPollId = null;
+    const chatPollMs = 8000;
 
-        if (answer.hidden) {
-            answer.hidden = false
-            this.setAttribute('aria-expanded', 'true')
-        } else {
-            answer.hidden = true
-            this.setAttribute('aria-expanded', 'false')
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
+    function switchRefundTab(tabName) {
+        const trackPanel = byId('track');
+        const requestPanel = byId('request');
+        const trackTab = byId('tab-track');
+        const requestTab = byId('tab-request');
+        const activePanel = byId(tabName);
+        const activeTab = byId('tab-' + tabName);
+
+        if (!trackPanel || !requestPanel || !trackTab || !requestTab || !activePanel || !activeTab) return;
+
+        trackPanel.hidden = true;
+        requestPanel.hidden = true;
+        trackTab.classList.remove('active');
+        requestTab.classList.remove('active');
+        trackTab.setAttribute('aria-selected', 'false');
+        requestTab.setAttribute('aria-selected', 'false');
+
+        activePanel.hidden = false;
+        activeTab.classList.add('active');
+        activeTab.setAttribute('aria-selected', 'true');
+    }
+
+    function renderChatStatus(text) {
+        const messages = byId('chatMessages');
+        if (!messages) return;
+
+        messages.innerHTML = '';
+        const status = document.createElement('div');
+        status.classList.add('chat-msg', 'system');
+        status.textContent = text;
+        messages.appendChild(status);
+    }
+
+    function renderChatMessages(data) {
+        const messages = byId('chatMessages');
+        if (!messages) return;
+
+        messages.innerHTML = '';
+        if (data.length === 0) {
+            renderChatStatus('Send a message and staff will reply here.');
+            return;
         }
-    })
-}
 
-// refund tabs
-function switchTab(tabName) {
-    document.getElementById('track').hidden = true
-    document.getElementById('request').hidden = true
+        data.forEach(function (item) {
+            const message = document.createElement('div');
+            message.classList.add('chat-msg');
+            message.classList.add(item.isStaff ? 'bot' : 'user');
+            message.textContent = item.senderName + ': ' + item.message;
+            messages.appendChild(message);
+        });
 
-    document.getElementById('tab-track').classList.remove('active')
-    document.getElementById('tab-request').classList.remove('active')
-    document.getElementById('tab-track').setAttribute('aria-selected', 'false')
-    document.getElementById('tab-request').setAttribute('aria-selected', 'false')
-
-    document.getElementById(tabName).hidden = false
-    document.getElementById('tab-' + tabName).classList.add('active')
-    document.getElementById('tab-' + tabName).setAttribute('aria-selected', 'true')
-}
-
-// FAQ search
-document.getElementById('faqSearch').addEventListener('input', function () {
-    var typed = this.value.toLowerCase()
-    var allItems = document.querySelectorAll('.faq-item')
-
-    for (var i = 0; i < allItems.length; i++) {
-        var questionText = allItems[i].querySelector('.faq-question').textContent.toLowerCase()
-        allItems[i].style.display = questionText.includes(typed) ? 'block' : 'none'
+        messages.scrollTop = messages.scrollHeight;
     }
-})
 
-var chatPollId = null
-var chatPollMs = 8000
+    function loadReplies() {
+        fetch('/chat/messages')
+            .then(function (response) {
+                if (response.status === 401) {
+                    renderChatStatus('Log in to start a live chat with staff.');
+                    return null;
+                }
 
-// chat open and close
-function toggleChat() {
-    var chatBody = document.getElementById('chatBody')
-    var chatHeader = document.querySelector('.chat-header')
-    var chevron = document.getElementById('chatChevron')
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(function (data) {
+                if (data) renderChatMessages(data);
+            })
+            .catch(function () {
+                renderChatStatus('Live chat is unavailable right now.');
+            });
+    }
 
-    if (chatBody.hidden) {
-        chatBody.hidden = false
-        chatHeader.setAttribute('aria-expanded', 'true')
-        chevron.textContent = 'v'
-        document.getElementById('chatInput').focus()
-        loadReplies()
-        startChatPolling()
+    function startChatPolling() {
+        if (chatPollId !== null) return;
+        chatPollId = window.setInterval(loadReplies, chatPollMs);
+    }
+
+    function stopChatPolling() {
+        if (chatPollId === null) return;
+        window.clearInterval(chatPollId);
+        chatPollId = null;
+    }
+
+    function toggleChat() {
+        const chatBody = byId('chatBody');
+        const chatHeader = document.querySelector('.chat-header');
+        const chevron = byId('chatChevron');
+        const input = byId('chatInput');
+        if (!chatBody || !chatHeader || !chevron || !input) return;
+
+        if (chatBody.hidden) {
+            chatBody.hidden = false;
+            chatHeader.setAttribute('aria-expanded', 'true');
+            chevron.textContent = 'v';
+            input.focus();
+            loadReplies();
+            startChatPolling();
+        } else {
+            chatBody.hidden = true;
+            chatHeader.setAttribute('aria-expanded', 'false');
+            chevron.textContent = '^';
+            stopChatPolling();
+        }
+    }
+
+    function openChat() {
+        const chatBody = byId('chatBody');
+        if (!chatBody) return;
+
+        if (chatBody.hidden) {
+            toggleChat();
+        } else {
+            loadReplies();
+        }
+    }
+
+    function sendChat() {
+        const input = byId('chatInput');
+        if (!input) return;
+
+        const text = input.value.trim();
+        if (text === '') return;
+        input.value = '';
+
+        fetch('/chat/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'message=' + encodeURIComponent(text),
+        })
+            .then(function (response) {
+                if (response.status === 401) {
+                    renderChatStatus('Log in to send a live chat message to staff.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    renderChatStatus('Your message could not be sent. Please try again.');
+                    return;
+                }
+
+                loadReplies();
+            })
+            .catch(function () {
+                renderChatStatus('Your message could not be sent. Please try again.');
+            });
+    }
+
+    function wireFaqAccordion() {
+        document.querySelectorAll('.faq-question').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const answer = byId(button.getAttribute('aria-controls'));
+                if (!answer) return;
+
+                const expanded = answer.hidden;
+                answer.hidden = !expanded;
+                button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            });
+        });
+    }
+
+    function wireFaqSearch() {
+        const search = byId('faqSearch');
+        if (!search) return;
+
+        search.addEventListener('input', function () {
+            const typed = search.value.toLowerCase();
+            document.querySelectorAll('.faq-item').forEach(function (item) {
+                const question = item.querySelector('.faq-question');
+                if (!question) return;
+                item.style.display = question.textContent.toLowerCase().includes(typed) ? 'block' : 'none';
+            });
+        });
+    }
+
+    function wireRefundTabs() {
+        document.querySelectorAll('[data-refund-tab]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                switchRefundTab(button.getAttribute('data-refund-tab'));
+            });
+        });
+    }
+
+    function wireRefundPlaceholders() {
+        const trackForm = byId('track-refund-form');
+        const requestForm = byId('request-refund-form');
+        const trackResult = byId('trackResult');
+        const requestResult = byId('requestResult');
+
+        if (trackForm && trackResult) {
+            trackForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                trackResult.innerHTML =
+                    '<p class="form-success">Your refund is being processed and should arrive within 3-5 business days.</p>';
+            });
+        }
+
+        if (requestForm && requestResult) {
+            requestForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                requestResult.innerHTML =
+                    '<p class="form-success">Your request has been submitted. You will receive a confirmation email shortly.</p>';
+            });
+        }
+    }
+
+    function wireChat() {
+        const openButton = byId('open-chat-button');
+        const toggleButton = byId('chat-toggle-button');
+        const sendButton = byId('chat-send-button');
+        const input = byId('chatInput');
+
+        if (openButton) openButton.addEventListener('click', openChat);
+        if (toggleButton) toggleButton.addEventListener('click', toggleChat);
+        if (sendButton) sendButton.addEventListener('click', sendChat);
+        if (input) {
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') sendChat();
+            });
+        }
+    }
+
+    function init() {
+        wireFaqAccordion();
+        wireFaqSearch();
+        wireRefundTabs();
+        wireRefundPlaceholders();
+        wireChat();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        chatBody.hidden = true
-        chatHeader.setAttribute('aria-expanded', 'false')
-        chevron.textContent = '^'
-        stopChatPolling()
+        init();
     }
-}
-
-// send chat message
-function sendChat() {
-    var input = document.getElementById('chatInput')
-    var text = input.value.trim()
-
-    if (text === '') return
-
-    input.value = ''
-
-    fetch('/chat/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'message=' + encodeURIComponent(text)
-    })
-        .then(function (response) {
-            if (response.status === 401) {
-                renderChatStatus('Log in to send a live chat message to staff.')
-                return
-            }
-
-            if (!response.ok) {
-                renderChatStatus('Your message could not be sent. Please try again.')
-                return
-            }
-
-            loadReplies()
-        })
-        .catch(function () {
-            renderChatStatus('Your message could not be sent. Please try again.')
-        })
-}
-
-// loads customer and staff messages from backend
-function loadReplies() {
-    fetch('/chat/messages')
-        .then(function (response) {
-            if (response.status === 401) {
-                renderChatStatus('Log in to start a live chat with staff.')
-                return
-            }
-
-            if (!response.ok) return
-            return response.json()
-        })
-        .then(function (data) {
-            if (!data) return
-            renderChatMessages(data)
-        })
-        .catch(function () {
-            renderChatStatus('Live chat is unavailable right now.')
-        })
-}
-
-function renderChatMessages(data) {
-    var messages = document.getElementById('chatMessages')
-    messages.innerHTML = ''
-
-    if (data.length === 0) {
-        renderChatStatus('Send a message and staff will reply here.')
-        return
-    }
-
-    for (var i = 0; i < data.length; i++) {
-        var msg = document.createElement('div')
-        msg.classList.add('chat-msg')
-        msg.classList.add(data[i].isStaff ? 'bot' : 'user')
-        msg.textContent = data[i].senderName + ': ' + data[i].message
-        messages.appendChild(msg)
-    }
-
-    messages.scrollTop = messages.scrollHeight
-}
-
-function renderChatStatus(text) {
-    var messages = document.getElementById('chatMessages')
-    messages.innerHTML = ''
-
-    var status = document.createElement('div')
-    status.classList.add('chat-msg', 'system')
-    status.textContent = text
-    messages.appendChild(status)
-}
-
-function startChatPolling() {
-    if (chatPollId !== null) return
-    chatPollId = window.setInterval(loadReplies, chatPollMs)
-}
-
-function stopChatPolling() {
-    if (chatPollId === null) return
-    window.clearInterval(chatPollId)
-    chatPollId = null
-}
-
-function openChat() {
-    var chatBody = document.getElementById('chatBody')
-    if (chatBody.hidden) {
-        toggleChat()
-    } else {
-        loadReplies()
-    }
-}
-
-function handleChatKey(event) {
-    if (event.key === 'Enter') {
-        sendChat()
-    }
-}
-
-// form placeholder responses
-function trackRefund(event) {
-    event.preventDefault()
-    document.getElementById('trackResult').innerHTML = '<p class="form-success">Your refund is being processed and should arrive within 3-5 business days.</p>'
-}
-
-function submitRefund(event) {
-    event.preventDefault()
-    document.getElementById('requestResult').innerHTML = '<p class="form-success">Your request has been submitted. You will receive a confirmation email shortly.</p>'
-}
-
-function submitContact(event) {
-    event.preventDefault()
-    document.getElementById('contactResult').innerHTML = '<p class="form-success">Message sent! We will get back to you within 24 hours.</p>'
-}
+})();

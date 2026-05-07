@@ -4,8 +4,8 @@
 (function () {
   'use strict';
 
-  var STORAGE_PAX = 'glideBookingPaxNames';
-  var stripeState = {
+  const STORAGE_PAX = 'glideBookingPaxNames';
+  const stripeState = {
     stripe: null,
     card: null,
     clientSecret: '',
@@ -17,11 +17,11 @@
   }
 
   function wirePayNow() {
-    var btn = document.getElementById('pay-now-button');
+    const btn = document.getElementById('pay-now-button');
     if (!btn) return;
     btn.addEventListener('click', function () {
       btn.disabled = true;
-      var originalText = btn.textContent;
+      const originalText = btn.textContent;
       btn.textContent = 'Checking card...';
       confirmStripeCard()
         .then(function (setupIntentId) {
@@ -41,7 +41,7 @@
   }
 
   function confirmBooking(setupIntentId) {
-    var body = new URLSearchParams();
+    const body = new URLSearchParams();
     body.set('setupIntentId', setupIntentId);
     return fetch('/book/payment/confirm' + window.location.search, {
       method: 'POST',
@@ -70,15 +70,15 @@
   }
 
   function showPaymentError(message) {
-    var btn = document.getElementById('pay-now-button');
+    const btn = document.getElementById('pay-now-button');
     if (!btn || !btn.parentNode) return;
-    var existing = document.getElementById('pay-confirm-error');
+    const existing = document.getElementById('pay-confirm-error');
     if (existing) {
       existing.hidden = false;
       if (message) existing.textContent = message;
       return;
     }
-    var msg = document.createElement('p');
+    const msg = document.createElement('p');
     msg.id = 'pay-confirm-error';
     msg.className = 'flights-hero__hint';
     msg.setAttribute('role', 'alert');
@@ -87,7 +87,7 @@
   }
 
   function initStripeCard() {
-    var cardEl = document.getElementById('stripe-card-element');
+    const cardEl = document.getElementById('stripe-card-element');
     if (!cardEl || typeof Stripe !== 'function') return Promise.resolve();
     return fetch('/book/payment/setup-intent' + window.location.search, { method: 'POST' })
       .then(function (response) {
@@ -96,7 +96,7 @@
       })
       .then(function (payload) {
         stripeState.stripe = Stripe(payload.publishableKey);
-        var elements = stripeState.stripe.elements();
+        const elements = stripeState.stripe.elements();
         stripeState.card = elements.create('card', {
           hidePostalCode: true,
         });
@@ -113,23 +113,23 @@
 
   function hydratePaxNames() {
     try {
-      var raw = sessionStorage.getItem(STORAGE_PAX);
+      const raw = sessionStorage.getItem(STORAGE_PAX);
       if (!raw) return;
-      var list = JSON.parse(raw);
+      const list = JSON.parse(raw);
       if (!Array.isArray(list)) return;
       document.querySelectorAll('[data-pay-pax-slot]').forEach(function (cell) {
-        var slotStr = cell.getAttribute('data-pay-pax-slot');
+        const slotStr = cell.getAttribute('data-pay-pax-slot');
         if (!slotStr) return;
-        var slot = parseInt(slotStr, 10);
-        var el = cell.querySelector('[data-pay-pax-name-text]');
+        const slot = parseInt(slotStr, 10);
+        const el = cell.querySelector('[data-pay-pax-name-text]');
         if (!el) return;
-        for (var i = 0; i < list.length; i++) {
-          var entry = list[i];
+        for (let i = 0; i < list.length; i++) {
+          const entry = list[i];
           if (!entry || parseInt(entry.slot, 10) !== slot) continue;
-          var nm = String(entry.displayName || '')
+          const name = String(entry.displayName || '')
             .replace(/\s+/g, ' ')
             .trim();
-          if (nm) el.textContent = nm;
+          if (name) el.textContent = name;
           break;
         }
       });

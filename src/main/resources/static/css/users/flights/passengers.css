@@ -1,4 +1,4 @@
-/* Passenger step (/book/passengers) — full width like search/review (inherits .flights-page padding) */
+/* Passenger step (/book/passengers) - full width like search/review (inherits .flights-page padding) */
 .bp-wf {
   padding-bottom: 2.5rem;
 }
@@ -349,7 +349,7 @@
   margin-top: 1.25rem;
 }
 
-/* Passenger step: inline errors — same palette as homepage `.flight-search-error`. */
+/* Passenger step: inline errors - same palette as homepage `.flight-search-error`. */
 .bp-wf-inline-error {
   width: 100%;
   max-width: 100%;
@@ -420,8 +420,7 @@
 .bp-wf-signin {
   min-height: 0;
   align-items: stretch;
-  margin-top: 1.35rem;
-  margin-bottom: 1.35rem;
+  margin: 1.35rem 0;
   grid-template-columns: minmax(12.5rem, 26%) minmax(0, 1fr);
   border: 1px solid var(--primary-border-color);
   border-radius: 6px;
@@ -560,8 +559,7 @@
 .review-wf-continue-wrap.bp-wf-cta-wrap {
   display: flex;
   justify-content: center;
-  margin-top: 0;
-  margin-bottom: 0;
+  margin: 0;
   padding-block: 0;
   -webkit-tap-highlight-color: transparent;
 }
