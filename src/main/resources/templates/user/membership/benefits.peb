@@ -1,0 +1,22 @@
+{% extends "_layout/base.peb" %}
+    {% block styles %}
+    <link rel="stylesheet" href="/static/css/users/membership.css">
+{% endblock %}
+    {% block content %}
+<h1 style="text-align: center;">Member Benefits</h1>
+<br>
+<br>
+
+<section aria-labelledby="list-heading">
+<h5>Membership status benefits</h5>
+<div class = "tiers">
+    <div><h3>Silver</h3></div>
+    <div><h3>Gold</h3></div>
+    <div><h3>Platinum</h3></div>
+<div class = "whyjoin">
+    <div><p>Earn points everytime you travel which can be spent to make your flights cheaper. </p></div>
+    <div><p>Earn 30% more points everytime you travel. Priority check-in and boarding. Free seat selection.</p></div>
+    <div><p>Earn 60% more points everytime you travel. Priority check-in and boarding. Free seat selection. Access to the lounge. </p></div>
+
+</section>
+{% endblock %}

@@ -1,13 +1,29 @@
 {% extends "_layout/base.peb" %}
-
+{% block styles %}
+    <link rel="stylesheet" href="/static/css/users/membership.css">
+{% endblock %}
 {% block content %}
 <h1 style="text-align: center;">Membership</h1>
 <br>
 <br>
 
-<section aria-labelledby="list-heading">
+<section class = "membership-page" aria-labelledby="list-heading" >
     {% if loggedIn %}
     <h1> Welcome to your membership </h1>
+    <!-- Make sure to get points and member rank from database -->
+    <p> Your member level is {% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</p>
+    <p> You have {% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %} Points to use </p>
+    <p> To use your points, book a flight and select the option while booking. </p>
+    {% else %}
+    <h5 style="text-align: center;"> Join our membership scheme for free, you'll get exclusive rewards only available to members </h5>
+    <h4 style="text-align: center;"> Why join? </h4>
+    <div class = "whyjoin">
+        <div>Save your information for faster booking and manage your trips quickly </div>
+        <div>Gain points you can use to decrease the price of flights </div>
+        <div>Gain membership tiers that allow for exclusive benefits </div>
+    </div>
+    <h5> Become a member today </h5>
+    <a href="/login" class="staff-action-link">Sign up now→</a>
     {% endif %}
 </section>
 {% endblock %}
