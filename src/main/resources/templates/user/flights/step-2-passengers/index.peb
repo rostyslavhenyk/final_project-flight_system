@@ -1,0 +1,147 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Passenger details · Glide Airways{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/users/flights/core.css">
+<link rel="stylesheet" href="/static/css/users/flights/passengers.css">
+<script src="/static/js/flights-results.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="flights-page bp-wf">
+    <nav class="booking-stepper" aria-label="Booking progress">
+        <ol class="booking-stepper__list">
+            <li class="booking-stepper__item booking-stepper__item--done">
+                <span class="booking-stepper__num">1</span>
+                <a class="booking-stepper__label booking-stepper__label--done-link" href="{{ backToChooseFlightsHref }}">Choose flights</a>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--current">
+                <span class="booking-stepper__num">2</span>
+                <span class="booking-stepper__label">Passenger info</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">3</span>
+                <span class="booking-stepper__label">Seat and extras</span>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--todo">
+                <span class="booking-stepper__num">4</span>
+                <span class="booking-stepper__label">Confirm and pay</span>
+            </li>
+        </ol>
+    </nav>
+
+    <header class="flights-hero">
+        <h1 class="flights-hero__title">Passenger details</h1>
+    </header>
+
+{% if not loggedIn %}
+    <section class="bp-wf-signin" aria-label="Sign in">
+        <div class="bp-wf-signin__visual">
+            <img class="bp-wf-signin__photo" src="/static/images/booking-signin-aircraft.jpg" alt="" width="960" height="655" decoding="async" fetchpriority="low">
+        </div>
+        <div class="bp-wf-signin__body">
+            <p class="bp-wf-signin__text"><strong>Sign in now</strong> to save time on future bookings and manage your trips in one place.</p>
+            <a class="bp-wf-signin__btn" href="{{ loginHref }}">Sign in</a>
+            <p class="bp-wf-signin__guest">Or continue as a guest — you can still complete this booking.</p>
+        </div>
+    </section>
+    <hr class="bp-wf-rule bp-wf-rule--after-signin" aria-hidden="true">
+    {% else %}
+    <hr class="bp-wf-rule bp-wf-rule--after-signin" aria-hidden="true">
+    {% endif %}
+
+    <div class="bp-wf-strapline-block">
+        <p class="flights-hero__strapline">Who is travelling?</p>
+        <p class="flights-hero__hint">Names must match passport or photo ID.</p>
+    </div>
+
+    {# Demo-stage form: client-side validation only; values are not persisted server-side yet. #}
+    <form class="bp-wf-form" method="get" action="#" aria-label="Passenger information" data-bp-passenger-form>
+        {% for row in passengerRows %}
+        <fieldset class="bp-wf-fieldset">
+            <legend class="sr-only">{{ row.heading }}</legend>
+            <div class="bp-wf-pax">
+                <div class="bp-wf-pax__badge" aria-hidden="true">
+                    <span class="bp-wf-pax__tier">{{ row.badgeTier }}</span>
+                    <span class="bp-wf-pax__num">Passenger {{ row.slot }}</span>
+                </div>
+                <div class="bp-wf-pax__fields">
+                    <div class="bp-wf-fields-card">
+                        <div class="bp-wf-fields-card__title-row" data-bp-title-combo>
+                            <label class="bp-wf-label" for="bp-title-trigger-{{ row.slot }}">Title</label>
+                            <input type="hidden" name="pax_{{ row.slot }}_title" id="bp-title-val-{{ row.slot }}" value="">
+                            <div class="bp-wf-combobox-wrap">
+                                <button type="button" id="bp-title-trigger-{{ row.slot }}" class="combo-trigger bp-wf-combo-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="bp-title-list-{{ row.slot }}">Title</button>
+                                <div id="bp-title-list-{{ row.slot }}" class="autocomplete-dropdown trip-dropdown bp-wf-title-menu" role="listbox" aria-label="Title">
+                                    <button type="button" role="option" class="trip-option" data-value="Mr">Mr</button>
+                                    <button type="button" role="option" class="trip-option" data-value="Miss">Miss</button>
+                                </div>
+                            </div>
+                        </div>
+                        <p id="bp-err-pax-{{ row.slot }}-title" class="bp-wf-inline-error" role="alert" hidden></p>
+                        <div class="bp-wf-fields-card__names-row">
+                            <div class="bp-wf-field-block">
+                                <label class="bp-wf-label" for="bp-given-{{ row.slot }}">First name</label>
+                                <input id="bp-given-{{ row.slot }}" name="pax_{{ row.slot }}_given" type="text" class="bp-wf-input bp-wf-input--tall bp-wf-input--pax-name" autocomplete="given-name" spellcheck="false" title="Letters only; spaces, hyphens and apostrophes allowed">
+                                <p id="bp-err-pax-{{ row.slot }}-given" class="bp-wf-inline-error" role="alert" hidden></p>
+                            </div>
+                            <div class="bp-wf-field-block">
+                                <label class="bp-wf-label" for="bp-family-{{ row.slot }}">Surname</label>
+                                <input id="bp-family-{{ row.slot }}" name="pax_{{ row.slot }}_family" type="text" class="bp-wf-input bp-wf-input--tall bp-wf-input--pax-name" autocomplete="family-name" spellcheck="false" title="Letters only; spaces, hyphens and apostrophes allowed">
+                                <p id="bp-err-pax-{{ row.slot }}-family" class="bp-wf-inline-error" role="alert" hidden></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+        {% endfor %}
+
+        <section class="bp-wf-contact" aria-labelledby="bp-contact-heading">
+            <h2 id="bp-contact-heading" class="bp-wf-contact__title">Contact information</h2>
+            <p class="bp-wf-contact__hint">Please provide accurate contact details in case we need to notify you about schedule changes or gate updates.</p>
+            <fieldset class="bp-wf-fieldset">
+                <legend class="sr-only">Contact person</legend>
+                <div class="bp-wf-pax bp-wf-pax--contact">
+                    <div class="bp-wf-pax__badge bp-wf-pax__badge--contact" aria-hidden="true"><span class="bp-wf-pax__contact-label">Contact person</span></div>
+                    <div class="bp-wf-contact__stack">
+                        <div class="bp-wf-fields-card bp-wf-fields-card--contact">
+                        <div class="bp-wf-phone-line">
+                            <div class="bp-wf-field" data-bp-dial-shell>
+                                <label class="bp-wf-label" for="bp-contact-dial">Country code</label>
+                                <input type="hidden" name="contactDialCode" id="bp-contact-dial-hidden" value="+">
+                                <div class="bp-wf-dial-row">
+                                    <span class="bp-wf-dial-prefix" aria-hidden="true">+</span>
+                                    <input id="bp-contact-dial" type="text" class="bp-wf-input bp-wf-input--tall bp-wf-dial-input" inputmode="numeric" placeholder="44" autocomplete="tel-country-code" title="Digits only">
+                                </div>
+                                <p id="bp-err-contact-dial" class="bp-wf-inline-error" role="alert" hidden></p>
+                            </div>
+                            <div class="bp-wf-field">
+                                <label class="bp-wf-label" for="bp-contact-phone">Phone number</label>
+                                <input id="bp-contact-phone" name="contactPhone" type="tel" class="bp-wf-input bp-wf-input--tall" inputmode="numeric" autocomplete="tel-national" title="Digits only">
+                                <p id="bp-err-contact-phone" class="bp-wf-inline-error" role="alert" hidden></p>
+                            </div>
+                        </div>
+                        <div class="bp-wf-field">
+                            <label class="bp-wf-label" for="bp-contact-email">Email</label>
+                            <input id="bp-contact-email" name="contactEmail" type="email" class="bp-wf-input bp-wf-input--tall" autocomplete="email" title="Must include @">
+                            <p id="bp-err-contact-email" class="bp-wf-inline-error" role="alert" hidden></p>
+                        </div>
+                        <div class="bp-wf-field">
+                            <label class="bp-wf-label" for="bp-membership-number">Membership Number</label>
+                    <input id="bp-membership-number" name="membershipNumber" type="text" class="bp-wf-input bp-wf-input--tall{% if not loggedIn %} bp-wf-input--membership-locked{% endif %}" autocomplete="off"{% if not loggedIn %} readonly{% endif %}{% if not loggedIn %} value="N/A"{% else %} value="{{ membershipValue }}"{% endif %}>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </section>
+
+        <hr class="bp-wf-rule bp-wf-rule--continue" aria-hidden="true">
+        <div class="review-wf-continue-wrap bp-wf-cta-wrap">
+            <a class="review-wf-continue" href="{{ continueSeatsHref }}" data-bp-passenger-continue>Continue</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

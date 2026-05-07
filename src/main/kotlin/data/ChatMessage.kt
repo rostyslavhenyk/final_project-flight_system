@@ -16,7 +16,6 @@ object ChatMessages : Table("chat_messages") {
     val message = varchar("message", 1000)
     val isStaff = bool("isStaff").default(false)
     val timestamp = long("timestamp")
-
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -32,15 +31,21 @@ data class ChatMessage(
 // handles database queries for chat messages
 object ChatRepository {
 
-    fun add(userId: Int, senderName: String, message: String, isStaff: Boolean): ChatMessage =
+    fun add(
+        userId: Int,
+        senderName: String,
+        message: String,
+        isStaff: Boolean,
+    ): ChatMessage =
         transaction {
-            val id = ChatMessages.insert {
-                it[ChatMessages.userId] = userId
-                it[ChatMessages.senderName] = senderName
-                it[ChatMessages.message] = message
-                it[ChatMessages.isStaff] = isStaff
-                it[ChatMessages.timestamp] = System.currentTimeMillis()
-            } get ChatMessages.id
+            val id =
+                ChatMessages.insert {
+                    it[ChatMessages.userId] = userId
+                    it[ChatMessages.senderName] = senderName
+                    it[ChatMessages.message] = message
+                    it[ChatMessages.isStaff] = isStaff
+                    it[ChatMessages.timestamp] = System.currentTimeMillis()
+                } get ChatMessages.id
 
             ChatMessage(id, userId, senderName, message, isStaff, System.currentTimeMillis())
         }

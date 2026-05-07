@@ -8,7 +8,6 @@ import io.ktor.util.*
 import isHtmxRequest
 
 val ReqIdKey = AttributeKey<String>("rid")
-val RequestStartTimeKey = AttributeKey<Long>("request_start")
 private val SidKey = AttributeKey<String>("sid")
 
 suspend fun <T> ApplicationCall.timed(
@@ -21,7 +20,6 @@ suspend fun <T> ApplicationCall.timed(
     attributes.put(SidKey, sid)
     val requestId = ensureRequestId()
     val started = System.currentTimeMillis()
-    attributes.put(RequestStartTimeKey, started)
 
     return try {
         val result = block()
@@ -52,18 +50,7 @@ suspend fun <T> ApplicationCall.timed(
     }
 }
 
-fun ApplicationCall.logValidationError(
-    taskCode: String,
-    outcome: String,
-) {
-    Logger.validationError(sessionCode(), requestId(), taskCode, outcome, jsMode())
-}
-
 fun ApplicationCall.jsMode(): String = if (isHtmxRequest()) "on" else "off"
-
-fun ApplicationCall.sessionCode(): String = attributes[SidKey]
-
-fun ApplicationCall.requestId(): String = attributes[ReqIdKey]
 
 private fun ApplicationCall.ensureSession(): SessionUtils =
     sessions.get<SessionUtils>() ?: SessionUtils().also {

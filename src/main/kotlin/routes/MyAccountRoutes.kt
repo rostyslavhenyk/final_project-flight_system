@@ -5,19 +5,17 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-import java.io.StringWriter
 import utils.jsMode
 import utils.timed
 import auth.UserSession
 import data.UserRepository
-import utils.baseModel
 
 fun Route.myAccountRoutes() {
     get("/my-account") { call.handleMyAccountLoad() }
 }
 
 private suspend fun ApplicationCall.handleMyAccountLoad() {
-    timed("T0_my_account", jsMode()) {
+    timed("T2_account_load", jsMode()) {
         val loggedState = loggedIn()
 
         if (!loggedState.loggedIn || loggedState.session == null) {
@@ -33,20 +31,18 @@ private suspend fun ApplicationCall.handleMyAccountLoad() {
             return@timed
         }
 
-        val model =
-            baseModel(
-                mapOf(
-                    "title" to "My Account",
-                    "account" to account,
-                    "layout" to if (account.roleId == 1) "_layout/basestaff.peb" else "_layout/base.peb",
-                ),
-            )
+        if (account.roleId in setOf(1, 2)) {
+            respondRedirect("/staff/my-account")
+            return@timed
+        }
 
-        val template = pebbleEngine.getTemplate("user/my-account/index.peb")
-        val writer = StringWriter()
-
-        template.evaluate(writer, model)
-
-        respondText(writer.toString(), ContentType.Text.Html)
+        renderTemplate(
+            "user/my-account/index.peb",
+            mapOf(
+                "title" to "My Account",
+                "account" to account,
+                "layout" to "_layout/base.peb",
+            ),
+        )
     }
 }

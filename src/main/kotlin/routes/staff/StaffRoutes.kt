@@ -16,6 +16,9 @@ fun Route.staffRoutes() {
         staffDashboardRoutes()
         staffFlightsRoutes()
         staffUsersRoutes()
+        staffAccountsRoutes()
+        staffTicketsRoutes()
+        staffMyAccountRoutes()
         staffChatRoutes()
     }
 }

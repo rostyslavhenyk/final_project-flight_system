@@ -1,0 +1,84 @@
+{# Flight summary panel for book review. Expects a `card` map. #}
+<div class="flight-card__detail flight-card__detail--review-wf">
+    <div class="flight-card__times">
+        <div class="flight-card__endpoint">
+            <span class="flight-card__time">{{ card.departTime }}</span>
+            <span class="flight-card__code">{{ card.originCode }}</span>
+            <span class="flight-card__timezone">{{ card.originTimeZone }}</span>
+        </div>
+        <div class="flight-card__timeline-wrap">
+            <div class="flight-card__track-column{% if card.stops > 0 %} flight-card__track-column--has-stops{% endif %}">
+                <div class="flight-card__track-block{% if card.stops > 0 %} flight-card__track-block--has-stops{% endif %}">
+                    <div class="flight-card__track-with-plane">
+                        <div class="flight-card__duration-above">{{ card.durationLabel }}</div>
+                        <span class="flight-card__plane">
+                            <svg class="flight-card__plane-icon" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+                        </span>
+                        <div class="flight-card__timeline flight-card__timeline--stops-{{ card.stops }}" aria-hidden="true">
+                            <div class="flight-card__track">
+                                <span class="flight-card__track-line"></span>
+                                <div class="flight-card__track-stops">
+                                    {% for ts in card.timelineStops %}
+                                    <span class="flight-card__stop-group">
+                                        <span class="flight-card__stop-dot"></span>
+                                        <span class="flight-card__stop-code">{{ ts.code }}</span>
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                <span class="flight-card__end-ring" title="Arrival"></span>
+                            </div>
+                        </div>
+                        <p class="flight-card__stops-line">{{ card.stopSummary }}</p>
+                        <p class="flight-card__timezone-change">{{ card.timeZoneDifference }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flight-card__endpoint flight-card__endpoint--arrive">
+            <span class="flight-card__time">{{ card.arrivalTime }}{% if card.arrivalPlusDays > 0 %}<sup class="flight-card__plus-day">+{{ card.arrivalPlusDays }}</sup>{% endif %}</span>
+            <span class="flight-card__code">{{ card.destCode }}</span>
+            <span class="flight-card__timezone">{{ card.destTimeZone }}</span>
+        </div>
+    </div>
+    <div class="flight-card__footer flight-card__footer--review-wf">
+        <div class="flight-card__footer-bar">
+        <span class="flight-card__preflight-chain">{{ card.flightNumberChain }}</span>
+        <details class="flight-card__details" data-route-details>
+            <summary class="flight-card__details-summary">Route details</summary>
+            <div class="flight-card__details-body">
+                <div class="route-itinerary route-itinerary--ledger">
+                {% for block in card.routeBlocks %}
+                {% if block.kind == "segment" %}
+                <div class="route-itinerary__row route-itinerary__row--segment">
+                    <div class="route-itinerary__lead route-itinerary__lead--fn"><span class="route-itinerary__fn">{{ block.flight }}</span></div>
+                    <div class="route-seg">
+                        <div class="route-seg__times">
+                            <span class="route-seg__time">{{ block.depart }}{% if block.depPlusDays > 0 %}<sup class="flight-card__plus-day">+{{ block.depPlusDays }}</sup>{% endif %}</span>
+                            <span class="route-seg__arrow" aria-hidden="true">→</span>
+                            <span class="route-seg__time">{{ block.arrive }}{% if block.arrPlusDays > 0 %}<sup class="flight-card__plus-day">+{{ block.arrPlusDays }}</sup>{% endif %}</span>
+                        </div>
+                        <p class="route-seg__airports"><strong>{{ block.fromName }}</strong> ({{ block.fromCode }}) → <strong>{{ block.toName }}</strong> ({{ block.toCode }})</p>
+                        <p class="route-seg__meta">Flight {{ block.flight }} · Glide Airways · {{ block.fromTimeZone }} to {{ block.toTimeZone }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="route-itinerary__row route-itinerary__row--join">
+                    <div class="route-itinerary__lead route-itinerary__lead--arrow" aria-hidden="true">↓</div>
+                    <div class="route-connect">
+                        <span class="route-connect__label">Connect at {{ block.airportCode }}</span>
+                        <span class="route-connect__name">{{ block.airportName }}</span>
+                        <span class="route-connect__layover"><span class="route-connect__layover-time">{{ block.layoverLabel }}</span> layover</span>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                </div>
+                <div class="route-total-row">
+                    <span class="route-total-row__spacer" aria-hidden="true"></span>
+                    <div class="route-total-bar">Total duration {{ card.durationLabel }}</div>
+                </div>
+            </div>
+        </details>
+        </div>
+    </div>
+</div>

@@ -1,6 +1,13 @@
 package data
 
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.ResultRow
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -40,7 +47,7 @@ object SeatRepository {
 
     val nullSeat = Seat(-1, -1, null, -1, "", "", 0L)
 
-    private fun ResultRow.toSeat() =
+    internal fun ResultRow.toSeat() =
         Seat(
             id = this[Seats.id],
             flightId = this[Seats.flightId],

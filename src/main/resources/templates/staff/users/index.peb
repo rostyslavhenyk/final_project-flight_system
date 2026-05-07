@@ -1,30 +1,40 @@
 {% extends "_layout/basestaff.peb" %}
 
 {% block content %}
-<h1>Manage Users</h1>
+<section class="staff-shell">
+    <header class="staff-hero">
+        <h1>Manage Users</h1>
+    </header>
 
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for account in users %}
+    <div class="staff-table-wrap">
+        <table class="staff-table">
+            <thead>
             <tr>
-                <td>{{ account.id }}</td>
-                <td>{{ account.firstname }} {{ account.lastname }}</td>
-                <td>{{ account.email }}</td>
-                <td>{% if account.roleId == 1 %}Staff{% else %}Customer{% endif %}</td>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Loyalty tier</th>
+                <th>Points</th>
             </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">No users found.</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+            </thead>
+            <tbody>
+            {% for account in users %}
+                <tr>
+                    <td>{{ account.user.id }}</td>
+                    <td><strong>{{ account.user.firstname }} {{ account.user.lastname }}</strong></td>
+                    <td>{{ account.user.email }}</td>
+                    <td><span class="staff-status-pill">{% if account.user.roleId == 2 %}Admin{% elseif account.user.roleId == 1 %}Staff{% else %}Customer{% endif %}</span></td>
+                    <td>{% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</td>
+                    <td>{% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">No users found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
 {% endblock %}

@@ -1,0 +1,66 @@
+{% extends "_layout/base.peb" %}
+
+{% block content %}
+<section class="info-page commitment-page" aria-labelledby="commitment-heading">
+    <header class="flights-hero">
+        <h1 id="commitment-heading" class="flights-hero__title">Our commitment to you</h1>
+    </header>
+
+    <div class="info-page__body">
+        <p>
+            Every Glide Airways booking is built around reliability, transparency, and care.
+            From your first search to final arrival, our teams work to make travel planning
+            simple, clear, and dependable.
+        </p>
+
+        <h2>Clear prices and fare choices</h2>
+        <p>
+            We show fare options with clear inclusions so you can compare what matters most:
+            flexibility, baggage allowance, and seat comfort. Our goal is to help you choose the
+            right journey without hidden surprises at checkout.
+        </p>
+
+        <h2>Updates that keep you informed</h2>
+        <p>
+            When schedules change, we aim to notify you quickly using the contact details in your
+            booking. Important updates such as gate changes, timing adjustments, and disruption
+            alerts are shared so you can travel with confidence.
+        </p>
+
+        <h2>Support before and during travel</h2>
+        <p>
+            Our Help team is available to assist with booking questions, special travel needs, and
+            journey guidance. We are committed to respectful service and practical support at every
+            stage of your trip.
+        </p>
+
+        <h2>Accessibility and inclusive travel</h2>
+        <p>
+            We are committed to making air travel more accessible for everyone. If you need extra
+            assistance, mobility support, or help arranging specific seating, our teams will work
+            with you ahead of travel to prepare a smoother airport and onboard experience.
+        </p>
+
+        <h2>Operational safety and reliability</h2>
+        <p>
+            Safety remains at the center of every flight decision we make. We follow rigorous
+            operational standards, ongoing crew training, and route-level planning to maintain
+            dependable service while adapting to weather and airspace conditions when needed.
+        </p>
+
+        <h2>Sustainability in practice</h2>
+        <p>
+            We continue to improve fuel efficiency, reduce avoidable waste, and support initiatives
+            that lower the environmental impact of travel. While this work is ongoing, we are
+            committed to practical progress and transparent communication about our efforts.
+        </p>
+
+        <h2>Listening and improving</h2>
+        <p>
+            Customer feedback helps shape the way we improve booking tools, onboard services, and
+            support channels. We review common pain points and use that insight to prioritize
+            updates that make planning and flying easier for future journeys.
+        </p>
+    </div>
+</section>
+{% endblock %}

@@ -1,6 +1,17 @@
 var resetKey = ''
 var resetType = ''
 
+function updateVerifyStatus(html) {
+    var status = document.getElementById('verify-status')
+    if (status) {
+        status.outerHTML = html
+    }
+}
+
+function responseWasSuccessful(html, successText) {
+    return html.indexOf(successText) !== -1
+}
+
 function sendResetCode() {
     var email = document.getElementById('reset-email').value.trim()
     var phone = document.getElementById('reset-phone').value.trim()
@@ -26,16 +37,15 @@ function sendResetCode() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
     })
-        .then(function (response) {
-            return response.text().then(function (text) {
-                if (response.ok) {
-                    document.getElementById('step1').hidden = true
-                    document.getElementById('step2').hidden = false
-                } else {
-                    document.getElementById('verify-status').textContent = text
-                }
-            })
+    .then(function(response) {
+        return response.text().then(function(text) {
+            updateVerifyStatus(text)
+            if (response.ok && responseWasSuccessful(text, 'Code sent successfully')) {
+                document.getElementById('step1').hidden = true
+                document.getElementById('step2').hidden = false
+            }
         })
+    })
 }
 
 function verifyResetCode() {
@@ -53,14 +63,17 @@ function verifyResetCode() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
     })
-        .then(function (response) {
-            if (response.ok) {
+    .then(function(response) {
+        return response.text().then(function(text) {
+            updateVerifyStatus(text)
+            if (response.ok && responseWasSuccessful(text, 'Code verified')) {
                 document.getElementById('step2').hidden = true
                 document.getElementById('step3').hidden = false
             } else {
                 document.getElementById('step2-status').textContent = 'Invalid or expired code, please try again.'
             }
         })
+    })
 }
 
 function resetPassword() {
@@ -86,13 +99,13 @@ function resetPassword() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: body
     })
-        .then(function (response) {
-            if (response.ok) {
+    .then(function(response) {
+        return response.text().then(function(text) {
+            if (response.ok && text === '') {
                 window.location.href = '/login'
             } else {
-                response.text().then(function (text) {
-                    document.getElementById('verify-status').textContent = text
-                })
+                updateVerifyStatus(text)
             }
         })
+    })
 }

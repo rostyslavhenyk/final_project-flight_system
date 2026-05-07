@@ -37,7 +37,7 @@ object CountryRepository {
                 .singleOrNull()
         }
 
-    private fun ResultRow.toCountry(): Country =
+    internal fun ResultRow.toCountry(): Country =
         Country(
             countryID = this[Countries.id],
             name = this[Countries.name],

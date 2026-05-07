@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 private const val STATUS_LENGTH = 20
@@ -38,7 +39,7 @@ data class Booking(
 )
 
 object BookingRepository {
-    private fun ResultRow.toBooking() =
+    internal fun ResultRow.toBooking() =
         Booking(
             bookingID = this[Bookings.id],
             flightID = this[Bookings.flightID],
@@ -69,6 +70,33 @@ object BookingRepository {
             Booking(id, flightID, userID, seatID, null, status, createdAt)
         }
 
+    fun allFull(): List<BookingFull> =
+        transaction {
+            val purchasesById =
+                Purchases
+                    .selectAll()
+                    .map { PurchaseRepository.run { it.toPurchase() } }
+                    .associateBy { it.purchaseID }
+
+            (
+                Bookings
+                    .innerJoin(Flights, { Bookings.flightID }, { Flights.id })
+                    .innerJoin(Users, { Bookings.userID }, { Users.id })
+                    .innerJoin(Seats, { Bookings.seatID }, { Seats.id })
+            ).selectAll()
+                .map {
+                    val booking = it.toBooking()
+
+                    BookingFull(
+                        booking = booking,
+                        flight = FlightRepository.run { it.toFlight() },
+                        user = UserRepository.run { it.toUser() },
+                        seat = SeatRepository.run { it.toSeat() },
+                        purchase = booking.purchaseID?.let { purchaseID -> purchasesById[purchaseID] },
+                    )
+                }
+        }
+
     fun attachToPurchase(
         bookingID: Int,
         purchaseID: Int,
@@ -94,3 +122,11 @@ object BookingRepository {
             Bookings.deleteWhere { Bookings.id eq id } > 0
         }
 }
+
+data class BookingFull(
+    val booking: Booking,
+    val flight: Flight,
+    val user: User,
+    val seat: Seat,
+    val purchase: Purchase?,
+)

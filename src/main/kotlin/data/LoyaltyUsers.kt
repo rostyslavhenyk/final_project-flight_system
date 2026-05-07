@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object LoyaltyUsers : Table("loyalty_users") {
@@ -29,8 +30,8 @@ data class LoyaltyUser(
     val joinDate: Long,
 )
 
-object LoyaltyRepository {
-    private fun ResultRow.toLoyaltyUser() =
+object LoyaltyUserRepository {
+    internal fun ResultRow.toLoyaltyUser() =
         LoyaltyUser(
             id = this[LoyaltyUsers.id],
             userID = this[LoyaltyUsers.userID],
@@ -42,6 +43,19 @@ object LoyaltyRepository {
     fun all(): List<LoyaltyUser> =
         transaction {
             LoyaltyUsers.selectAll().map { it.toLoyaltyUser() }
+        }
+
+    fun allFull(): List<LoyaltyUserFull> =
+        transaction {
+            LoyaltyUsers
+                .innerJoin(Users, { LoyaltyUsers.userID }, { Users.id })
+                .selectAll()
+                .map {
+                    LoyaltyUserFull(
+                        loyaltyUser = it.toLoyaltyUser(),
+                        user = UserRepository.run { it.toUser() },
+                    )
+                }
         }
 
     fun getByUser(userID: Int): LoyaltyUser? =
@@ -86,3 +100,8 @@ object LoyaltyRepository {
             LoyaltyUsers.deleteWhere { LoyaltyUsers.userID eq userID } > 0
         }
 }
+
+data class LoyaltyUserFull(
+    val loyaltyUser: LoyaltyUser,
+    val user: User,
+)

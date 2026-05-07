@@ -29,36 +29,30 @@ data class ChatMessageResponse(
 
 private suspend fun ApplicationCall.handleSendMessage() {
     val session = sessions.get<UserSession>()
-
     if (session == null) {
         respond(HttpStatusCode.Unauthorized)
         return
     }
-
     val params = receiveParameters()
     val message = params["message"]
-
     if (message.isNullOrBlank()) {
         respond(HttpStatusCode.BadRequest)
         return
     }
-
     ChatRepository.add(session.id, session.firstname, message, false)
     respond(HttpStatusCode.OK)
 }
 
 private suspend fun ApplicationCall.handleGetMessages() {
     val session = sessions.get<UserSession>()
-
     if (session == null) {
         respond(HttpStatusCode.Unauthorized)
         return
     }
-
     val messages = ChatRepository.getByUser(session.id)
-    val response = messages.map {
-        ChatMessageResponse(it.id, it.senderName, it.message, it.isStaff, it.timestamp)
-    }
-
+    val response =
+        messages.map {
+            ChatMessageResponse(it.id, it.senderName, it.message, it.isStaff, it.timestamp)
+        }
     respondText(Json.encodeToString(response), ContentType.Application.Json)
 }

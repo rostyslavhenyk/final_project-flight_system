@@ -22,30 +22,34 @@ fun Route.staffChatRoutes() {
 private suspend fun ApplicationCall.handleStaffChatLoad() {
     val allMessages = ChatRepository.getAll()
 
-    // group messages by user id
     val grouped = allMessages.groupBy { it.userId }
 
-    val conversations = grouped.map { (userId, messages) ->
-        val user = UserRepository.get(userId)
-        mapOf(
-            "userId" to userId,
-            "userName" to (user?.firstname ?: "Unknown"),
-            "messages" to messages.map { msg ->
-                mapOf(
-                    "id" to msg.id,
-                    "senderName" to msg.senderName,
-                    "message" to msg.message,
-                    "isStaff" to msg.isStaff,
-                    "timestamp" to msg.timestamp,
-                )
-            }
-        )
-    }
+    val conversations =
+        grouped.map { (userId, messages) ->
+            val user = UserRepository.get(userId)
+            mapOf(
+                "userId" to userId,
+                "userName" to (user?.firstname ?: "Unknown"),
+                "messages" to
+                    messages.map { msg ->
+                        mapOf(
+                            "id" to msg.id,
+                            "senderName" to msg.senderName,
+                            "message" to msg.message,
+                            "isStaff" to msg.isStaff,
+                            "timestamp" to msg.timestamp,
+                        )
+                    },
+            )
+        }
 
-    val model = baseModel(mapOf(
-        "title" to "Staff Chat",
-        "conversations" to conversations,
-    ))
+    val model =
+        baseModel(
+            mapOf(
+                "title" to "Staff Chat",
+                "conversations" to conversations,
+            ),
+        )
 
     val template = pebbleEngine.getTemplate("staff/chat/index.peb")
     val writer = StringWriter()

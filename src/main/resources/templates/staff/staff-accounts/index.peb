@@ -1,0 +1,37 @@
+{% extends "_layout/basestaff.peb" %}
+
+{% block content %}
+<section class="staff-shell">
+    <header class="staff-hero">
+        <h1>Create Staff Account</h1>
+    </header>
+
+    <div class="staff-form-card">
+        {% if statusMessage %}
+        <p class="staff-form-status staff-form-status--{{ statusTone }}" role="status">{{ statusMessage }}</p>
+        {% endif %}
+
+        <form class="staff-form" method="post" action="/staff/staff-accounts">
+            <div class="staff-form__grid">
+                <div class="staff-form__field">
+                    <label for="staff-firstname">First name</label>
+                    <input id="staff-firstname" name="firstname" type="text" autocomplete="given-name">
+                </div>
+                <div class="staff-form__field">
+                    <label for="staff-lastname">Last name</label>
+                    <input id="staff-lastname" name="lastname" type="text" autocomplete="family-name">
+                </div>
+                <div class="staff-form__field staff-form__field--wide">
+                    <label for="staff-email">Email</label>
+                    <input id="staff-email" name="email" type="email" autocomplete="email">
+                </div>
+                <div class="staff-form__field staff-form__field--wide">
+                    <label for="staff-password">Temporary password</label>
+                    <input id="staff-password" name="password" type="password" autocomplete="new-password">
+                </div>
+            </div>
+            <button type="submit" class="staff-form__submit">Create staff account</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

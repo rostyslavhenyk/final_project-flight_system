@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object Airports : Table("airports") {
@@ -31,7 +32,7 @@ data class Airport(
 )
 
 object AirportRepository {
-    private fun ResultRow.toAirport() =
+    internal fun ResultRow.toAirport() =
         Airport(
             airportID = this[Airports.id],
             countryID = this[Airports.countryId],
@@ -43,6 +44,19 @@ object AirportRepository {
     fun all(): List<Airport> =
         transaction {
             Airports.selectAll().map { it.toAirport() }
+        }
+
+    fun allFull(): List<AirportFull> =
+        transaction {
+            Airports
+                .innerJoin(Countries, { Airports.countryId }, { Countries.id })
+                .selectAll()
+                .map {
+                    AirportFull(
+                        airport = it.toAirport(),
+                        country = CountryRepository.run { it.toCountry() },
+                    )
+                }
         }
 
     fun get(id: Int): Airport? =
@@ -77,3 +91,8 @@ object AirportRepository {
             Airports.deleteWhere { Airports.id eq id } > 0
         }
 }
+
+data class AirportFull(
+    val airport: Airport,
+    val country: Country,
+)

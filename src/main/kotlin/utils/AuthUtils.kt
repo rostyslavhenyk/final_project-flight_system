@@ -11,4 +11,6 @@ fun ApplicationCall.getUser(): User? {
     return UserRepository.get(session.id)
 }
 
-fun ApplicationCall.isStaff(): Boolean = getUser()?.roleId == 1
+fun ApplicationCall.isStaff(): Boolean = getUser()?.roleId in setOf(1, 2)
+
+fun ApplicationCall.isStaffAdmin(): Boolean = getUser()?.roleId == 2

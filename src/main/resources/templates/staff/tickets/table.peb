@@ -1,0 +1,16 @@
+<div class="ticket-button-list">
+    {% for item in tickets %}
+        <a href="/staff/tickets/{{ item.ticket.ticketID }}" class="ticket-button">
+            <span class="ticket-button-main">
+                <span class="ticket-button-title">Ticket No. {{ item.ticket.ticketID }}</span>
+            </span>
+            <span class="ticket-button-tags">
+                <span>{% if item.ticket.status == "IN_PROGRESS" %}IN PROGRESS{% else %}{{ item.ticket.status }}{% endif %}</span>
+            </span>
+            <span class="ticket-button-meta">{{ item.user.firstname }} {{ item.user.lastname }}</span>
+            <span class="ticket-button-view">{{ item.createdAtText }}</span>
+        </a>
+    {% else %}
+        <p class="staff-empty">{{ emptyMessage }}</p>
+    {% endfor %}
+</div>
