@@ -172,14 +172,14 @@
     border-radius: 12px;
     padding: 40px 36px;
     width: 100%;
-    max-width: 400px;
+    max-width: 560px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     position: relative;
     z-index: 1;
 }
 
 .signup-card {
-    max-width: 440px;
+    max-width: 600px;
 }
 
 .login-logo {

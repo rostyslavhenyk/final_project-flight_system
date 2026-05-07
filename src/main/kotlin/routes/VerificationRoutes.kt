@@ -127,7 +127,7 @@ private suspend fun ApplicationCall.handleForgotPasswordVerify() {
             respond(HttpStatusCode.BadRequest)
             return@timed
         }
-        respond(HttpStatusCode.OK)
+        respondText("Code verified", ContentType.Text.Plain, status = HttpStatusCode.OK)
     }
 }
 
@@ -186,7 +186,7 @@ private suspend fun ApplicationCall.handlePasswordReset() {
         VerificationStore.removeCode(key)
 
         response.headers.append("HX-Redirect", "/login")
-        respond(HttpStatusCode.OK)
+        respondText("Code verified", ContentType.Text.Plain, status = HttpStatusCode.OK)
     }
 }
 

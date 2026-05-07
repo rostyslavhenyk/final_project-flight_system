@@ -349,7 +349,7 @@
 
 <!-- CHAT WIDGET -->
 <div class="chat-widget" id="chatWidget" role="complementary" aria-label="Live chat">
-    <button class="chat-header" onclick="toggleChat()" aria-expanded="false" aria-controls="chatBody" aria-label="Toggle live chat">
+    <button class="chat-header" onclick="openChat()" aria-expanded="false" aria-controls="chatBody" aria-label="Toggle live chat">
         <span>Live Chat</span>
         <span aria-hidden="true" id="chatChevron">^</span>
     </button>
