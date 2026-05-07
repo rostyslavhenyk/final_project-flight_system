@@ -44,6 +44,28 @@ class RepositoryTest {
     }
 
     @Test
+    fun `closed chat conversations are hidden from staff until customer sends again`() {
+        val user = testUser("Ada", "Chat", "chat-close@example.com")
+        val other = testUser("Grace", "Open", "chat-open@example.com")
+
+        ChatRepository.add(user.id, user.firstname, "Can you help?", false)
+        ChatRepository.add(other.id, other.firstname, "Still open", false)
+
+        withClue("closing a conversation marks it closed") {
+            assertTrue(ChatRepository.close(user.id))
+            assertTrue(ChatRepository.isClosed(user.id))
+        }
+        withClue("closed conversations are not returned to the staff open list") {
+            assertEquals(listOf(other.id), ChatRepository.getAllOpen().map { it.userId }.distinct())
+        }
+        withClue("a new customer message reopens the conversation") {
+            ChatRepository.add(user.id, user.firstname, "I still need help", false)
+            assertFalse(ChatRepository.isClosed(user.id))
+            assertTrue(ChatRepository.getAllOpen().any { it.userId == user.id })
+        }
+    }
+
+    @Test
     fun `seat holds block other users but can be refreshed released and confirmed by owner`() {
         val owner = testUser("Owner", "Passenger", "owner@example.com")
         val other = testUser("Other", "Passenger", "other@example.com")

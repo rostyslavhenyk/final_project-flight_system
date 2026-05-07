@@ -19,6 +19,7 @@ object AllTables {
             Tickets,
             TicketImages,
             ChatMessages,
+            ChatConversationStates,
             Purchases,
             Payments,
         )

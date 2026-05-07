@@ -1,6 +1,8 @@
 package data
 
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.ResultRow
@@ -23,6 +25,14 @@ object ChatMessages : Table("chat_messages") {
     override val primaryKey = PrimaryKey(id)
 }
 
+object ChatConversationStates : Table("chat_conversation_states") {
+    val userId = integer("userId")
+    val isClosed = bool("isClosed").default(false)
+    val closedAt = long("closedAt").nullable()
+
+    override val primaryKey = PrimaryKey(userId)
+}
+
 data class ChatMessage(
     val id: Int,
     val userId: Int,
@@ -41,6 +51,9 @@ object ChatRepository {
         isStaff: Boolean,
     ): ChatMessage =
         transaction {
+            if (!isStaff) {
+                reopen(userId)
+            }
             val timestamp = System.currentTimeMillis()
             val id =
                 ChatMessages.insert {
@@ -70,6 +83,53 @@ object ChatRepository {
                 .orderBy(ChatMessages.timestamp, SortOrder.ASC)
                 .map { it.toChatMessage() }
         }
+
+    fun getAllOpen(): List<ChatMessage> =
+        transaction {
+            val closedUsers =
+                ChatConversationStates
+                    .select(ChatConversationStates.userId)
+                    .where { ChatConversationStates.isClosed eq true }
+                    .map { it[ChatConversationStates.userId] }
+                    .toSet()
+
+            ChatMessages
+                .selectAll()
+                .orderBy(ChatMessages.timestamp, SortOrder.ASC)
+                .map { it.toChatMessage() }
+                .filterNot { it.userId in closedUsers }
+        }
+
+    fun close(userId: Int): Boolean =
+        transaction {
+            val hasMessages =
+                ChatMessages
+                    .select(ChatMessages.id)
+                    .where { ChatMessages.userId eq userId }
+                    .limit(1)
+                    .any()
+            if (!hasMessages) return@transaction false
+
+            ChatConversationStates.deleteWhere { ChatConversationStates.userId eq userId }
+            ChatConversationStates.insert {
+                it[ChatConversationStates.userId] = userId
+                it[isClosed] = true
+                it[closedAt] = System.currentTimeMillis()
+            }
+            true
+        }
+
+    fun isClosed(userId: Int): Boolean =
+        transaction {
+            ChatConversationStates
+                .select(ChatConversationStates.userId)
+                .where { (ChatConversationStates.userId eq userId) and (ChatConversationStates.isClosed eq true) }
+                .any()
+        }
+
+    private fun reopen(userId: Int) {
+        ChatConversationStates.deleteWhere { ChatConversationStates.userId eq userId }
+    }
 
     private fun ResultRow.toChatMessage(): ChatMessage =
         ChatMessage(

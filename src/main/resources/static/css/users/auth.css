@@ -260,8 +260,7 @@
 
 .login-forgot {
     text-align: right;
-    margin-bottom: 20px;
-    margin-top: -8px;
+    margin: -8px 0 20px;
 }
 
 .login-forgot a {

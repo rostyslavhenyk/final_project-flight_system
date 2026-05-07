@@ -68,10 +68,8 @@
 
 .help-section--grey > * {
     max-width: 860px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 24px;
-    padding-right: 24px;
+    margin-inline: auto;
+    padding-inline: 24px;
 }
 
 .help-section h2 {

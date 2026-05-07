@@ -324,7 +324,7 @@
   color: var(--primary-color);
 }
 
-/* One line for chosen cabin (from homepage search); replaces repeating “Economy” on every card */
+/* One line for chosen cabin (from homepage search); replaces repeating "Economy" on every card */
 .cabin-banner {
   margin: 0 0 1.1rem;
   padding: 0.65rem 1rem;
@@ -832,7 +832,7 @@
   z-index: 1;
 }
 
-/* Only the “Route details” label toggles `<details>` — not a full-width row. */
+/* Only the "Route details" label toggles `<details>` - not a full-width row. */
 .flight-card__details-summary {
   cursor: pointer;
   color: var(--primary-color);
@@ -850,12 +850,12 @@
 }
 
 .flight-card__details-summary::after {
-  content: " ▼";
+  content: " \25BC";
   font-size: 0.75em;
 }
 
 .flight-card__details[open] .flight-card__details-summary::after {
-  content: " ▲";
+  content: " \25B2";
 }
 
 .flight-card__details-body {
@@ -925,7 +925,7 @@
   gap: 0.35rem;
 }
 
-/* Left column: flight numbers + ↓; right column: segment / connect boxes (direct + multi-stop). */
+/* Left column: flight numbers + down arrow; right column: segment / connect boxes (direct + multi-stop). */
 .route-itinerary--ledger .route-itinerary__row--segment {
   display: grid;
   grid-template-columns: 5.35rem minmax(0, 1fr);
@@ -966,7 +966,7 @@
   font-weight: 700;
   color: var(--primary-color);
   line-height: 1;
-  /* Column is centred on full width; flight numbers are left — nudge arrow left to sit under their visual centre */
+  /* Column is centred on full width; flight numbers are left - nudge arrow left to sit under their visual centre */
   transform: translateX(-0.42rem);
 }
 

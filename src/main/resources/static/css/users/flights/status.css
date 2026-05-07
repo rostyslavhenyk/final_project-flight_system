@@ -1,8 +1,7 @@
 @import url("/static/css/users/flights/core.css");
 
 .status-page {
-  margin-top: 1.1rem;
-  margin-bottom: 0;
+  margin: 1.1rem 0 0;
 }
 
 .status-shell {

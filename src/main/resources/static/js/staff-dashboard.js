@@ -3,7 +3,7 @@
 
   function setRange(range) {
     document.querySelectorAll('[data-sales-range]').forEach(function (button) {
-      var active = button.getAttribute('data-sales-range') === range;
+      const active = button.getAttribute('data-sales-range') === range;
       button.classList.toggle('staff-dashboard-toggle__btn--active', active);
       button.setAttribute('aria-pressed', active ? 'true' : 'false');
     });

@@ -198,16 +198,16 @@
     <p class="help-subtitle">Track an existing refund or raise a new request.</p>
 
     <div class="refund-tabs" role="tablist" aria-label="Refund options">
-        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="track" id="tab-track" onclick="switchTab('track')">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="track" id="tab-track" data-refund-tab="track">
             Track Refund
         </button>
-        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="request" id="tab-request" onclick="switchTab('request')">
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="request" id="tab-request" data-refund-tab="request">
             Raise a Refund Request
         </button>
     </div>
 
     <div class="tab-content" id="track" role="tabpanel" aria-labelledby="tab-track">
-        <form class="help-form" onsubmit="trackRefund(event)" novalidate aria-label="Track refund form">
+        <form class="help-form" id="track-refund-form" novalidate aria-label="Track refund form">
             <div class="form-group">
                 <label for="track-ref">Booking Reference</label>
                 <input type="text" id="track-ref" placeholder="e.g. ABC123" required aria-required="true">
@@ -222,7 +222,7 @@
     </div>
 
     <div class="tab-content" id="request" role="tabpanel" aria-labelledby="tab-request" hidden>
-        <form class="help-form" onsubmit="submitRefund(event)" novalidate aria-label="Raise refund request form">
+        <form class="help-form" id="request-refund-form" novalidate aria-label="Raise refund request form">
             <div class="form-row">
                 <div class="form-group">
                     <label for="refund-firstname">First Name</label>
@@ -288,7 +288,7 @@
                 <p class="error">Images must be image files, 2 MB or smaller. You can attach up to 3 images.</p>
             {% endif %}
 
-            <form method="post" action="/help/tickets" enctype="multipart/form-data" onsubmit="submitContact(event)" aria-label="Contact us form">
+            <form method="post" action="/help/tickets" enctype="multipart/form-data" aria-label="Contact us form">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="contact-firstname">First Name</label>
@@ -336,7 +336,7 @@
             <div class="contact-info-item">
                 <strong>Live Chat</strong>
                 <p>Available 24/7 for urgent queries</p>
-                <button class="btn-help-outline" onclick="openChat()" aria-label="Open live chat">Start Chat</button>
+                <button class="btn-help-outline" id="open-chat-button" aria-label="Open live chat">Start Chat</button>
             </div>
             <div class="contact-info-item">
                 <strong>Response Times</strong>
@@ -349,7 +349,7 @@
 
 <!-- CHAT WIDGET -->
 <div class="chat-widget" id="chatWidget" role="complementary" aria-label="Live chat">
-    <button class="chat-header" onclick="toggleChat()" aria-expanded="false" aria-controls="chatBody" aria-label="Toggle live chat">
+    <button class="chat-header" id="chat-toggle-button" aria-expanded="false" aria-controls="chatBody" aria-label="Toggle live chat">
         <span>Live Chat</span>
         <span aria-hidden="true" id="chatChevron">^</span>
     </button>
@@ -359,8 +359,8 @@
         </div>
         <div class="chat-input-row">
             <label for="chatInput" class="sr-only">Type your message</label>
-            <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="handleChatKey(event)">
-            <button onclick="sendChat()" aria-label="Send message">Send</button>
+            <input type="text" id="chatInput" placeholder="Type a message...">
+            <button id="chat-send-button" aria-label="Send message">Send</button>
         </div>
     </div>
 </div>
