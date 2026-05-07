@@ -34,7 +34,11 @@
             </ul>
             <ul class="auth-links">
                 <li><a href="/staff/my-account">My Account</a></li>
-                <li><a href="/logout">Log Out</a></li>
+                <li>
+                    <form action="/logout" method="post" class="nav-inline-form">
+                        <button type="submit" class="nav-inline-button">Log Out</button>
+                    </form>
+                </li>
             </ul>
         </nav>
     </header>

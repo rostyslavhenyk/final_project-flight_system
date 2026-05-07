@@ -125,7 +125,7 @@
                         </div>
                         <div class="bp-wf-field">
                             <label class="bp-wf-label" for="bp-contact-email">Email</label>
-                            <input id="bp-contact-email" name="contactEmail" type="email" class="bp-wf-input bp-wf-input--tall" autocomplete="email" title="Must include @">
+                            <input id="bp-contact-email" name="contactEmail" type="email" class="bp-wf-input bp-wf-input--tall" autocomplete="email" title="Must include @"{% if loggedIn and contactEmailValue %} value="{{ contactEmailValue }}"{% endif %}>
                             <p id="bp-err-contact-email" class="bp-wf-inline-error" role="alert" hidden></p>
                         </div>
                         <div class="bp-wf-field">

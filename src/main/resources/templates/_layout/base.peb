@@ -34,7 +34,11 @@
             <ul class="auth-links">
                 {% if loggedIn %}
                     <li><a href="/my-account">My Account</a></li>
-                    <li><a href="/logout">Log Out</a></li>
+                    <li>
+                        <form action="/logout" method="post" class="nav-inline-form">
+                            <button type="submit" class="nav-inline-button">Log Out</button>
+                        </form>
+                    </li>
                 {% else %}
                     <li><a href="/signup">Sign Up</a></li>
                     <li><a href="/login">Log In</a></li>

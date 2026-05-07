@@ -1,0 +1,39 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Student Fare · Glide Airways{% endblock %}
+
+{% block content %}
+<section class="page-shell" aria-labelledby="student-fare-heading">
+    <header class="page-header">
+        <p class="page-header__eyebrow">Flights</p>
+        <h1 id="student-fare-heading" class="page-header__title">Student Fare</h1>
+        <p class="page-header__text">Reduced fares for eligible students on selected routes and travel periods.</p>
+    </header>
+
+    <section class="surface-card">
+        <div class="surface-card__body">
+            <h2>Eligibility</h2>
+            <ul>
+                <li>Available to active students aged 16 and above.</li>
+                <li>Valid student ID or enrollment proof is required at check-in.</li>
+                <li>Name on the booking must match your official student documents.</li>
+            </ul>
+
+            <h2>What is included</h2>
+            <ul>
+                <li>Special student pricing on selected destinations.</li>
+                <li>Flexible date changes on qualifying fares (fare differences may apply).</li>
+                <li>Access to seasonal promotions for student members.</li>
+            </ul>
+
+            <h2>Before you travel</h2>
+            <ul>
+                <li>Carry both your passport/ID and student verification documents.</li>
+                <li>If documents cannot be verified, standard fare conditions may be applied.</li>
+            </ul>
+
+            <p><a href="/signup">Create an account to start booking student fares.</a></p>
+        </div>
+    </section>
+</section>
+{% endblock %}

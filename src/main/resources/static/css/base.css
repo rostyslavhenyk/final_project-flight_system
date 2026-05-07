@@ -658,7 +658,39 @@ button {
     transition: color 0.2s ease;
 }
 
+.nav-inline-form {
+    margin: 0;
+}
+
+.nav-inline-button {
+    position: relative;
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-color) !important;
+    -webkit-text-fill-color: var(--text-color);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
 #navbar nav ul li a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -4px;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary-color);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.2s ease;
+}
+
+#navbar nav ul li .nav-inline-button::after {
     content: "";
     position: absolute;
     left: 0;
@@ -676,6 +708,15 @@ button {
 }
 
 #navbar nav ul li a:hover::after {
+    transform: scaleX(1);
+}
+
+#navbar nav ul li .nav-inline-button:hover {
+    color: var(--primary-color) !important;
+    -webkit-text-fill-color: var(--primary-color);
+}
+
+#navbar nav ul li .nav-inline-button:hover::after {
     transform: scaleX(1);
 }
 

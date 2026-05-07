@@ -1,6 +1,7 @@
 package routes.flight
 
 import auth.LoggedInState
+import data.UserRepository
 import data.flight.FlightSearchRepository
 import io.ktor.http.Parameters
 import java.net.URLEncoder
@@ -22,6 +23,7 @@ internal fun bookPassengersModel(
     val adults = queryParams["adults"]?.toIntOrNull()?.coerceIn(1, MAX_ADULT_PASSENGERS) ?: 1
     val children = queryParams["children"]?.toIntOrNull()?.coerceIn(0, MAX_CHILD_PASSENGERS) ?: 0
     val session = logged.session
+    val account = if (logged.loggedIn && session != null) UserRepository.get(session.id) else null
     val segment = passengerSegmentSnapshot(queryParams)
     val cabinEff = CabinNormalization.normalizedCabinFromQuery(queryParams, fromRaw, toRaw)
     return mapOf(
@@ -38,7 +40,7 @@ internal fun bookPassengersModel(
         "flight" to queryParams["flight"].orEmpty(),
         "price" to queryParams["price"].orEmpty(),
         "backToChooseFlightsHref" to backToChooseFlightsHref(queryParams, fromRaw, toRaw, departRaw),
-        "passengerRows" to buildPassengerRowModels(adults, children),
+        "passengerRows" to bookingPassengerRowModels(queryParams),
         "hasFlightDetail" to segment.hasFlightDetail,
         "segDep" to segment.departure,
         "segArr" to segment.arrival,
@@ -47,7 +49,7 @@ internal fun bookPassengersModel(
         "segOrig" to segment.origin,
         "segDest" to segment.destination,
         "segArrPlus" to segment.arrivalPlusDays,
-        "loginHref" to "/login?returnUrl=" + URLEncoder.encode(currentUri, StandardCharsets.UTF_8),
+        "loginHref" to "/login?redirect=" + URLEncoder.encode(currentUri, StandardCharsets.UTF_8),
         "membershipValue" to
             if (logged.loggedIn && session != null) {
                 String.format(Locale.UK, MEMBER_NUMBER_FORMAT, session.id)
@@ -55,6 +57,7 @@ internal fun bookPassengersModel(
                 ""
             },
         "membershipFilled" to (logged.loggedIn && session != null),
+        "contactEmailValue" to (account?.email ?: ""),
         "continueSeatsHref" to bookingHref("/book/seats", queryParams),
     )
 }
@@ -131,6 +134,13 @@ private fun inboundPassengerSearchHref(
         returnSearchParams["leg"] = "inbound"
     }
     return flightsHref(returnSearchParams)
+}
+
+/** Per-passenger row: global `slot`, screen-reader `heading`, wireframe `badgeTier`. */
+internal fun bookingPassengerRowModels(queryParams: Parameters): List<Map<String, Any>> {
+    val adults = queryParams["adults"]?.toIntOrNull()?.coerceIn(1, MAX_ADULT_PASSENGERS) ?: 1
+    val children = queryParams["children"]?.toIntOrNull()?.coerceIn(0, MAX_CHILD_PASSENGERS) ?: 0
+    return buildPassengerRowModels(adults, children)
 }
 
 /** Per-passenger row: global `slot`, screen-reader `heading`, wireframe `badgeTier`. */

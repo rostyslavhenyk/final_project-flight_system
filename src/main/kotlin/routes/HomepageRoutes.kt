@@ -16,6 +16,9 @@ import kotlin.random.Random
 
 fun Route.homepageRoutes() {
     get("/") { call.handleLoadPage() }
+    get("/check-in") { call.handleCheckInPage() }
+    get("/offers/free-cancellation") { call.handleFreeCancellationPage() }
+    get("/offers/student-fare") { call.handleStudentFarePage() }
     get("/api/latest-offers") { call.handleLatestOffers() }
     get("/api/homepage-cabin-constraints") { call.handleHomepageCabinConstraints() }
 }
@@ -57,6 +60,47 @@ private suspend fun ApplicationCall.handleHomepageCabinConstraints() {
             else -> !FlightScheduleRules.isIntraRegionalBusinessRestrictedPair(origin, dest)
         }
     respondText("""{"businessSelectable":$businessSelectable}""", ContentType.Application.Json)
+}
+
+private suspend fun ApplicationCall.handleCheckInPage() {
+    timed("T0_checkin_page_load", jsMode()) {
+        if (isStaff()) {
+            respondRedirect("/staff")
+            return@timed
+        }
+        renderTemplate(
+            "user/check-in/index.peb",
+            mapOf(
+                "title" to "Check in",
+            ),
+        )
+    }
+}
+
+private suspend fun ApplicationCall.handleFreeCancellationPage() {
+    timed("T0_offer_free_cancel_page_load", jsMode()) {
+        if (isStaff()) {
+            respondRedirect("/staff")
+            return@timed
+        }
+        renderTemplate(
+            "user/offers/free-cancellation/index.peb",
+            mapOf("title" to "24-hour free cancellation"),
+        )
+    }
+}
+
+private suspend fun ApplicationCall.handleStudentFarePage() {
+    timed("T0_offer_student_fare_page_load", jsMode()) {
+        if (isStaff()) {
+            respondRedirect("/staff")
+            return@timed
+        }
+        renderTemplate(
+            "user/offers/student-fare/index.peb",
+            mapOf("title" to "Student Fare"),
+        )
+    }
 }
 
 private suspend fun ApplicationCall.handleLatestOffers() {

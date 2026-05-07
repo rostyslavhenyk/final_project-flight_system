@@ -1,0 +1,15 @@
+<div class="seat-booking__pay-receipt" aria-label="Payment summary">
+    <div class="seat-booking__receipt-unit-line seat-booking__receipt-unit-line--combined">
+        <span class="seat-booking__receipt-combined-label">Flights + Extras (per passenger)</span>
+        <span class="seat-booking__receipt-unit-amount">GBP {{ perPassengerCombinedPlain }}</span>
+    </div>
+    <div class="seat-booking__receipt-pax-row">
+        <span class="seat-booking__receipt-pax-label">Number of {% if paxCount == 1 %}passenger{% else %}passengers{% endif %}</span>
+        <span class="seat-booking__receipt-pax-num">{{ paxCount }}</span>
+    </div>
+    <hr class="seat-booking__receipt-rule">
+    <div class="seat-booking__receipt-total">
+        <span class="seat-booking__receipt-total-label">Total</span>
+        <span class="seat-booking__receipt-total-amount">GBP {{ grandTotalPlain }}</span>
+    </div>
+</div>

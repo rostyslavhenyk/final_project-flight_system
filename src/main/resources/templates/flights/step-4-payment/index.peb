@@ -1,0 +1,48 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Confirm and pay · Glide Airways{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="/static/css/users/flights/core.css">
+<link rel="stylesheet" href="/static/css/users/flights/review.css">
+<link rel="stylesheet" href="/static/css/users/flights/seats.css">
+<script src="/static/js/book-payment.js" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="flights-page seat-booking-page seat-booking-page--seat-step">
+    <nav class="booking-stepper" aria-label="Booking progress">
+        <ol class="booking-stepper__list">
+            <li class="booking-stepper__item booking-stepper__item--done">
+                <span class="booking-stepper__num">1</span>
+                <a class="booking-stepper__label booking-stepper__label--done-link" href="{{ chooseFlightsHref }}">Choose flights</a>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--done">
+                <span class="booking-stepper__num">2</span>
+                <a class="booking-stepper__label booking-stepper__label--done-link" href="{{ passengersHref }}">Passenger info</a>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--done">
+                <span class="booking-stepper__num">3</span>
+                <a class="booking-stepper__label booking-stepper__label--done-link" href="{{ seatsHref }}">Seat and extras</a>
+            </li>
+            <li class="booking-stepper__item booking-stepper__item--current">
+                <span class="booking-stepper__num">4</span>
+                <span class="booking-stepper__label">Confirm and pay</span>
+            </li>
+        </ol>
+    </nav>
+
+    <header class="flights-hero">
+        <h1 class="flights-hero__title">Confirm and pay</h1>
+    </header>
+
+    {% include 'user/flights/_book-payment-summary-inner.peb' %}
+
+    <footer class="seat-booking__pay-footer seat-booking__pay-footer--receipt">
+        {% include 'user/flights/_book-payment-receipt.peb' %}
+        <div class="seat-booking__pay-cta review-wf-continue-wrap">
+            <button type="button" class="review-wf-continue" id="pay-now-button">Pay now</button>
+        </div>
+    </footer>
+</div>
+{% endblock %}

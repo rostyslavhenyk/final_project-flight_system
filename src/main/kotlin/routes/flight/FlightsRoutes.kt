@@ -12,7 +12,7 @@ import utils.timed
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-/** Registers `/flights`, `/search-flights`, `/book/review`, `/book/passengers`, `/book/seats`. */
+/** Registers `/flights`, `/search-flights`, `/book/review`, `/book/passengers`, `/book/seats`, `/book/payment`. */
 fun Route.flightsRoutes() {
     get("/flights") { call.handleFlightsPage() }
     get("/flight-status") { call.handleFlightStatusPage() }
@@ -21,6 +21,7 @@ fun Route.flightsRoutes() {
     get("/book/review") { call.handleBookReview() }
     get("/book/passengers") { call.handleBookPassengers() }
     get("/book/seats") { call.handleBookSeats() }
+    get("/book/payment") { call.handleBookPayment() }
 }
 
 /** Simple static Flights page so the header link does not clash with search results. */
@@ -97,7 +98,7 @@ private suspend fun ApplicationCall.handleBookPassengers() {
     }
 }
 
-/** Placeholder step 4 until seat selection is implemented. */
+/** Step 3: seat map and extras (client-side selection; server model from chosen flights). */
 private suspend fun ApplicationCall.handleBookSeats() {
     timed("T0_book_seats", jsMode()) {
         redirectToLoginIfNeeded()?.let { url ->
@@ -109,13 +110,25 @@ private suspend fun ApplicationCall.handleBookSeats() {
             respondRedirect(url)
             return@timed
         }
-        val model =
-            mapOf(
-                "title" to "Seat and extras",
-                "chooseFlightsHref" to backToFlightSearchHref(queryParams),
-                "passengersHref" to bookingHref("/book/passengers", queryParams),
-            )
+        val model = bookSeatsModel(queryParams)
         renderFlightTemplate("user/flights/step-3-seats/index.peb", model)
+    }
+}
+
+/** Step 4: confirm seat fees and proceed to pay. */
+private suspend fun ApplicationCall.handleBookPayment() {
+    timed("T0_book_payment", jsMode()) {
+        redirectToLoginIfNeeded()?.let { url ->
+            respondRedirect(url)
+            return@timed
+        }
+        val queryParams = request.queryParameters
+        bookPathRedirectIfCanonicalCabinNeeded("/book/payment", queryParams)?.let { url ->
+            respondRedirect(url)
+            return@timed
+        }
+        val model = bookPaymentModel(queryParams)
+        renderFlightTemplate("flights/step-4-payment/index.peb", model)
     }
 }
 

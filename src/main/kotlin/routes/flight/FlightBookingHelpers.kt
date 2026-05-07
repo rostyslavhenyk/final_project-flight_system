@@ -39,6 +39,8 @@ private val bookingQueryKeys =
         "segArrPlus",
         "segOrig",
         "segDest",
+        "seatSel",
+        "paxSel",
     )
 
 /** Preserves booking state across /book/... steps. */
@@ -98,6 +100,22 @@ internal fun findRecordForRouteAndFlightId(
         searchRouteRecord(origin, destination, departureDate, flightId)
     }
 }
+
+internal fun findRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
+    findRecordForRouteAndFlightId(
+        fromRaw = queryParams["from"].orEmpty(),
+        toRaw = queryParams["to"].orEmpty(),
+        departRaw = queryParams["depart"].orEmpty(),
+        flightId = queryParams["flight"].orEmpty(),
+    )
+
+internal fun findOutboundRecordForBooking(queryParams: Parameters): FlightScheduleRecord? =
+    findRecordForRouteAndFlightId(
+        fromRaw = queryParams["obFrom"].orEmpty(),
+        toRaw = queryParams["obTo"].orEmpty(),
+        departRaw = queryParams["obDepart"].orEmpty(),
+        flightId = queryParams["obFlight"].orEmpty(),
+    )
 
 private fun searchRouteRecord(
     origin: String,

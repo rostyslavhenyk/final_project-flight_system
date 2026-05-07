@@ -119,6 +119,30 @@ object UserRepository {
                 .singleOrNull()
         }
 
+    fun updateName(
+        id: Int,
+        firstName: String,
+        lastName: String,
+    ): User? =
+        transaction {
+            val normalizedFirstName = normalizePersonName(firstName)
+            val normalizedLastName = normalizePersonName(lastName)
+            val updatedRows =
+                Users.update({ Users.id eq id }) {
+                    it[firstname] = normalizedFirstName
+                    it[lastname] = normalizedLastName
+                }
+            if (updatedRows == 0) {
+                null
+            } else {
+                Users
+                    .selectAll()
+                    .where { Users.id eq id }
+                    .map { it.toUser() }
+                    .singleOrNull()
+            }
+        }
+
     fun normalizeStoredNames() {
         transaction {
             Users.selectAll().forEach { row ->
