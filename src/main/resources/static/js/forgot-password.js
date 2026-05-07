@@ -42,7 +42,7 @@ function verifyResetCode() {
     var code = document.getElementById('reset-code').value.trim()
 
     if (code === '') {
-        document.getElementById('verify-status').textContent = 'Please enter the code'
+        document.getElementById('step2-status').textContent = 'Please enter the code'
         return
     }
 
@@ -54,14 +54,12 @@ function verifyResetCode() {
         body: body
     })
         .then(function (response) {
-            return response.text().then(function (text) {
-                if (response.ok) {
-                    document.getElementById('step2').hidden = true
-                    document.getElementById('step3').hidden = false
-                } else {
-                    document.getElementById('verify-status').textContent = text
-                }
-            })
+            if (response.ok) {
+                document.getElementById('step2').hidden = true
+                document.getElementById('step3').hidden = false
+            } else {
+                document.getElementById('step2-status').textContent = 'Invalid or expired code, please try again.'
+            }
         })
 }
 

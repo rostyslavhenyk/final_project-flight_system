@@ -13,8 +13,8 @@ import java.util.Properties
 // replace senderEmail and senderPassword before testing
 object EmailService {
 
-    private val senderEmail = "yourapp@gmail.com"
-    private val senderPassword = "your-app-password-here"
+    private val senderEmail = "glideairways.support@gmail.com"
+    private val senderPassword = "yekdqnxsmwedvlnz"
 
     private fun getSession(): Session {
         val props = Properties()

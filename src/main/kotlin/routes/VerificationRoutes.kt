@@ -90,39 +90,21 @@ private suspend fun ApplicationCall.handleForgotPasswordVerify() {
         val code = params["code"]
 
         if (key.isNullOrBlank()) {
-            respondText(
-                createVerifyStatus("Email or phone is required"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respond(HttpStatusCode.BadRequest)
             return@timed
         }
 
         if (code.isNullOrBlank()) {
-            respondText(
-                createVerifyStatus("Please enter the code"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respond(HttpStatusCode.BadRequest)
             return@timed
         }
 
         val valid = VerificationStore.verifyCode(key, code)
-
         if (!valid) {
-            respondText(
-                createVerifyStatus("Invalid or expired code"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respond(HttpStatusCode.BadRequest)
             return@timed
         }
-
-        respondText(
-            createVerifyStatus("Code verified"),
-            ContentType.Text.Html,
-            status = HttpStatusCode.OK,
-        )
+        respond(HttpStatusCode.OK)
     }
 }
 

@@ -84,21 +84,40 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val existingUser = UserRepository.getByEmail(email)
-
-        if (existingUser != null) {
+    // password requirements check
+        if (password.length < 10) {
             respondText(
-                createSignUpStatus("User already exists with that email"),
+                createSignUpStatus("Password must be at least 10 characters"),
                 ContentType.Text.Html,
                 status = HttpStatusCode.OK,
             )
             return@timed
-        }
-
-        val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
-        val u = UserRepository.add(firstname, lastname, 0, email, hashedPassword)
-        sessions.set(UserSession(u.id, firstname))
-        response.headers.append("HX-Redirect", "/")
-        respond(HttpStatusCode.OK)
     }
-}
+
+        if (!password.any { it.isUpperCase() }) {
+        respondText(
+            createSignUpStatus("Password must contain at least one capital letter"),
+            ContentType.Text.Html,
+            status = HttpStatusCode.OK,
+        )
+        return@timed
+    }
+
+            val existingUser = UserRepository.getByEmail(email)
+
+            if (existingUser != null) {
+                respondText(
+                    createSignUpStatus("User already exists with that email"),
+                    ContentType.Text.Html,
+                    status = HttpStatusCode.OK,
+                )
+                return@timed
+            }
+
+            val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+            val u = UserRepository.add(firstname, lastname, 0, email, hashedPassword)
+            sessions.set(UserSession(u.id, firstname))
+            response.headers.append("HX-Redirect", "/")
+            respond(HttpStatusCode.OK)
+        }
+    }
