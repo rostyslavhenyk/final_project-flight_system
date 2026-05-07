@@ -13,6 +13,7 @@ import io.ktor.server.sessions.*
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import routes.commitmentRoutes
+import routes.chatRoutes
 import routes.flight.flightsRoutes
 import routes.helpRoutes
 import routes.homepageRoutes
@@ -23,6 +24,7 @@ import routes.myAccountRoutes
 import routes.signUpRoutes
 import routes.staff.configureHealthCheck
 import routes.staff.staffRoutes
+import routes.verificationRoutes
 import utils.DatabaseFactory
 import utils.SessionUtils
 
@@ -39,12 +41,13 @@ fun main() {
     }.start(wait = true)
 }
 
+// sets up the database and creates tables
 @Suppress("SpreadOperator")
 fun configureDatabase() {
     DatabaseFactory.init()
 
     transaction {
-        SchemaUtils.create(*AllTables.all())
+        SchemaUtils.createMissingTablesAndColumns(*AllTables.all())
         FlightScheduleGenerator.ensureSeedData()
     }
     UserRepository.normalizeStoredNames()
@@ -70,6 +73,7 @@ fun Application.configureTemplating() {
 
 fun ApplicationCall.isHtmxRequest(): Boolean = request.headers["HX-Request"] == "true"
 
+// sets up session cookies
 fun Application.configureSessions() {
     install(Sessions) {
         cookie<SessionUtils>("SESSION") {
@@ -84,6 +88,7 @@ fun Application.configureSessions() {
     }
 }
 
+// registers all routes
 fun Application.configureRouting() {
     routing {
         staticResources("/static", "static")
@@ -100,5 +105,7 @@ fun Application.configureRouting() {
         logInRoutes()
         myAccountRoutes()
         staffRoutes()
+        verificationRoutes()
+        chatRoutes()
     }
 }

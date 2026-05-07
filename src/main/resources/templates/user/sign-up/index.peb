@@ -1,42 +1,75 @@
 {% extends "_layout/base.peb" %}
 
-{% block content %}
-<section class="page-shell page-shell--narrow" aria-labelledby="signup-heading">
-    <header class="page-header">
-        <p class="page-header__eyebrow">Account</p>
-        <h1 id="signup-heading" class="page-header__title">Sign up</h1>
-        <p class="page-header__text">Create an account to manage bookings and Glide Club membership.</p>
-    </header>
+{% block styles %}
+<link rel="stylesheet" href="/static/css/users/auth.css">
+{% endblock %}
 
-    <div class="surface-card auth-card">
-        <form class="auth-form"
+{% block body_class %}auth-page-body{% endblock %}
+
+{% block content %}
+
+<div class="login-page">
+
+    <div class="login-card signup-card">
+
+        <div class="login-logo">
+            <img src="/static/images/LogoForTab.svg" alt="" aria-hidden="true">
+            <span>Glide Airlines</span>
+        </div>
+
+        <h1>Create your account</h1>
+        <p class="login-subtitle">Create your account with an optional phone number</p>
+
+        <form class="signup-form"
             method="post"
             action="/signup"
             hx-post="/signup"
             hx-target="#sign-up-status"
-            hx-swap="innerHTML">
+            hx-swap="innerHTML"
+            novalidate>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="signup-firstname">First name</label>
-                    <input id="signup-firstname" name="firstname" autocomplete="given-name">
+            <div class="signup-name-row">
+                <div class="login-field">
+                    <label for="firstname">First Name</label>
+                    <input id="firstname" name="firstname" placeholder="First Name" autocomplete="given-name" required aria-required="true">
                 </div>
-                <div class="form-group">
-                    <label for="signup-lastname">Last name</label>
-                    <input id="signup-lastname" name="lastname" autocomplete="family-name">
+
+                <div class="login-field">
+                    <label for="lastname">Last Name</label>
+                    <input id="lastname" name="lastname" placeholder="Last Name" autocomplete="family-name" required aria-required="true">
                 </div>
             </div>
-            <div class="form-group">
-                <label for="signup-email">Email</label>
-                <input id="signup-email" name="email" type="email" autocomplete="email">
+
+            <div class="login-field">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" autocomplete="email" required aria-required="true">
             </div>
-            <div class="form-group">
-                <label for="signup-password">Password</label>
-                <input id="signup-password" name="password" type="password" autocomplete="new-password">
+
+            <div class="login-field">
+                <label for="phone">Phone Number <span class="optional-label">Optional</span></label>
+                <input type="tel" id="phone" name="phone" placeholder="+44 7000 000000" autocomplete="tel">
             </div>
-            <button type="submit">Sign up</button>
-            <div id="sign-up-status" role="status" aria-live="polite" aria-atomic="true"></div>
+
+            <div class="login-field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required aria-required="true">
+            </div>
+
+            <button type="submit" class="login-btn">Sign Up</button>
+            <div id="sign-up-status" class="auth-status" role="status" aria-live="polite" aria-atomic="true"></div>
         </form>
+
+        <p class="login-signup-link">
+            Already have an account? <a href="/login">Sign in</a>
+        </p>
+
     </div>
-</section>
+
+    <div class="login-bg" aria-hidden="true">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
+
+</div>
 {% endblock %}

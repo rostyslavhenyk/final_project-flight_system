@@ -18,6 +18,7 @@ object AllTables {
             LoyaltyUsers,
             Tickets,
             TicketImages,
+            ChatMessages,
             Purchases,
             Payments,
         )

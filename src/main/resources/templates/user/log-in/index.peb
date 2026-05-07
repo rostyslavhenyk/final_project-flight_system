@@ -1,33 +1,82 @@
 {% extends "_layout/base.peb" %}
 
-{% block content %}
-<section class="page-shell page-shell--narrow" aria-labelledby="login-heading">
-    <header class="page-header">
-        <p class="page-header__eyebrow">Account</p>
-        <h1 id="login-heading" class="page-header__title">Log in</h1>
-        <p class="page-header__text">Access your bookings, membership details, and support tickets.</p>
-    </header>
+{% block styles %}
+<link rel="stylesheet" href="/static/css/users/auth.css">
+{% endblock %}
 
-    <div class="surface-card auth-card">
-        <form class="auth-form"
-            method="post"
+{% block body_class %}auth-page-body{% endblock %}
+
+{% block content %}
+
+<div class="login-page">
+
+    <div class="login-card">
+
+        <div class="login-logo">
+            <img src="/static/images/LogoForTab.svg" alt="" aria-hidden="true">
+            <span>Glide Airlines</span>
+        </div>
+
+        <h1>Welcome back</h1>
+        <p class="login-subtitle">Sign in to your account</p>
+
+        <form method="post"
             action="/login"
             hx-post="/login"
             hx-target="#log-in-status"
-            hx-swap="innerHTML">
+            hx-swap="innerHTML"
+            novalidate>
 
             <input type="hidden" name="redirect" value="{{ redirect }}">
-            <div class="form-group">
-                <label for="login-email">Email</label>
-                <input id="login-email" name="email" type="email" autocomplete="email">
+
+            <div class="login-field">
+                <label for="email">Email Address</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="your@email.com"
+                    autocomplete="email"
+                    required
+                    aria-required="true"
+                >
             </div>
-            <div class="form-group">
-                <label for="login-password">Password</label>
-                <input id="login-password" name="password" type="password" autocomplete="current-password">
+
+            <div class="login-field">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                    required
+                    aria-required="true"
+                >
             </div>
-            <button type="submit">Log in</button>
-            <div id="log-in-status" role="status" aria-live="polite" aria-atomic="true"></div>
+
+            <div class="login-forgot">
+                <a href="/forgot-password">Forgot your password?</a>
+            </div>
+
+            <button type="submit" class="login-btn">Sign In</button>
+
+            <div id="log-in-status" class="auth-status" role="status" aria-live="polite" aria-atomic="true"></div>
+
         </form>
+
+        <p class="login-signup-link">
+            Don't have an account? <a href="/signup">Sign up</a>
+        </p>
+
     </div>
-</section>
+
+    <div class="login-bg" aria-hidden="true">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
+
+</div>
+
 {% endblock %}

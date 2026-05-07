@@ -10,14 +10,16 @@ import utils.jsMode
 import utils.timed
 import data.UserRepository
 import auth.UserSession
+import org.mindrot.jbcrypt.BCrypt
 
+// signup routes
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
     post("/signup") { call.handleSignUpPost() }
 }
 
 fun createSignUpStatus(message: String): String =
-    """<div id="sign-up-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
+    """<div id="sign-up-status" class="auth-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
     timed("T1_signup_load", jsMode()) {
@@ -30,13 +32,15 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
     }
 }
 
+// validates fields then creates the user
 private suspend fun ApplicationCall.handleSignUpPost() {
     timed("T1_signup_submit", jsMode()) {
         val params = receiveParameters()
 
         val firstname = params["firstname"]
         val lastname = params["lastname"]
-        val email = params["email"]
+        val email = params["email"]?.trim()
+        val phone = params["phone"]?.trim().orEmpty()
         val password = params["password"]
 
         if (firstname.isNullOrBlank()) {
@@ -86,7 +90,8 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
-        val createdUser = UserRepository.add(firstname, lastname, 0, email, password)
+        val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
+        val createdUser = UserRepository.add(firstname, lastname, 0, email, hashedPassword, phone)
         sessions.set(UserSession(createdUser.id, createdUser.firstname))
         response.headers.append("HX-Redirect", "/")
         respond(HttpStatusCode.OK)

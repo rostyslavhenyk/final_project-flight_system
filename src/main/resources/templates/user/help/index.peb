@@ -41,7 +41,6 @@
     <!-- Booking -->
     <div class="faq-category" id="booking-help">
         <h3>Booking</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a1" id="faq-q1">
                 How do I book a flight?
@@ -51,7 +50,6 @@
                 <p>Go to the Flights page, enter your origin, destination, date and number of passengers, then select your preferred flight and complete payment.</p>
             </div>
         </div>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a2" id="faq-q2">
                 Can I change my booking?
@@ -61,7 +59,6 @@
                 <p>Yes. Go to Manage Booking, select the booking you want to change and click "Change Flight". Only available for flights that have not departed yet.</p>
             </div>
         </div>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a3" id="faq-q3">
                 How do I cancel my booking?
@@ -76,7 +73,6 @@
     <!-- Check-in -->
     <div class="faq-category" id="checkin-help">
         <h3>Check-in</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a4" id="faq-q4">
                 How do I check in online?
@@ -86,7 +82,6 @@
                 <p>Online check-in opens 24 hours before your flight. Sign in, go to Check-in and follow the steps. You will need your booking reference and passport.</p>
             </div>
         </div>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a5" id="faq-q5">
                 What documents do I need?
@@ -101,7 +96,6 @@
     <!-- Baggage -->
     <div class="faq-category">
         <h3>Baggage</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a6" id="faq-q6">
                 What is the baggage allowance?
@@ -111,7 +105,6 @@
                 <p>Standard economy includes 1 carry-on bag up to 10kg. Checked baggage can be added during or after booking. Allowances vary by fare type and membership tier.</p>
             </div>
         </div>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a7" id="faq-q7">
                 Can I add extra baggage after booking?
@@ -126,7 +119,6 @@
     <!-- Membership -->
     <div class="faq-category">
         <h3>Membership</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a8" id="faq-q8">
                 What are the membership benefits?
@@ -136,7 +128,6 @@
                 <p>We offer Silver, Gold and Platinum tiers. Benefits include loyalty points, priority boarding, extra baggage and exclusive fare discounts.</p>
             </div>
         </div>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a9" id="faq-q9">
                 How do I become a member?
@@ -151,7 +142,6 @@
     <!-- Delays -->
     <div class="faq-category">
         <h3>Delays &amp; Cancellations</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a10" id="faq-q10">
                 What happens if my flight is delayed?
@@ -161,7 +151,6 @@
                 <p>You will be notified by email. You can track live flight status on our Flight Status page. Depending on the delay you may be entitled to compensation.</p>
             </div>
         </div>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a11" id="faq-q11">
                 What if my flight is cancelled by the airline?
@@ -176,7 +165,6 @@
     <!-- Special Assistance -->
     <div class="faq-category">
         <h3>Special Assistance</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a12" id="faq-q12">
                 How do I request special assistance?
@@ -191,7 +179,6 @@
     <!-- Visa -->
     <div class="faq-category">
         <h3>Visa &amp; Travel Documents</h3>
-
         <div class="faq-item">
             <button class="faq-question" aria-expanded="false" aria-controls="faq-a13" id="faq-q13">
                 Do I need a visa for my destination?
@@ -219,7 +206,6 @@
         </button>
     </div>
 
-    <!-- Track -->
     <div class="tab-content" id="track" role="tabpanel" aria-labelledby="tab-track">
         <form class="help-form" onsubmit="trackRefund(event)" novalidate aria-label="Track refund form">
             <div class="form-group">
@@ -235,7 +221,6 @@
         <div id="trackResult" role="status" aria-live="polite"></div>
     </div>
 
-    <!-- Request -->
     <div class="tab-content" id="request" role="tabpanel" aria-labelledby="tab-request" hidden>
         <form class="help-form" onsubmit="submitRefund(event)" novalidate aria-label="Raise refund request form">
             <div class="form-row">
@@ -285,7 +270,6 @@
     <p class="help-subtitle">We aim to respond to all messages within 24 hours.</p>
 
     <div class="contact-wrapper">
-
         <div class="contact-form-box">
             <h3>Send us a message</h3>
             {% if ticketCreated %}
@@ -360,7 +344,6 @@
                 <p>Refund requests: 3-5 business days</p>
             </div>
         </div>
-
     </div>
 </section>
 
