@@ -13,5 +13,6 @@ The main AI-assisted areas were:
 - `src/main/kotlin/data/flight/FlightScheduleGenerator.kt` and `src/main/kotlin/data/flight/FlightSeedData.kt` - spoof data for testing and demonstration.
 - `src/main/kotlin/routes/flight/FlightBookingHelpers.kt` - initial query about how one would carry the data throughout pages, which was built on later.
 - `src/main/resources/static/js/homepage.js` and `src/main/resources/static/js/flights-results.js` - used AI to explain the server-to-front-end data display, and some UI choices.
+- `src/main/resources/static/js/homepage.js`, `src/main/resources/templates/user/homepage/index.peb`, and `src/main/resources/static/css/homepage.css` - used AI to solve front-end bugs and alignment issues that I do not know how to, helped me implement Flatpickr to display dates, and make each option to have a white background colour instead of the default black one. Also used AI to auto generate comments for each chunk to facilitate merging with other branches (only a few was kept in the end).
 - Asked AI to explain what kind of stuff should be covered by tests.
 Front-end behaviour and booking/search flows were manually tested in the running application.
