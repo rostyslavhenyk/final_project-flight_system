@@ -98,6 +98,21 @@ class TemplateIntegrityTest {
     }
 
     @Test
+    fun `help contact form posts to ticket route`() {
+        val help = templateText("user/help/index.peb")
+        val helpScript = Files.readString(staticPath("/static/js/help.js"))
+
+        withClue("Contact form should submit to the server ticket route") {
+            assertTrue(help.contains("""action="/help/tickets""""))
+            assertTrue(help.contains("""enctype="multipart/form-data""""))
+        }
+        withClue("Contact ticket form must not be blocked by placeholder JavaScript") {
+            assertTrue(!help.contains("submitContact(event)"))
+            assertTrue(!helpScript.contains("function submitContact"))
+        }
+    }
+
+    @Test
     fun `representative templates render without pebble errors`() {
         val smokeTemplates =
             mapOf(

@@ -73,7 +73,7 @@
   position: relative;
 }
 
-/* White “summary” triggers (trip type, cabin summary) — same family as airport inputs */
+/* White "summary" triggers (trip type, cabin summary) - same family as airport inputs */
 .combo-trigger,
 .flight-search .field .date-trigger {
   min-height: 44px;
@@ -401,7 +401,7 @@
   text-align: left;
 }
 
-/* Same line as offers “Origin:” but slightly larger / stronger for long promo sentences */
+/* Same line as offers "Origin:" but slightly larger / stronger for long promo sentences */
 .home-promo__intro .offers-origin {
   margin: 0 0 16px;
   font-size: 1.1rem;
@@ -548,7 +548,7 @@
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
-  /* Card width = 4 per viewport (3 gaps × 16px) */
+  /* Card width = 4 per viewport (3 gaps x 16px) */
   container-type: inline-size;
   container-name: offers;
 }

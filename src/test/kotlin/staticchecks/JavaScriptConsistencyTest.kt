@@ -56,6 +56,26 @@ class JavaScriptConsistencyTest {
     }
 
     @Test
+    fun `application scripts avoid legacy var declarations`() {
+        appScriptPaths().forEach { scriptPath ->
+            val script = staticText(scriptPath)
+            withClue("$scriptPath should use block scoped declarations") {
+                assertTrue(!Regex("""\bvar\b""").containsMatchIn(script))
+            }
+        }
+    }
+
+    @Test
+    fun `application scripts avoid deprecated browser helpers`() {
+        appScriptPaths().forEach { scriptPath ->
+            val script = staticText(scriptPath)
+            withClue("$scriptPath should not use deprecated unescape") {
+                assertTrue(!script.contains("unescape("))
+            }
+        }
+    }
+
+    @Test
     fun `forgot password javascript endpoints match verification routes`() {
         val script = staticText("js/forgot-password.js")
 
@@ -74,3 +94,14 @@ private val templateRoot: Path = root.resolve("src/main/resources/templates")
 private fun staticText(relative: String): String = Files.readString(staticRoot.resolve(relative))
 
 private fun templateText(relative: String): String = Files.readString(templateRoot.resolve(relative))
+
+private fun appScriptPaths(): List<String> =
+    Files
+        .list(staticRoot.resolve("js"))
+        .use { paths: java.util.stream.Stream<Path> ->
+            paths
+                .filter { path -> Files.isRegularFile(path) }
+                .filter { path -> path.fileName.toString() != "htmx-1.9.12.min.js" }
+                .map { path -> staticRoot.relativize(path).toString().replace('\\', '/') }
+                .toList()
+        }

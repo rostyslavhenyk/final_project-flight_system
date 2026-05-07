@@ -19,11 +19,12 @@ import java.io.StringWriter
 fun Route.staffChatRoutes() {
     get("/chat") { call.handleStaffChatLoad() }
     post("/chat/reply") { call.handleStaffReply() }
+    post("/chat/close") { call.handleStaffChatClose() }
 }
 
 private suspend fun ApplicationCall.handleStaffChatLoad() {
     timed("T4_staff_chat_load", jsMode()) {
-        val allMessages = ChatRepository.getAll()
+        val allMessages = ChatRepository.getAllOpen()
 
         val conversations =
             allMessages
@@ -83,6 +84,26 @@ private suspend fun ApplicationCall.handleStaffReply() {
         }
 
         ChatRepository.add(userId, "Support Team", message, true)
+        respondRedirect("/staff/chat")
+    }
+}
+
+private suspend fun ApplicationCall.handleStaffChatClose() {
+    timed("T4_staff_chat_close", jsMode()) {
+        val session = sessions.get<UserSession>()
+
+        if (session == null) {
+            respond(HttpStatusCode.Unauthorized)
+            return@timed
+        }
+
+        val userId = receiveParameters()["userId"]?.toIntOrNull()
+
+        if (userId == null || !ChatRepository.close(userId)) {
+            respond(HttpStatusCode.BadRequest)
+            return@timed
+        }
+
         respondRedirect("/staff/chat")
     }
 }

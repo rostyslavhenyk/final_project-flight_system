@@ -11,6 +11,16 @@
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
+  function toBase64UrlUtf8(text) {
+    let bytes = new TextEncoder().encode(text);
+    let binary = '';
+    bytes.forEach(function (byte) {
+      binary += String.fromCharCode(byte);
+    });
+    let encoded = btoa(binary);
+    return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  }
+
   function setQueryParamIfPresent(params, key, value) {
     let trimmedValue = (value || '').trim();
     if (trimmedValue) params.set(key, trimmedValue);
@@ -549,10 +559,7 @@
             pax.push({ slot: parseInt(slot, 10), displayName: displayName });
           });
           sessionStorage.setItem('glideBookingPaxNames', JSON.stringify(pax));
-          let encoded = btoa(unescape(encodeURIComponent(JSON.stringify(pax))))
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=+$/g, '');
+          let encoded = toBase64UrlUtf8(JSON.stringify(pax));
           if (encoded) {
             let u = new URL(continueLink.getAttribute('href'), window.location.origin);
             u.searchParams.set('paxSel', encoded);
