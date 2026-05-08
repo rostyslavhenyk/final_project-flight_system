@@ -27,5 +27,30 @@ GLIDE_STRIPE_PUBLISHABLE_KEY = pk_test_51TUNmpEBhmaPcmwS1yJuThZL4siddhg1vnp6CEUU
 GLIDE_STRIPE_SECRET_KEY = sk_test_51TUNmpEBhmaPcmwSu3W1VhKi7JKHpu8L9VkVC3bjHG3Ag1X7n0LjGlzfJXjkYLw0AH2RohKqJ9zdOO29qJmrC1Ou00Vgz9Bg3K
 Environment keys for email messages to work and stripe payment.
 
+# WCAG Accessibility Test Record
+
+This table records a site-wide WCAG review of the Glide Airways flight booking system. The checks were carried out against the application templates, CSS and JavaScript, with practical keyboard-only behaviour assessed from the implemented markup and scripts. This is an internal accessibility test record suitable for project documentation; a formal certification would additionally require logged browser and assistive-technology test evidence.
+
+| Check | Criterion | Level | Pass/Fail | Notes |
+|---|---:|---:|---|---|
+| K1 | 2.1.1 All actions keyboard accessible | A | Pass | Interactive actions are mostly implemented with keyboard accessibility in mind. |
+| K2 | 2.4.7 Focus visible | AA | Pass | Global `:focus-visible` styling is present in `base.css`. Skip links also have visible focus styling. |
+| K3 | No keyboard traps | A | Pass | No obvious keyboard trap was found in the code. Dialogs and lightboxes provide close/Escape behaviour. |
+| K4 | Logical tab order | A | Pass | The page structure generally follows DOM order and uses native controls, so tab order is mostly logical. |
+| K5 | Skip links present | AA | Pass | Both user and staff layouts include a “Skip to main content” link targeting `#main`. |
+| F1 | 3.3.2 Labels present | A | Pass | Forms have visible or screen-reader labels, including the flight status route, flight number and date fields. |
+| F2 | 3.3.1 Errors identified | A | Pass | Error/status messages are shown for forms and booking flows, with `role="alert"` or visible inline error regions in key workflows. |
+| F3 | 4.1.2 Name, role, value | A | Pass | Controls expose names, roles and state. Custom dropdowns expose expanded/active state, staff chat open buttons expose `aria-expanded`, and dashboard toggle buttons expose `aria-pressed`. |
+| D1 | 4.1.3 Status messages | AA | Pass | Global status regions, auth status messages, booking errors, contact/refund statuses and several result messages use `role="status"`, `role="alert"` or `aria-live`. |
+| D2 | Live regions work | AA | Pass | Live chat uses `role="log"` and `aria-live`; unread chat badges and the dashboard unread count also expose polite live updates. |
+| D3 | Focus management | A | Fail | Some flows move focus correctly, but modal/dialog focus handling is not fully consistent. |
+| V1 | 1.4.3 Contrast minimum | AA | Pass | Main text and button colour combinations use strong foreground/background contrast. |
+| V2 | 1.4.4 Resize text | AA | Pass | Layouts are mostly responsive and use scalable units/clamp patterns.|
+| V3 | 1.4.11 Non-text contrast | AA | Pass | Most borders are green and stand out compared to the background. |
+| S1 | 1.3.1 Headings hierarchy | A | Pass | Most pages have clear headings, fitting the criteria required. | 
+| S2 | 2.4.1 Bypass blocks | A | Pass | Skip links are present in both main layouts and point to the main content region. |
+| S3 | 1.1.1 Alt text | A | Pass | Image elements include `alt` text. Decorative images generally use empty alt text or are marked hidden. |
+
 Running Instructions:
+
   
