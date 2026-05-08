@@ -343,7 +343,7 @@ button {
 
 .surface-card {
     background: var(--page-white);
-    border: 1px solid var(--primary-border-color);
+    border: 1px solid var(--primary-color);
     border-radius: var(--surface-radius);
     box-shadow: var(--surface-shadow);
 }

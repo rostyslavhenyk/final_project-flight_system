@@ -13,6 +13,7 @@ import utils.timed
 
 fun Route.membershipRoutes() {
     get("/membership") { call.handleMembershipList() }
+    get("/membership/benefits") { call.handleMembershipBenefitsList() }
 }
 
 private suspend fun ApplicationCall.handleMembershipList() {
@@ -31,5 +32,11 @@ private suspend fun ApplicationCall.handleMembershipList() {
                 "account" to user?.let { UserRepository.getFull(it.id) },
             ),
         )
+    }
+}
+
+private suspend fun ApplicationCall.handleMembershipBenefitsList() {
+    timed("T0_membership_benefits_list", jsMode()) {
+        renderTemplate("user/membership/benefits.peb", mapOf("title" to "Membership"))
     }
 }
