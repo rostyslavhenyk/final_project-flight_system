@@ -8,15 +8,16 @@
 <br>
 
 <section aria-labelledby="list-heading">
-<h5>Membership status benefits</h5>
+<h5 style="text-align: center;">Membership status benefits</h5>
 <div class = "tiers">
-    <div><h3>Silver</h3></div>
-    <div><h3>Gold</h3></div>
-    <div><h3>Platinum</h3></div>
+    <div><h3>Silver Tier</h3></div>
+    <div><h3>Gold Tier</h3></div>
+    <div><h3>Platinum Tier</h3></div>
+</div>
 <div class = "whyjoin">
-    <div><p>Earn points everytime you travel which can be spent to make your flights cheaper. </p></div>
-    <div><p>Earn 30% more points everytime you travel. Priority check-in and boarding. Free seat selection.</p></div>
-    <div><p>Earn 60% more points everytime you travel. Priority check-in and boarding. Free seat selection. Access to the lounge. </p></div>
-
+    <div><h5>Earn points everytime you travel which can be spent to make your flights cheaper. </h5></div>
+    <div><h5>Earn 30% more points everytime you travel. Priority check-in and boarding. Free seat selection.</h5></div>
+    <div><h5>Earn 60% more points everytime you travel. Priority check-in and boarding. Free seat selection. Access to the lounge. </h5></div>
+</div>
 </section>
 {% endblock %}

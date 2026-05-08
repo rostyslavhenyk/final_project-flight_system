@@ -18,9 +18,9 @@
     <h5 style="text-align: center;"> Join our membership scheme for free, you'll get exclusive rewards only available to members </h5>
     <h4 style="text-align: center;"> Why join? </h4>
     <div class = "whyjoin">
-        <div>Save your information for faster booking and manage your trips quickly </div>
-        <div>Gain points you can use to decrease the price of flights </div>
-        <div>Gain membership tiers that allow for exclusive benefits </div>
+        <div><h5>Save your information for faster booking and manage your trips quickly </h5></div>
+        <div><h5>Gain points you can use to decrease the price of flights </h5></div>
+        <div><h5>Gain membership tiers that allow for exclusive benefits </h5></div>
     </div>
     <h5> Become a member today </h5>
     <a href="/login" class="staff-action-link">Sign up now→</a>
