@@ -1,0 +1,9 @@
+<div class="flights-page seat-booking-page fare-summary-sheet" data-fare-summary-fragment-root>
+    <header class="flights-hero">
+        <h1 id="fare-summary-heading" class="flights-hero__title">Fare Summary</h1>
+    </header>
+    {% include 'user/flights/_book-payment-summary-inner.peb' %}
+    <footer class="seat-booking__pay-footer seat-booking__pay-footer--receipt fare-summary-sheet__footer-only">
+        {% include 'user/flights/_book-payment-receipt.peb' %}
+    </footer>
+</div>

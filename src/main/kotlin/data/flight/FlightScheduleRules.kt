@@ -27,11 +27,11 @@ internal object FlightScheduleRules {
     private const val MAX_DURATION_MINUTES = 1_100
     private const val SHORT_HAUL_PRICE_LIMIT_MINUTES = 90
     private const val MEDIUM_HAUL_PRICE_LIMIT_MINUTES = 150
-    private const val LONG_HAUL_STARTING_PRICE = 349.0
-    private const val LONG_HAUL_DURATION_PRICE_DIVISOR = 35
-    private const val REGIONAL_PRICE = 79.0
-    private const val SHORT_CONNECTION_PRICE = 115.0
-    private const val STANDARD_PRICE = 149.0
+    private const val LONG_HAUL_STARTING_PRICE = 261.75
+    private const val LONG_HAUL_DURATION_PRICE_DIVISOR = 46.6666666667
+    private const val REGIONAL_PRICE = 59.25
+    private const val SHORT_CONNECTION_PRICE = 86.25
+    private const val STANDARD_PRICE = 111.75
     private const val ROUTE_TIME_VARIANT_COUNT = 3
     private const val MORNING_HOUR_ONE = 6
     private const val MORNING_HOUR_TWO = 7

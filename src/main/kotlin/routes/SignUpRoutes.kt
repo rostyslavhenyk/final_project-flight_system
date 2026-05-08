@@ -19,7 +19,10 @@ fun Route.signUpRoutes() {
 }
 
 fun createSignUpStatus(message: String): String =
-    """<div id="sign-up-status" class="auth-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
+    """
+    <div id="sign-up-status" class="auth-status" hx-swap-oob="true" role="status"
+         aria-live="polite" aria-atomic="true">$message</div>
+    """.trimIndent()
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
     timed("T1_signup_load", jsMode()) {

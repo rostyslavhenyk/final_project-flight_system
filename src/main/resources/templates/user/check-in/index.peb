@@ -1,0 +1,13 @@
+{% extends "_layout/base.peb" %}
+
+{% block title %}Check in · Glide Airways{% endblock %}
+
+{% block content %}
+<section class="page-shell" aria-labelledby="checkin-heading">
+    <header class="page-header">
+        <p class="page-header__eyebrow">Travel tools</p>
+        <h1 id="checkin-heading" class="page-header__title">Check in</h1>
+        <p class="page-header__text">This feature is still under development.</p>
+    </header>
+</section>
+{% endblock %}

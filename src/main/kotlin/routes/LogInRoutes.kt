@@ -11,26 +11,40 @@ import utils.timed
 import data.UserRepository
 import auth.UserSession
 import org.mindrot.jbcrypt.BCrypt
+import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 // login and logout routes
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
     post("/login") { call.handleLogInPost() }
-    get("/logout") { call.handleLogOut() }
+    post("/logout") { call.handleLogOut() }
+    get("/logout") { call.respondRedirect("/") }
 }
 
 fun ApplicationCall.createLoginStatus(message: String): String =
-    """<div id="log-in-status" class="auth-status" hx-swap-oob="true" role="status" aria-live="polite" aria-atomic="true">$message</div>"""
+    """
+    <div id="log-in-status" class="auth-status" hx-swap-oob="true" role="status"
+         aria-live="polite" aria-atomic="true">$message</div>
+    """.trimIndent()
 
 private suspend fun ApplicationCall.handleLogInLoad() {
     timed("T1_login_load", jsMode()) {
-        val redirectUrl = safeLoginRedirect(request.queryParameters["redirect"])
+        val redirectUrl = loginRedirectTarget()
         if (sessions.get<UserSession>() != null) {
             respondRedirect(redirectUrl)
             return@timed
         }
 
-        renderTemplate("user/log-in/index.peb", mapOf("title" to "Log In", "redirect" to redirectUrl))
+        renderTemplate(
+            "user/log-in/index.peb",
+            mapOf(
+                "title" to "Log In",
+                "redirect" to redirectUrl,
+                "redirectParam" to URLEncoder.encode(redirectUrl, StandardCharsets.UTF_8),
+            ),
+        )
     }
 }
 
@@ -40,7 +54,7 @@ private suspend fun ApplicationCall.handleLogInPost() {
         val params = receiveParameters()
         val email = params["email"]
         val password = params["password"]
-        val redirectUrl = safeLoginRedirect(params["redirect"])
+        val redirectUrl = safeLoginRedirectParam(params)
 
         if (email == null || password == null) {
             respondText(
@@ -73,8 +87,12 @@ private suspend fun ApplicationCall.handleLogInPost() {
 
         sessions.set(UserSession(usr.id, usr.firstname))
         val redirectTarget = if (usr.roleId == 1 || usr.roleId == 2) "/staff" else redirectUrl
-        response.headers.append("HX-Redirect", redirectTarget)
-        respond(HttpStatusCode.OK)
+        if (request.headers["HX-Request"] == "true") {
+            response.headers.append("HX-Redirect", redirectTarget)
+            respond(HttpStatusCode.OK)
+        } else {
+            respondRedirect(redirectTarget)
+        }
     }
 }
 
@@ -96,4 +114,34 @@ private fun safeLoginRedirect(rawRedirect: String?): String {
             redirect == "/login" ||
             redirect.startsWith("/login?")
     return if (unsafeRedirect) "/" else redirect
+}
+
+private fun safeLoginRedirectParam(params: Parameters): String {
+    val rawRedirect = params["redirect"] ?: params["returnUrl"]
+    return safeLoginRedirect(rawRedirect)
+}
+
+private fun Parameters.hasLoginRedirect(): Boolean = contains("redirect") || contains("returnUrl")
+
+private fun ApplicationCall.loginRedirectTarget(): String {
+    if (request.queryParameters.hasLoginRedirect()) {
+        return safeLoginRedirectParam(request.queryParameters)
+    }
+    return safeLoginRedirect(refererPath())
+}
+
+private fun ApplicationCall.refererPath(): String? {
+    val referer = request.headers[HttpHeaders.Referrer]?.trim().orEmpty()
+    if (referer.isBlank()) return null
+
+    return runCatching {
+        val uri = URI(referer)
+        if (uri.isAbsolute && !uri.host.equals(request.host(), ignoreCase = true)) {
+            return@runCatching null
+        }
+        val path = uri.rawPath?.takeIf { it.isNotBlank() } ?: return@runCatching null
+        val query = uri.rawQuery?.let { "?$it" }.orEmpty()
+        val fragment = uri.rawFragment?.let { "#$it" }.orEmpty()
+        "$path$query$fragment"
+    }.getOrNull()
 }

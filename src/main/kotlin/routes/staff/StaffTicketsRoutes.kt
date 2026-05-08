@@ -126,16 +126,18 @@ private suspend fun ApplicationCall.handleTicketDetails() {
 }
 
 private suspend fun ApplicationCall.handleTicketImage() {
-    val imageID = parameters["id"]?.toIntOrNull()
-    val image = imageID?.let { TicketImageRepository.get(it) }
-    val file = image?.let { File(it.path) }
+    timed("T5_staff_ticket_image", jsMode()) {
+        val imageID = parameters["id"]?.toIntOrNull()
+        val image = imageID?.let { TicketImageRepository.get(it) }
+        val file = image?.let { File(it.path) }
 
-    if (image == null || file == null || !file.isFile) {
-        respond(HttpStatusCode.NotFound)
-        return
+        if (image == null || file == null || !file.isFile) {
+            respond(HttpStatusCode.NotFound)
+            return@timed
+        }
+
+        respondFile(file)
     }
-
-    respondFile(file)
 }
 
 private suspend fun ApplicationCall.handleUpdateTicketStatus() {

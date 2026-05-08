@@ -1,6 +1,7 @@
 package data.flight
 
 import data.AirportRepository
+import data.Bookings
 import data.Airports
 import data.Countries
 import data.FlightRepository
@@ -9,8 +10,11 @@ import data.RouteRepository
 import data.Routes
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.update
 import java.time.LocalDate
@@ -18,14 +22,16 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZonedDateTime
 
+private const val ACTIVE_STATUS = "scheduled"
+
 object FlightScheduleGenerator {
     private const val DAYS_TO_GENERATE = 28
-    private const val ACTIVE_STATUS = "scheduled"
 
     fun ensureSeedData() {
         ensureCountryTimezoneColumn()
         ensureFlightSearchIndexes()
         seedAirportsRoutesAndTemplates()
+        deleteExpiredUnbookedFlights()
         generateMissingFlights()
     }
 
@@ -48,7 +54,7 @@ object FlightScheduleGenerator {
 
     private fun seedAirportsRoutesAndTemplates() {
         FlightSeedData.countries().forEach { country ->
-            ensureCountry(country.name, country.timeZone)
+            FlightScheduleSeedMaintenance.ensureCountry(country.name, country.timeZone)
         }
 
         val countriesByName =
@@ -58,7 +64,7 @@ object FlightScheduleGenerator {
 
         val seedAirports = FlightSeedData.airports(countriesByName)
         seedAirports.forEach { airport ->
-            ensureAirport(airport)
+            FlightScheduleSeedMaintenance.ensureAirport(airport)
         }
 
         val airportCodes = seedAirports.map { airport -> airport.code }
@@ -70,7 +76,7 @@ object FlightScheduleGenerator {
             }
 
         routePairs.forEach { routePair ->
-            ensureRoute(routePair.first, routePair.second)
+            FlightScheduleSeedMaintenance.ensureRoute(routePair.first, routePair.second)
         }
 
         RouteRepository.allFull().forEachIndexed { routeIndex, routeFull ->
@@ -88,7 +94,7 @@ object FlightScheduleGenerator {
                 )
             val departureTimes = FlightScheduleRules.weeklyDepartureTimes(routeIndex)
             departureTimes.forEach { departureTime ->
-                ensureTemplate(
+                FlightScheduleSeedMaintenance.ensureTemplate(
                     routeId = routeFull.route.routeID,
                     departureTime = departureTime,
                     durationMinutes = durationMinutes,
@@ -143,7 +149,55 @@ object FlightScheduleGenerator {
         }
     }
 
-    private fun ensureCountry(
+    private fun deleteExpiredUnbookedFlights() {
+        val todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN).toString()
+        Flights.deleteWhere {
+            (Flights.departureTime less todayStart) and
+                notExists(
+                    Bookings
+                        .selectAll()
+                        .where { Bookings.flightID eq Flights.id },
+                )
+        }
+    }
+
+    private fun upsertFlight(
+        existingFlight: ResultRow?,
+        routeId: Int,
+        departureTime: String,
+        arrivalTime: String,
+        price: Double,
+        status: String,
+    ) {
+        if (existingFlight == null) {
+            FlightRepository.add(
+                routeID = routeId,
+                departureTime = departureTime,
+                arrivalTime = arrivalTime,
+                price = price,
+                status = status,
+            )
+        } else if (
+            existingFlight[Flights.arrivalTime] != arrivalTime ||
+            existingFlight[Flights.price] != price ||
+            existingFlight[Flights.status] != status
+        ) {
+            Flights.update({ Flights.id eq existingFlight[Flights.id] }) {
+                it[Flights.arrivalTime] = arrivalTime
+                it[Flights.price] = price
+                it[Flights.status] = status
+            }
+        }
+    }
+
+    private data class FlightKey(
+        val routeId: Int,
+        val departureTime: String,
+    )
+}
+
+private object FlightScheduleSeedMaintenance {
+    fun ensureCountry(
         name: String,
         timeZone: String,
     ) {
@@ -160,14 +214,14 @@ object FlightScheduleGenerator {
         }
     }
 
-    private fun ensureAirport(airport: SeedAirport) {
+    fun ensureAirport(airport: SeedAirport) {
         val exists = Airports.selectAll().where { Airports.code eq airport.code }.any()
         if (!exists) {
             AirportRepository.add(airport.countryId, airport.city, airport.name, airport.code)
         }
     }
 
-    private fun ensureRoute(
+    fun ensureRoute(
         departureCode: String,
         arrivalCode: String,
     ) {
@@ -186,7 +240,7 @@ object FlightScheduleGenerator {
         }
     }
 
-    private fun ensureTemplate(
+    fun ensureTemplate(
         routeId: Int,
         departureTime: LocalTime,
         durationMinutes: Int,
@@ -224,38 +278,4 @@ object FlightScheduleGenerator {
             }
         }
     }
-
-    private fun upsertFlight(
-        existingFlight: ResultRow?,
-        routeId: Int,
-        departureTime: String,
-        arrivalTime: String,
-        price: Double,
-        status: String,
-    ) {
-        if (existingFlight == null) {
-            FlightRepository.add(
-                routeID = routeId,
-                departureTime = departureTime,
-                arrivalTime = arrivalTime,
-                price = price,
-                status = status,
-            )
-        } else if (
-            existingFlight[Flights.arrivalTime] != arrivalTime ||
-            existingFlight[Flights.price] != price ||
-            existingFlight[Flights.status] != status
-        ) {
-            Flights.update({ Flights.id eq existingFlight[Flights.id] }) {
-                it[Flights.arrivalTime] = arrivalTime
-                it[Flights.price] = price
-                it[Flights.status] = status
-            }
-        }
-    }
-
-    private data class FlightKey(
-        val routeId: Int,
-        val departureTime: String,
-    )
 }

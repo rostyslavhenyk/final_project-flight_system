@@ -109,3 +109,13 @@ function resetPassword() {
         })
     })
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    var sendBtn = document.getElementById('send-reset-code-button')
+    var verifyBtn = document.getElementById('verify-reset-code-button')
+    var resetBtn = document.getElementById('reset-password-button')
+
+    if (sendBtn) sendBtn.addEventListener('click', sendResetCode)
+    if (verifyBtn) verifyBtn.addEventListener('click', verifyResetCode)
+    if (resetBtn) resetBtn.addEventListener('click', resetPassword)
+})

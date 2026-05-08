@@ -63,7 +63,10 @@ object EmailService {
                 message.setFrom(InternetAddress(senderEmail))
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
                 message.subject = "Glide Airways Password Reset"
-                message.setText("Hi,\n\nYour password reset code is: $code\n\nIf you did not request this, ignore this email.\n\nGlide Airways")
+                message.setText(
+                    "Hi,\n\nYour password reset code is: $code\n\n" +
+                        "If you did not request this, ignore this email.\n\nGlide Airways",
+                )
                 Transport.send(message)
                 true
             }

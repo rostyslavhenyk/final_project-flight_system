@@ -97,6 +97,34 @@ object BookingRepository {
                 }
         }
 
+    fun allFullByUser(userID: Int): List<BookingFull> =
+        transaction {
+            val purchasesById =
+                Purchases
+                    .selectAll()
+                    .map { PurchaseRepository.run { it.toPurchase() } }
+                    .associateBy { it.purchaseID }
+
+            (
+                Bookings
+                    .innerJoin(Flights, { Bookings.flightID }, { Flights.id })
+                    .innerJoin(Users, { Bookings.userID }, { Users.id })
+                    .innerJoin(Seats, { Bookings.seatID }, { Seats.id })
+            ).selectAll()
+                .where { Bookings.userID eq userID }
+                .map {
+                    val booking = it.toBooking()
+
+                    BookingFull(
+                        booking = booking,
+                        flight = FlightRepository.run { it.toFlight() },
+                        user = UserRepository.run { it.toUser() },
+                        seat = SeatRepository.run { it.toSeat() },
+                        purchase = booking.purchaseID?.let { purchaseID -> purchasesById[purchaseID] },
+                    )
+                }
+        }
+
     fun attachToPurchase(
         bookingID: Int,
         purchaseID: Int,

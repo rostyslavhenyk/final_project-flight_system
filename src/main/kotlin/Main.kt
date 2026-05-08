@@ -1,6 +1,7 @@
 import auth.UserSession
 import data.AllTables
-import data.UserRepository
+import data.SeatMaintenance
+import data.UserMaintenance
 import data.flight.FlightScheduleGenerator
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -21,12 +22,22 @@ import routes.legalRoutes
 import routes.logInRoutes
 import routes.membershipRoutes
 import routes.myAccountRoutes
+import routes.settingsRoutes
 import routes.signUpRoutes
 import routes.staff.configureHealthCheck
 import routes.staff.staffRoutes
 import routes.verificationRoutes
 import utils.DatabaseFactory
 import utils.SessionUtils
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
+private const val SCHEDULE_MAINTENANCE_HOUR = 0
+private const val SCHEDULE_MAINTENANCE_MINUTE = 5
 
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
@@ -36,21 +47,64 @@ fun main() {
         configureDatabase()
         configureLogging()
         configureTemplating()
+        configureFlightScheduleMaintenance()
         configureSessions()
         configureRouting()
     }.start(wait = true)
 }
 
-// sets up the database and creates tables
-@Suppress("SpreadOperator")
 fun configureDatabase() {
     DatabaseFactory.init()
 
     transaction {
-        SchemaUtils.createMissingTablesAndColumns(*AllTables.all())
+        SchemaUtils.createMissingTablesAndColumns(
+            tables = AllTables.all(),
+        )
+        SeatMaintenance.ensureUniqueSeatIndex()
         FlightScheduleGenerator.ensureSeedData()
     }
-    UserRepository.normalizeStoredNames()
+    UserMaintenance.normalizeStoredNames()
+}
+
+fun Application.configureFlightScheduleMaintenance() {
+    val scheduler =
+        Executors.newSingleThreadScheduledExecutor { runnable ->
+            Thread(runnable, "flight-schedule-maintenance").apply {
+                isDaemon = true
+            }
+        }
+    val initialDelayMillis = millisUntilNextScheduleMaintenance()
+    val dailyDelayMillis = TimeUnit.DAYS.toMillis(1)
+
+    scheduler.scheduleWithFixedDelay(
+        {
+            runCatching {
+                transaction {
+                    FlightScheduleGenerator.ensureSeedData()
+                }
+                log.info("Daily flight schedule maintenance completed")
+            }.onFailure { error ->
+                log.error("Daily flight schedule maintenance failed", error)
+            }
+        },
+        initialDelayMillis,
+        dailyDelayMillis,
+        TimeUnit.MILLISECONDS,
+    )
+
+    environment.monitor.subscribe(ApplicationStopping) {
+        scheduler.shutdownNow()
+    }
+}
+
+private fun millisUntilNextScheduleMaintenance(): Long {
+    val now = LocalDateTime.now()
+    val nextRun =
+        LocalDateTime.of(
+            LocalDate.now().plusDays(1),
+            LocalTime.of(SCHEDULE_MAINTENANCE_HOUR, SCHEDULE_MAINTENANCE_MINUTE),
+        )
+    return Duration.between(now, nextRun).toMillis().coerceAtLeast(TimeUnit.MINUTES.toMillis(1))
 }
 
 fun Application.configureLogging() {
@@ -101,6 +155,7 @@ fun Application.configureRouting() {
         flightsRoutes()
         membershipRoutes()
         helpRoutes()
+        settingsRoutes()
         signUpRoutes()
         logInRoutes()
         myAccountRoutes()

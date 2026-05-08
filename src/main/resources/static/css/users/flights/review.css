@@ -1,14 +1,13 @@
-/* --- Book review (step 1) layout — match Choose flights horizontal padding. --- */
+/* --- Book review (step 1) layout - match Choose flights horizontal padding. --- */
 .book-review-wf {
   max-width: none;
   margin: 0;
   padding-bottom: 2.75rem;
 }
 
-/* Use the same <hr> style as passenger step, with spacing before “Returning flight”. */
+/* Use the same <hr> style as passenger step, with spacing before "Returning flight". */
 .book-review-wf__leg-divider {
-  margin-top: 0.25rem;
-  margin-bottom: 2rem;
+  margin: 0.25rem 0 2rem;
 }
 
 .review-wf-stack {
@@ -156,7 +155,7 @@
   font-size: 0.82rem;
 }
 
-/* Hoist summary + body into `.review-wf-package-row` grid so open body spans GBP → Package details. */
+/* Hoist summary + body into `.review-wf-package-row` grid so open body spans GBP to Package details. */
 .review-wf-package-details {
   display: contents;
   margin: 0;
@@ -167,8 +166,7 @@
   grid-column: 2;
   grid-row: 1;
   justify-self: end;
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline: 0;
   padding-right: 0.15rem;
   text-align: right;
   width: fit-content;
@@ -191,8 +189,7 @@
   display: block;
   width: 100%;
   max-width: none;
-  margin-left: 0;
-  margin-right: 0;
+  margin-inline: 0;
   text-align: left;
   box-sizing: border-box;
 }
@@ -261,7 +258,7 @@
   }
 }
 
-/* Search cards use a 2-col grid + overflow:hidden for the price column; review has no price column — use one column or times get clipped. */
+/* Search cards use a 2-col grid + overflow:hidden for the price column; review has no price column - use one column or times get clipped. */
 .flight-card.flight-card--review-wf {
   display: block;
   overflow: visible;
@@ -277,7 +274,7 @@
   padding: 1.35rem 1.5rem 1rem;
 }
 
-/* Space under “Direct” / stops summary before the grey rule */
+/* Space under "Direct" / stops summary before the grey rule */
 .flight-card__detail--review-wf .flight-card__stops-line {
   margin-bottom: 1.1rem;
 }
