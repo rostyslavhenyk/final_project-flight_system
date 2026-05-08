@@ -11,8 +11,8 @@
     {% if loggedIn %}
     <h2 id="list-heading">Welcome to your membership</h2>
     <!-- Make sure to get points and member rank from database -->
-    <p> Your member level is {% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</p>
-    <p> You have {% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %} Points to use </p>
+    <p> Your member level is {% if account.loyaltyUser is not null %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</p>
+    <p> You have {% if account.loyaltyUser is not null %}{{ account.loyaltyUser.points }}{% else %}0{% endif %} Points to use </p>
     <p> To use your points, book a flight and select the option while booking. </p>
     {% else %}
     <h5 style="text-align: center;"> Join our membership scheme for free, you'll get exclusive rewards only available to members </h5>
