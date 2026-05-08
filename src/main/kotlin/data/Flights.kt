@@ -131,6 +131,19 @@ object FlightRepository {
                 .map { it.toFlightFull(fullQuery) }
         }
 
+    fun countBetweenDates(
+        firstDateInclusive: LocalDate,
+        lastDateInclusive: LocalDate,
+    ): Long =
+        transaction {
+            Flights
+                .selectAll()
+                .where {
+                    (Flights.departureTime greaterEq departureLowerInclusive(firstDateInclusive)) and
+                        (Flights.departureTime less departureEndExclusive(lastDateInclusive))
+                }.count()
+        }
+
     fun pagedFull(
         page: Int,
         pageSize: Int,

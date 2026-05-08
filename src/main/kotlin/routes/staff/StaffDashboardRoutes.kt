@@ -1,6 +1,7 @@
 package routes.staff
 
 import data.BookingRepository
+import data.ChatRepository
 import data.FlightRepository
 import data.PurchaseRepository
 import data.TicketRepository
@@ -58,6 +59,9 @@ private fun staffDashboardModel(): Map<String, Any?> {
         "soldFlightsSimulatedToday" to sales.today.simulatedSoldSeats,
         "soldFlightsSimulatedWeek" to sales.week.simulatedSoldSeats,
         "soldFlightsSimulatedFourWeeks" to sales.fourWeeks.simulatedSoldSeats,
+        "flightCountToday" to sales.today.flightCount,
+        "flightCountWeek" to sales.week.flightCount,
+        "flightCountFourWeeks" to sales.fourWeeks.flightCount,
         "soldFlightsRemainingToday" to sales.today.remainingSeats,
         "soldFlightsRemainingWeek" to sales.week.remainingSeats,
         "soldFlightsRemainingFourWeeks" to sales.fourWeeks.remainingSeats,
@@ -68,6 +72,7 @@ private fun staffDashboardModel(): Map<String, Any?> {
         "activeStaffTickets" to tickets.staff,
         "activeTicketTotal" to tickets.total,
         "userTicketPercent" to percentOf(tickets.user, tickets.total),
+        "unreadChatConversations" to ChatRepository.staffUnreadConversationCount(),
         "salesTarget28DaysPlain" to SALES_TARGET_28_DAYS_GBP.toString(),
         "salesReached28DaysPlain" to formatDashboardMoney(target.sales28Days),
         "salesTargetProgressPercent" to target.progressPercent,
@@ -146,7 +151,6 @@ private fun soldFlightSales(
     startDate: LocalDate,
     endDate: LocalDate,
 ): SoldFlightSales {
-    val flights = FlightRepository.allFull(startDate, endDate)
     val realSoldSeats =
         bookings.count {
             it.booking.createdAt
@@ -161,12 +165,13 @@ private fun soldFlightSales(
                     .isBetweenDates(startDate, endDate)
             }.map { it.flight.flightID }
             .toSet()
-    val rangeFlightCount = maxOf(flights.size, bookedFlightIds.size)
+    val rangeFlightCount = maxOf(FlightRepository.countBetweenDates(startDate, endDate).toInt(), bookedFlightIds.size)
     val simulatedSoldSeats = ((rangeFlightCount * SEATS_PER_FLIGHT * SIMULATED_TAKEN_SEAT_PERCENT) / PERCENT_MAX)
     val totalCapacity = rangeFlightCount * SEATS_PER_FLIGHT
     val soldSeats = realSoldSeats + simulatedSoldSeats
     val remainingSeats = (totalCapacity - soldSeats).coerceAtLeast(0)
     return SoldFlightSales(
+        flightCount = rangeFlightCount,
         realSoldSeats = realSoldSeats,
         simulatedSoldSeats = simulatedSoldSeats,
         soldSeats = soldSeats,
@@ -188,6 +193,7 @@ private fun percentOf(
 private fun formatDashboardMoney(value: Double): String = "%,.2f".format(value)
 
 private data class SoldFlightSales(
+    val flightCount: Int,
     val realSoldSeats: Int,
     val simulatedSoldSeats: Int,
     val soldSeats: Int,

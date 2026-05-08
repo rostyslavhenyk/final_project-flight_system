@@ -59,21 +59,29 @@
     {% if hasSearch %}
     {# Date, sort, and order controls are server-rendered links. #}
     <section class="date-carousel" aria-label="Departure date">
+        {% if weekPrevAvailable %}
         <a class="date-carousel__arrow" href="{{ weekPrevHref }}" aria-label="View dates one week earlier">‹</a>
+        {% else %}
+        <span class="date-carousel__arrow date-carousel__arrow--disabled" aria-disabled="true" tabindex="-1" aria-label="No earlier available dates">‹</span>
+        {% endif %}
         <ul class="date-carousel__days">
             {% for day in carouselDays %}
-            <li class="date-carousel__cell{% if day.selected %} date-carousel__cell--selected{% endif %}{% if day.past %} date-carousel__cell--past{% endif %}">
+            <li class="date-carousel__cell{% if day.selected %} date-carousel__cell--selected{% endif %}{% if day.unavailable %} date-carousel__cell--past{% endif %}">
                 {% if day.selected %}
                 <span class="date-carousel__chip date-carousel__chip--selected" aria-current="date">{{ day.label }}</span>
-                {% elseif day.past %}
-                <span class="date-carousel__chip date-carousel__chip--past" aria-disabled="true">{{ day.label }}</span>
+                {% elseif day.unavailable %}
+                <span class="date-carousel__chip date-carousel__chip--past" aria-disabled="true" tabindex="-1">{{ day.label }}</span>
                 {% else %}
                 <a class="date-carousel__chip" href="{{ day.href }}">{{ day.label }}</a>
                 {% endif %}
             </li>
             {% endfor %}
         </ul>
+        {% if weekNextAvailable %}
         <a class="date-carousel__arrow" href="{{ weekNextHref }}" aria-label="View dates one week later">›</a>
+        {% else %}
+        <span class="date-carousel__arrow date-carousel__arrow--disabled" aria-disabled="true" tabindex="-1" aria-label="No later available dates">›</span>
+        {% endif %}
     </section>
 
     <div class="flights-toolbar">

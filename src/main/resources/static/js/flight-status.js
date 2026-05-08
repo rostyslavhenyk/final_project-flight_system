@@ -9,10 +9,49 @@
     let list = document.getElementById(listId);
     if (!input || !list) return;
     let options = list.querySelectorAll('[role="option"]');
+    let activeIndex = -1;
+    options.forEach(function(el, index) {
+      if (!el.id) el.id = listId + '-option-' + index;
+    });
+
+    function visibleOptions() {
+      return Array.prototype.filter.call(options, function(el) {
+        return el.style.display !== 'none';
+      });
+    }
+
+    function setActiveOption(index) {
+      let available = visibleOptions();
+      options.forEach(function(el) {
+        el.classList.remove('highlight');
+        el.removeAttribute('aria-selected');
+      });
+      if (!available.length) {
+        activeIndex = -1;
+        input.removeAttribute('aria-activedescendant');
+        return null;
+      }
+      activeIndex = (index + available.length) % available.length;
+      let active = available[activeIndex];
+      active.classList.add('highlight');
+      active.setAttribute('aria-selected', 'true');
+      input.setAttribute('aria-activedescendant', active.id);
+      return active;
+    }
+
+    function clearActiveOption() {
+      activeIndex = -1;
+      options.forEach(function(el) {
+        el.classList.remove('highlight');
+        el.removeAttribute('aria-selected');
+      });
+      input.removeAttribute('aria-activedescendant');
+    }
 
     function hide() {
       list.classList.remove('is-open');
       input.setAttribute('aria-expanded', 'false');
+      clearActiveOption();
     }
 
     function choose(value) {
@@ -37,10 +76,36 @@
       }
       list.classList.add('is-open');
       input.setAttribute('aria-expanded', 'true');
+      clearActiveOption();
     }
 
     input.addEventListener('focus', filter);
     input.addEventListener('input', filter);
+    input.addEventListener('keydown', function(e) {
+      let open = list.classList.contains('is-open');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!open) filter();
+        setActiveOption(activeIndex + 1);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!open) filter();
+        setActiveOption(activeIndex - 1);
+        return;
+      }
+      if (e.key === 'Escape') {
+        hide();
+        return;
+      }
+      if (e.key === 'Enter' && open && activeIndex >= 0) {
+        let active = visibleOptions()[activeIndex];
+        if (!active) return;
+        e.preventDefault();
+        choose(active.getAttribute('data-value'));
+      }
+    });
     input.addEventListener('blur', function() { setTimeout(hide, 150); });
     list.querySelectorAll('[role="option"]').forEach(function(el) {
       el.addEventListener('mousedown', function(e) {
@@ -56,12 +121,33 @@
   function initStatusDatePickers() {
     let flatpickrFactory = window['flatpickr'];
     if (typeof flatpickrFactory !== 'function') return;
+
+    function markDisabledDate(dayElem) {
+      if (!dayElem || !dayElem.classList || !dayElem.classList.contains('flatpickr-disabled')) return;
+      dayElem.setAttribute('tabindex', '-1');
+      dayElem.setAttribute('aria-disabled', 'true');
+    }
+
+    function markDisabledDates(selectedDates, dateStr, instance) {
+      if (!instance || !instance.calendarContainer) return;
+      instance.calendarContainer.querySelectorAll('.flatpickr-day.flatpickr-disabled').forEach(markDisabledDate);
+    }
+
     document.querySelectorAll('.status-date-picker').forEach(function(input) {
       let minDate = input.getAttribute('data-min-date') || 'today';
+      let maxDate = input.getAttribute('data-max-date') || null;
       STATUS_DATE_PICKERS.set(input, flatpickrFactory(input, {
         mode: 'single',
         dateFormat: 'Y-m-d',
-        minDate: minDate
+        minDate: minDate,
+        maxDate: maxDate,
+        onReady: markDisabledDates,
+        onOpen: markDisabledDates,
+        onMonthChange: markDisabledDates,
+        onYearChange: markDisabledDates,
+        onDayCreate: function(selectedDates, dateStr, instance, dayElem) {
+          markDisabledDate(dayElem);
+        }
       }));
     });
   }
@@ -73,6 +159,7 @@
     let debounceTimer = null;
     let emptyMsg = null;
     let suggestSeq = 0;
+    let activeIndex = -1;
 
     let maxFlightDigits =
       parseInt(input.getAttribute('data-max-flight-digits') || '6', 10);
@@ -93,6 +180,8 @@
       list.querySelectorAll('[role="option"]').forEach(function(el) {
         el.remove();
       });
+      activeIndex = -1;
+      input.removeAttribute('aria-activedescendant');
     }
 
     function setOpen(isOpen) {
@@ -103,6 +192,49 @@
         list.classList.remove('is-open');
       }
       input.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (!isOpen) {
+        activeIndex = -1;
+        input.removeAttribute('aria-activedescendant');
+      }
+    }
+
+    function visibleOptions() {
+      if (!list) return [];
+      return Array.prototype.slice.call(list.querySelectorAll('[role="option"]'));
+    }
+
+    function setActiveOption(index) {
+      let options = visibleOptions();
+      options.forEach(function(el) {
+        el.classList.remove('highlight');
+        el.removeAttribute('aria-selected');
+      });
+      if (!options.length) {
+        activeIndex = -1;
+        input.removeAttribute('aria-activedescendant');
+        return null;
+      }
+      activeIndex = (index + options.length) % options.length;
+      let active = options[activeIndex];
+      if (!active.id) active.id = 'status-flight-suggest-option-' + activeIndex;
+      active.classList.add('highlight');
+      active.setAttribute('aria-selected', 'true');
+      input.setAttribute('aria-activedescendant', active.id);
+      return active;
+    }
+
+    function chooseFlightNumber(value) {
+      suggestSeq++;
+      clearTimeout(debounceTimer);
+      input.value = value;
+      setOpen(false);
+      clearOptions();
+      if (emptyMsg) {
+        emptyMsg.remove();
+        emptyMsg = null;
+      }
+      onlyDigits();
+      input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     function showSuggestions() {
@@ -146,24 +278,15 @@
               setOpen(true);
               return;
             }
-            arr.forEach(function(suffix) {
+            arr.forEach(function(suffix, index) {
               let el = document.createElement('div');
               el.setAttribute('role', 'option');
+              el.id = 'status-flight-suggest-option-' + index;
               el.setAttribute('data-value', suffix);
               el.textContent = 'GA' + suffix;
               el.addEventListener('mousedown', function(e) {
                 e.preventDefault();
-                suggestSeq++;
-                clearTimeout(debounceTimer);
-                input.value = suffix;
-                setOpen(false);
-                clearOptions();
-                if (emptyMsg) {
-                  emptyMsg.remove();
-                  emptyMsg = null;
-                }
-                onlyDigits();
-                input.dispatchEvent(new Event('change', { bubbles: true }));
+                chooseFlightNumber(suffix);
               });
               list.appendChild(el);
             });
@@ -179,6 +302,31 @@
 
     input.addEventListener('input', showSuggestions);
     input.addEventListener('focus', showSuggestions);
+    input.addEventListener('keydown', function(e) {
+      let open = list && list.classList.contains('is-open');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!open) showSuggestions();
+        setActiveOption(activeIndex + 1);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!open) showSuggestions();
+        setActiveOption(activeIndex - 1);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (e.key === 'Enter' && open && activeIndex >= 0) {
+        let active = visibleOptions()[activeIndex];
+        if (!active) return;
+        e.preventDefault();
+        chooseFlightNumber(active.getAttribute('data-value'));
+      }
+    });
     input.addEventListener('blur', function() {
       setTimeout(function() {
         setOpen(false);

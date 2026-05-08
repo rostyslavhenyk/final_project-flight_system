@@ -12,6 +12,8 @@ import data.UserRepository
 import auth.UserSession
 import org.mindrot.jbcrypt.BCrypt
 
+private const val MIN_SIGNUP_PASSWORD_LENGTH = 10
+
 // signup routes
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
@@ -82,6 +84,10 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
+        if (respondPasswordRequirementFailure(password)) {
+            return@timed
+        }
+
         val existingUser = UserRepository.getByEmail(email)
 
         if (existingUser != null) {
@@ -99,4 +105,19 @@ private suspend fun ApplicationCall.handleSignUpPost() {
         response.headers.append("HX-Redirect", "/")
         respond(HttpStatusCode.OK)
     }
+}
+
+private suspend fun ApplicationCall.respondPasswordRequirementFailure(password: String): Boolean {
+    val message =
+        when {
+            password.length < MIN_SIGNUP_PASSWORD_LENGTH -> "Password must be at least 10 characters"
+            !password.any { it.isUpperCase() } -> "Password must contain at least one capital letter"
+            else -> return false
+        }
+    respondText(
+        createSignUpStatus(message),
+        ContentType.Text.Html,
+        status = HttpStatusCode.OK,
+    )
+    return true
 }

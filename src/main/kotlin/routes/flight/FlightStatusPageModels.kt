@@ -40,6 +40,7 @@ internal fun flightStatusPageModel(parameters: Parameters): Map<String, Any?> {
         "mode" to query.mode,
         "date" to query.date.toString(),
         "minDate" to query.today.toString(),
+        "maxDate" to query.today.plusDays((FLIGHT_STATUS_UPCOMING_DAY_COUNT - 1).toLong()).toString(),
         "anyDate" to query.anyDate,
         "flightNumber" to query.flightNumber,
         "flightDigits" to query.flightDigitsOnly,

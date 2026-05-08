@@ -56,7 +56,7 @@
 }
 
 .staff-dashboard-card--wide {
-  grid-row: span 2;
+  grid-row: auto;
 }
 
 .staff-dashboard-card__head {
@@ -101,10 +101,10 @@
 
 .staff-pie-panel {
   display: grid;
-  grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-columns: minmax(5.5rem, 7.5rem) minmax(0, 1fr);
+  gap: 0.85rem;
   align-items: center;
-  margin-top: 1rem;
+  margin-top: 0.85rem;
 }
 
 .staff-pie-panel[hidden] {
@@ -117,7 +117,7 @@
 
 .staff-pie {
   --pie-main: 0%;
-  width: min(100%, 11rem);
+  width: min(100%, 7.5rem);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
@@ -175,6 +175,14 @@
   color: var(--muted-text-color);
   font-size: 0.88rem;
   font-weight: 700;
+}
+
+.staff-dashboard-count {
+  margin-top: 1rem;
+  color: var(--primary-color);
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 800;
 }
 
 .staff-pie-details strong {
@@ -537,6 +545,13 @@
   font-size: 0.9rem;
 }
 
+.chat-convo-head .chat-convo-preview {
+  max-width: 34rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chat-convo-head span {
   flex: 0 0 auto;
   padding: 0.25rem 0.55rem;
@@ -545,6 +560,11 @@
   color: var(--primary-color);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.chat-convo-head .chat-unread-pill {
+  background: var(--primary-color);
+  color: var(--page-white);
 }
 
 .chat-convo-actions {
@@ -584,6 +604,11 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.chat-convo-messages[hidden],
+.chat-reply-form[hidden] {
+  display: none;
 }
 
 .chat-convo-msg {

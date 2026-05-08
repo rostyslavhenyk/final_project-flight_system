@@ -32,6 +32,7 @@
             <input type="text" id="reset-code" placeholder="123456" maxlength="6">
         </div>
         <button id="verify-reset-code-button">Verify Code</button>
+        <div id="step2-status" role="status" aria-live="polite"></div>
     </div>
 
     <div id="step3" hidden>

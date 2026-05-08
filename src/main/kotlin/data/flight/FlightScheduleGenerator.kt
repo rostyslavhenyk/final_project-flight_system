@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.update
 import java.time.LocalDate
@@ -32,6 +33,7 @@ object FlightScheduleGenerator {
         ensureFlightSearchIndexes()
         seedAirportsRoutesAndTemplates()
         deleteExpiredUnbookedFlights()
+        deleteDuplicateUnbookedFlights()
         generateMissingFlights()
     }
 
@@ -161,6 +163,45 @@ object FlightScheduleGenerator {
         }
     }
 
+    private fun deleteDuplicateUnbookedFlights() {
+        val bookedFlightIds =
+            Bookings
+                .selectAll()
+                .map { row -> row[Bookings.flightID] }
+                .toSet()
+        val duplicateUnbookedIds =
+            Flights
+                .selectAll()
+                .map { row ->
+                    MaintenanceFlightRow(
+                        id = row[Flights.id],
+                        routeId = row[Flights.routeId],
+                        departureTime = row[Flights.departureTime],
+                    )
+                }.groupBy { row -> FlightKey(row.routeId, row.departureTime) }
+                .values
+                .flatMap { matchingFlights -> duplicateUnbookedIds(matchingFlights, bookedFlightIds) }
+
+        if (duplicateUnbookedIds.isNotEmpty()) {
+            Flights.deleteWhere { Flights.id inList duplicateUnbookedIds }
+        }
+    }
+
+    private fun duplicateUnbookedIds(
+        matchingFlights: List<MaintenanceFlightRow>,
+        bookedFlightIds: Set<Int>,
+    ): List<Int> {
+        if (matchingFlights.size <= 1) return emptyList()
+
+        val bookedFlight = matchingFlights.firstOrNull { row -> row.id in bookedFlightIds }
+        val keptFlightId = bookedFlight?.id ?: matchingFlights.minOf { row -> row.id }
+
+        return matchingFlights
+            .filterNot { row -> row.id == keptFlightId }
+            .filterNot { row -> row.id in bookedFlightIds }
+            .map { row -> row.id }
+    }
+
     private fun upsertFlight(
         existingFlight: ResultRow?,
         routeId: Int,
@@ -191,6 +232,12 @@ object FlightScheduleGenerator {
     }
 
     private data class FlightKey(
+        val routeId: Int,
+        val departureTime: String,
+    )
+
+    private data class MaintenanceFlightRow(
+        val id: Int,
         val routeId: Int,
         val departureTime: String,
     )

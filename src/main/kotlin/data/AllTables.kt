@@ -22,5 +22,6 @@ object AllTables {
             ChatConversationStates,
             Purchases,
             Payments,
+            ChatMessages,
         )
 }

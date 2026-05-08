@@ -17,6 +17,7 @@ import java.util.Locale
 private const val MINUTES_PER_HOUR = 60
 private const val DATE_CAROUSEL_VISIBLE_DAYS = 7
 private const val DATE_CAROUSEL_CENTER_OFFSET_DAYS = 3
+private const val DEFAULT_BOOKING_WINDOW_LAST_OFFSET_DAYS = 27
 
 // Includes `flight`: inbound results URL carries the chosen outbound flight + tier alongside the route.
 private val SEARCH_QUERY_PARAM_KEYS =
@@ -308,6 +309,7 @@ internal fun buildCarouselDays(
     selected: LocalDate,
     windowStart: LocalDate,
     base: Map<String, String>,
+    latestAvailableDate: LocalDate = LocalDate.now().plusDays(DEFAULT_BOOKING_WINDOW_LAST_OFFSET_DAYS.toLong()),
 ): List<Map<String, Any?>> {
     val today = LocalDate.now()
     return (0 until DATE_CAROUSEL_VISIBLE_DAYS).map { offset ->
@@ -321,12 +323,14 @@ internal fun buildCarouselDays(
                 .toString()
         params["page"] = "1"
         val past = chipDate.isBefore(today)
+        val unavailable = past || chipDate.isAfter(latestAvailableDate)
         mapOf(
             "label" to dayChipFmt.format(chipDate),
             "iso" to chipDate.toString(),
             "selected" to (chipDate == selected),
             "past" to past,
-            "href" to if (past) "" else flightsHref(params),
+            "unavailable" to unavailable,
+            "href" to if (unavailable) "" else flightsHref(params),
         )
     }
 }
