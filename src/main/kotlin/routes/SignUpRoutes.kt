@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets
 private const val MIN_SIGNUP_PASSWORD_LENGTH = 10
 private val personNamePattern = Regex("^[\\p{L}][\\p{L}\\s'-]*$")
 
-// signup routes
 fun Route.signUpRoutes() {
     get("/signup") { call.handleSignUpLoad() }
     post("/signup") { call.handleSignUpPost() }
@@ -48,7 +47,6 @@ private suspend fun ApplicationCall.handleSignUpLoad() {
     }
 }
 
-// validates fields then creates the user
 private suspend fun ApplicationCall.handleSignUpPost() {
     timed("T1_signup_submit", jsMode()) {
         val params = receiveParameters()

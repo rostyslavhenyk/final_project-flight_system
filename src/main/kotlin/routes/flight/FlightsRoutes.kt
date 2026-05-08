@@ -2,10 +2,12 @@ package routes.flight
 
 import auth.UserSession
 import data.BookingRepository
+import data.LoyaltyUserRepository
 import data.PaymentRepository
 import data.PurchaseRepository
 import data.Seat
 import data.SeatRepository
+import data.UserRepository
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
@@ -28,7 +30,6 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 
-/** Registers `/flights`, `/search-flights`, `/book/review`, `/book/passengers`, `/book/seats`, `/book/payment`. */
 fun Route.flightsRoutes() {
     get("/flights") { call.handleFlightsPage() }
     get("/flight-status") { call.handleFlightStatusPage() }
@@ -46,14 +47,12 @@ fun Route.flightsRoutes() {
     post("/book/payment/confirm") { call.handleBookPaymentConfirm() }
 }
 
-/** Simple static Flights page so the header link does not clash with search results. */
 private suspend fun ApplicationCall.handleFlightsPage() {
     timed("T0_flights_page", jsMode()) {
         respondRedirect("/")
     }
 }
 
-/** Parses query string, loads flights, sorts, pages, renders `flights/step-1-search-results/index.peb`. */
 private suspend fun ApplicationCall.handleSearchFlightsList() {
     timed("T0_search_flights_list", jsMode()) {
         searchFlightsRedirectIfCanonicalCabinNeeded(request.queryParameters)?.let { url ->
@@ -67,7 +66,6 @@ private suspend fun ApplicationCall.handleSearchFlightsList() {
     }
 }
 
-/** After fare selection: recap still counts as step 1 (Choose flights) before passengers. */
 private suspend fun ApplicationCall.handleBookReview() {
     timed("T0_book_review", jsMode()) {
         redirectToLoginIfNeeded()?.let { url ->
@@ -100,7 +98,6 @@ private suspend fun ApplicationCall.handleBookReview() {
     }
 }
 
-/** Step 3: passenger details after `/book/review`. */
 private suspend fun ApplicationCall.handleBookPassengers() {
     timed("T0_book_passengers", jsMode()) {
         redirectToLoginIfNeeded()?.let { url ->
@@ -119,7 +116,6 @@ private suspend fun ApplicationCall.handleBookPassengers() {
     }
 }
 
-/** Step 3: seat map and extras (client-side selection; server model from chosen flights). */
 private suspend fun ApplicationCall.handleBookSeats() {
     timed("T0_book_seats", jsMode()) {
         redirectToLoginIfNeeded()?.let { url ->
@@ -136,7 +132,6 @@ private suspend fun ApplicationCall.handleBookSeats() {
     }
 }
 
-/** Step 4: confirm seat fees and proceed to pay. */
 private suspend fun ApplicationCall.handleBookPayment() {
     timed("T0_book_payment", jsMode()) {
         redirectToLoginIfNeeded()?.let { url ->
@@ -210,8 +205,20 @@ private suspend fun ApplicationCall.handleBookPaymentConfirm() {
             respond(HttpStatusCode.BadRequest, "no-seats-selected")
             return@timed
         }
+        awardLoyaltyPoints(session.id, queryParams)
 
         respond(HttpStatusCode.OK, "confirmed")
+    }
+}
+
+private fun awardLoyaltyPoints(
+    userId: Int,
+    queryParams: io.ktor.http.Parameters,
+) {
+    val user = UserRepository.get(userId) ?: return
+    val points = loyaltyPointsForBooking(queryParams)
+    if (user.roleId == 0 && points > 0) {
+        LoyaltyUserRepository.addPoints(userId, points)
     }
 }
 

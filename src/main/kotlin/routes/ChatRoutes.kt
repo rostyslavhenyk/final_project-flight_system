@@ -14,7 +14,6 @@ import kotlinx.serialization.json.Json
 import utils.jsMode
 import utils.timed
 
-// customer chat routes
 fun Route.chatRoutes() {
     post("/chat/send") { call.handleSendMessage() }
     get("/chat/messages") { call.handleGetMessages() }

@@ -4,8 +4,6 @@ import com.twilio.Twilio
 import com.twilio.rest.api.v2010.account.Message
 import com.twilio.type.PhoneNumber
 
-// handles sending sms messages using twilio
-// sign up at twilio.com to get the account sid, auth token and phone number
 object SmsService {
     private val accountSid = System.getenv("TWILIO_ACCOUNT_SID").orEmpty()
     private val authToken = System.getenv("TWILIO_AUTH_TOKEN").orEmpty()

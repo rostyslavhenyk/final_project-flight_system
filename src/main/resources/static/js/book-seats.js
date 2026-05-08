@@ -1,7 +1,3 @@
-/**
- * /book/seats — journey / leg switching, passenger selection, and seat assignment (sessionStorage).
- * Colours come from CSS variables in base.css (see seats.css).
- */
 (function () {
   'use strict';
 

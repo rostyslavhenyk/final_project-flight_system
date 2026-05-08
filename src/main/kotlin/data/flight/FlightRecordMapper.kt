@@ -14,7 +14,6 @@ import java.util.Locale
 private const val DEFAULT_MIN_DURATION_MINUTES = 1
 private const val ESSENTIAL_FARE_INCREMENT = "45.00"
 private const val FLEX_FARE_INCREMENT = "75.00"
-private const val FLIGHT_NUMBER_DIGITS = 4
 
 internal object FlightRecordMapper {
     fun recordsForDate(depart: LocalDate): List<FlightSearchRepository.FlightScheduleRecord> =
@@ -45,7 +44,7 @@ internal object FlightRecordMapper {
             stopoverAirportCodes = row.stopoverCodes,
         )
 
-    fun flightNumberFor(id: Int): String = "GA" + id.toString().padStart(FLIGHT_NUMBER_DIGITS, '0')
+    fun flightNumberFor(id: Int): String = data.flight.flightNumberFor(id)
 
     private fun FlightFull.toScheduleRecord(requestedDate: LocalDate): FlightSearchRepository.FlightScheduleRecord? {
         val parsedDeparture = parseDateTimeOrTime(flight.departureTime, requestedDate)

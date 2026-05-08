@@ -6,6 +6,18 @@
         <h1>Manage Users</h1>
     </header>
 
+    <form class="staff-search-form" method="get" action="/staff/users" role="search" aria-label="Search users">
+        <label class="staff-search-form__label" for="staff-user-search">Search users</label>
+        <div class="staff-search-form__row">
+            <input id="staff-user-search" name="q" type="search" value="{{ searchQuery }}" placeholder="Name, email, role, tier or ID">
+            <button type="submit">Search</button>
+            {% if searchQuery %}
+                <a class="staff-search-form__clear" href="/staff/users">Clear</a>
+            {% endif %}
+        </div>
+        <p class="staff-list-summary">{{ totalUsers }} user{% if totalUsers != 1 %}s{% endif %} found</p>
+    </form>
+
     <div class="staff-table-wrap">
         <table class="staff-table">
             <thead>
@@ -25,8 +37,8 @@
                     <td><strong>{{ account.user.firstname }} {{ account.user.lastname }}</strong></td>
                     <td>{{ account.user.email }}</td>
                     <td><span class="staff-status-pill">{% if account.user.roleId == 2 %}Admin{% elseif account.user.roleId == 1 %}Staff{% else %}Customer{% endif %}</span></td>
-                    <td>{% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</td>
-                    <td>{% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %}</td>
+                    <td>{% if account.user.roleId == 0 %}{% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}{% else %}N/A{% endif %}</td>
+                    <td>{% if account.user.roleId == 0 %}{% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %}{% else %}N/A{% endif %}</td>
                 </tr>
             {% else %}
                 <tr>

@@ -10,7 +10,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.SortOrder
 
-// chat messages table
 object ChatMessages : Table("chat_messages") {
     private const val SENDER_NAME_LENGTH = 128
     private const val MESSAGE_LENGTH = 1000
@@ -41,7 +40,6 @@ data class ChatMessage(
     val timestamp: Long,
 )
 
-// handles database queries for chat messages
 object ChatRepository {
     fun add(
         userId: Int,

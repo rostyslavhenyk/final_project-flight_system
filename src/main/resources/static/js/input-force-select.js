@@ -1,4 +1,3 @@
-/** Shared select-all-on-focus helper for filled text inputs. */
 (function(global) {
   'use strict';
 

@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class RepositoryTest {
@@ -36,6 +37,19 @@ class RepositoryTest {
                 assertTrue(it in tableNames)
             }
         }
+    }
+
+    @Test
+    fun `flight full exposes five digit flight code`() {
+        val flightFull =
+            FlightFull(
+                flight = Flight(2931, 1, "2026-05-08T10:00", "2026-05-08T12:00", 120.0, "ON_TIME"),
+                route = Route(1, 1, 2),
+                departureAirport = Airport(1, 1, "Manchester", "Manchester Airport", "MAN"),
+                arrivalAirport = Airport(2, 1, "Paris", "Charles de Gaulle Airport", "CDG"),
+            )
+
+        assertEquals("GA02931", flightFull.flightCode)
     }
 
     @Test
@@ -149,6 +163,62 @@ class RepositoryTest {
     }
 
     @Test
+    fun `loyalty points are created and incremented for paid bookings`() {
+        val user = testUser("Loyalty", "Passenger", "loyalty@example.com")
+
+        val firstBalance = LoyaltyUserRepository.addPoints(user.id, 120)
+        val secondBalance = LoyaltyUserRepository.addPoints(user.id, 45)
+
+        withClue("first paid booking creates a Silver loyalty account") {
+            assertEquals("SILVER", firstBalance.tier)
+            assertEquals(120, firstBalance.points)
+        }
+        withClue("later paid bookings add to the existing balance") {
+            assertEquals(firstBalance.id, secondBalance.id)
+            assertEquals(165, secondBalance.points)
+            assertEquals(165, LoyaltyUserRepository.getByUser(user.id)?.points)
+        }
+    }
+
+    @Test
+    fun `loyalty points are only available for customer accounts`() {
+        val staff =
+            UserRepository.add(
+                firstname = "Staff",
+                lastname = "Member",
+                roleId = STAFF_ROLE_ID,
+                email = "staff-loyalty@example.com",
+                password = "password",
+            )
+
+        assertFailsWith<IllegalArgumentException> {
+            LoyaltyUserRepository.addPoints(staff.id, 100)
+        }
+    }
+
+    @Test
+    fun `staff memberships are removed during cleanup`() {
+        val customer = testUser("Customer", "Member", "customer-member@example.com")
+        val staff =
+            UserRepository.add(
+                firstname = "Staff",
+                lastname = "Member",
+                roleId = STAFF_ROLE_ID,
+                email = "staff-member-cleanup@example.com",
+                password = "password",
+            )
+
+        LoyaltyUserRepository.add(customer.id, points = 50)
+        LoyaltyUserRepository.add(staff.id, points = 50)
+
+        withClue("only non-customer membership rows are removed") {
+            assertEquals(1, LoyaltyUserRepository.deleteNonCustomerMemberships())
+            assertEquals(50, LoyaltyUserRepository.getByUser(customer.id)?.points)
+            assertEquals(null, LoyaltyUserRepository.getByUser(staff.id))
+        }
+    }
+
+    @Test
     fun `booking attach to purchase marks booking paid without changing unrelated bookings`() {
         val firstUser = testUser("Booked", "Passenger", "booking-paid@example.com")
         val secondUser = testUser("Other", "Passenger", "booking-other@example.com")
@@ -203,6 +273,32 @@ class RepositoryTest {
         }
     }
 
+    @Test
+    fun `users can update account profile details`() {
+        val user = testUser("Profile", "Owner", "profile-owner@example.com")
+        val other = testUser("Other", "Owner", "profile-other@example.com")
+
+        val updated =
+            UserProfileRepository.updateProfile(
+                id = user.id,
+                firstName = "  ada  ",
+                lastName = "  lovelace  ",
+                email = "  ADA.PROFILE@example.COM ",
+                phone = " +44 (7700) 900123 ",
+            )
+
+        withClue("profile fields are normalized and stored together") {
+            assertEquals("Ada", updated?.firstname)
+            assertEquals("Lovelace", updated?.lastname)
+            assertEquals("ada.profile@example.com", updated?.email)
+            assertEquals("+447700900123", updated?.phone)
+        }
+        withClue("duplicate email checks ignore the current user but catch other accounts") {
+            assertFalse(UserProfileRepository.emailBelongsToOtherUser("ada.profile@example.com", user.id))
+            assertTrue(UserProfileRepository.emailBelongsToOtherUser(other.email, user.id))
+        }
+    }
+
     private fun testUser(
         firstName: String,
         lastName: String,
@@ -218,6 +314,7 @@ class RepositoryTest {
 }
 
 private const val CUSTOMER_ROLE_ID = 0
+private const val STAFF_ROLE_ID = 1
 private const val FLIGHT_ID = 1
 private const val SECOND_FLIGHT_ID = 2
 private const val ROW_NUMBER = 12

@@ -28,25 +28,33 @@
         <section class="surface-card" aria-labelledby="details-heading">
             <div class="surface-card__body">
                 <h2 id="details-heading">Account details</h2>
-                {% if nameStatus == "updated" %}
-                <p class="account-name-status account-name-status--success" role="status">Your name has been updated.</p>
-                {% elseif nameStatus == "missing" %}
-                <p class="account-name-status account-name-status--error" role="alert">Please enter both first name and surname.</p>
-                {% elseif nameStatus == "error" %}
-                <p class="account-name-status account-name-status--error" role="alert">We could not update your name. Please try again.</p>
+                {% if profileStatus == "updated" or nameStatus == "updated" %}
+                <p class="account-name-status account-name-status--success" role="status">Your account details have been updated.</p>
+                {% elseif profileStatus == "missing" or nameStatus == "missing" %}
+                <p class="account-name-status account-name-status--error" role="alert">Please enter first name, surname and email.</p>
+                {% elseif profileStatus == "name" %}
+                <p class="account-name-status account-name-status--error" role="alert">Names can only include letters, spaces, hyphens and apostrophes.</p>
+                {% elseif profileStatus == "email" %}
+                <p class="account-name-status account-name-status--error" role="alert">Please enter a valid email address.</p>
+                {% elseif profileStatus == "email-taken" %}
+                <p class="account-name-status account-name-status--error" role="alert">That email address is already used by another account.</p>
+                {% elseif profileStatus == "error" or nameStatus == "error" %}
+                <p class="account-name-status account-name-status--error" role="alert">We could not update your account details. Please try again.</p>
                 {% endif %}
                 <dl class="detail-list">
                     <dt>Name</dt>
                     <dd>{{ account.firstname }} {{ account.lastname }}</dd>
                     <dt>Email</dt>
                     <dd>{{ account.email }}</dd>
+                    <dt>Phone</dt>
+                    <dd>{% if account.phone %}{{ account.phone }}{% else %}Not added{% endif %}</dd>
                     <dt>Membership number</dt>
                     <dd>{{ membershipNumber }}</dd>
                     <dt>Account type</dt>
                     <dd>Customer</dd>
                 </dl>
-                <button type="button" class="account-edit-toggle" id="account-name-edit-toggle" aria-controls="account-name-edit-form" aria-expanded="false">Edit name</button>
-                <form id="account-name-edit-form" class="account-name-form" action="/my-account/name" method="post" hidden>
+                <button type="button" class="account-edit-toggle" id="account-profile-edit-toggle" aria-controls="account-profile-edit-form" aria-expanded="false">Edit details</button>
+                <form id="account-profile-edit-form" class="account-name-form" action="/my-account/profile" method="post" hidden>
                     <div class="account-name-form__grid">
                         <label class="account-name-form__field">
                             <span>First name</span>
@@ -56,9 +64,17 @@
                             <span>Surname</span>
                             <input type="text" name="lastName" value="{{ account.lastname }}" autocomplete="family-name" required maxlength="128">
                         </label>
+                        <label class="account-name-form__field">
+                            <span>Email</span>
+                            <input type="email" name="email" value="{{ account.email }}" autocomplete="email" required maxlength="256">
+                        </label>
+                        <label class="account-name-form__field">
+                            <span>Phone</span>
+                            <input type="tel" name="phone" value="{{ account.phone }}" autocomplete="tel" maxlength="50">
+                        </label>
                     </div>
                     <div class="account-name-form__actions">
-                        <button type="submit" class="account-name-save">Save name</button>
+                        <button type="submit" class="account-name-save">Save details</button>
                     </div>
                 </form>
             </div>
@@ -74,6 +90,7 @@
                     {% for booking in serverBookings %}
                     <button type="button" class="manage-booking-card" data-fare-summary-href="{{ booking.href }}" aria-label="Open fare summary for {{ booking.label }}">
                         <p class="manage-booking-card__eyebrow">{{ booking.label }}</p>
+                        <p class="manage-booking-card__meta">Reference {{ booking.reference }}</p>
                         <p class="manage-booking-card__route">{{ booking.route }}</p>
                         <p class="manage-booking-card__meta">{{ booking.meta }}</p>
                     </button>
@@ -88,6 +105,7 @@
                         {% for booking in pastBookings %}
                         <button type="button" class="manage-booking-card" data-fare-summary-href="{{ booking.href }}" aria-label="Open fare summary for {{ booking.label }}">
                             <p class="manage-booking-card__eyebrow">{{ booking.label }}</p>
+                            <p class="manage-booking-card__meta">Reference {{ booking.reference }}</p>
                             <p class="manage-booking-card__route">{{ booking.route }}</p>
                             <p class="manage-booking-card__meta">{{ booking.meta }}</p>
                         </button>

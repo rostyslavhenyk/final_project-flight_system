@@ -8,7 +8,12 @@
                 <span>{% if item.ticket.status == "IN_PROGRESS" %}IN PROGRESS{% else %}{{ item.ticket.status }}{% endif %}</span>
             </span>
             <span class="ticket-button-meta">{{ item.user.firstname }} {{ item.user.lastname }}</span>
-            <span class="ticket-button-view">{{ item.createdAtText }}</span>
+            <span class="ticket-button-info">
+                {% if item.ticket.bookingReference %}
+                    <span class="ticket-button-meta">Booking ref {{ item.ticket.bookingReference }}</span>
+                {% endif %}
+                <span class="ticket-button-view">{{ item.createdAtText }}</span>
+            </span>
         </a>
     {% else %}
         <p class="staff-empty">{{ emptyMessage }}</p>

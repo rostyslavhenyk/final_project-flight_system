@@ -10,7 +10,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import java.util.Locale
 
-// users table definition
 object Users : Table("users") {
     private const val NAME_LENGTH = 128
     private const val EMAIL_LENGTH = 256
@@ -28,7 +27,6 @@ object Users : Table("users") {
     override val primaryKey = PrimaryKey(id)
 }
 
-// user data class
 data class User(
     val id: Int,
     val firstname: String,
@@ -39,7 +37,6 @@ data class User(
     val phone: String = "",
 )
 
-// handles all database queries for users
 object UserRepository {
     fun all(): List<User> =
         transaction {
@@ -66,6 +63,35 @@ object UserRepository {
                 }
         }
 
+    fun searchFull(query: String): List<UserFull> {
+        val normalizedQuery = query.trim().lowercase(Locale.UK)
+        val users = allFull()
+        if (normalizedQuery.isBlank()) return users
+        return users.filter { account ->
+            val user = account.user
+            val role =
+                when (user.roleId) {
+                    2 -> "admin"
+                    1 -> "staff"
+                    else -> "customer"
+                }
+            listOf(
+                user.id.toString(),
+                user.firstname,
+                user.lastname,
+                "${user.firstname} ${user.lastname}",
+                user.email,
+                user.phone,
+                role,
+                account.loyaltyUser?.tier.orEmpty(),
+                account.loyaltyUser
+                    ?.points
+                    ?.toString()
+                    .orEmpty(),
+            ).any { value -> value.lowercase(Locale.UK).contains(normalizedQuery) }
+        }
+    }
+
     fun add(
         firstname: String,
         lastname: String,
@@ -89,7 +115,15 @@ object UserRepository {
                     it[Users.phone] = normalizedPhone
                 } get Users.id
 
-            User(id, normalizedFirstName, normalizedLastName, roleId, normalizedEmail, password, normalizedPhone)
+            User(
+                id = id,
+                firstname = normalizedFirstName,
+                lastname = normalizedLastName,
+                roleId = roleId,
+                email = normalizedEmail,
+                password = password,
+                phone = normalizedPhone,
+            )
         }
 
     fun get(id: Int): User? =
@@ -100,6 +134,8 @@ object UserRepository {
                 .map { it.toUser() }
                 .singleOrNull()
         }
+
+    fun getFull(id: Int): UserFull? = allFull().singleOrNull { it.user.id == id }
 
     fun getByEmail(email: String): User? =
         transaction {
@@ -119,30 +155,6 @@ object UserRepository {
                 .singleOrNull()
         }
 
-    fun updateName(
-        id: Int,
-        firstName: String,
-        lastName: String,
-    ): User? =
-        transaction {
-            val normalizedFirstName = normalizePersonName(firstName)
-            val normalizedLastName = normalizePersonName(lastName)
-            val updatedRows =
-                Users.update({ Users.id eq id }) {
-                    it[firstname] = normalizedFirstName
-                    it[lastname] = normalizedLastName
-                }
-            if (updatedRows == 0) {
-                null
-            } else {
-                Users
-                    .selectAll()
-                    .where { Users.id eq id }
-                    .map { it.toUser() }
-                    .singleOrNull()
-            }
-        }
-
     fun delete(id: Int): Boolean =
         transaction {
             Users.deleteWhere { Users.id eq id } > 0
@@ -157,15 +169,71 @@ object UserRepository {
                 it[password] = newPassword
             } > 0
         }
+}
 
-    fun updatePhone(
+object UserProfileRepository {
+    fun updateName(
         id: Int,
-        newPhone: String,
+        firstName: String,
+        lastName: String,
+    ): User? =
+        transaction {
+            val normalizedFirstName = normalizePersonName(firstName)
+            val normalizedLastName = normalizePersonName(lastName)
+            val updatedRows =
+                Users.update({ Users.id eq id }) {
+                    it[firstname] = normalizedFirstName
+                    it[lastname] = normalizedLastName
+                }
+            userAfterUpdate(id, updatedRows)
+        }
+
+    fun updateProfile(
+        id: Int,
+        firstName: String,
+        lastName: String,
+        email: String,
+        phone: String,
+    ): User? =
+        transaction {
+            val normalizedFirstName = normalizePersonName(firstName)
+            val normalizedLastName = normalizePersonName(lastName)
+            val normalizedEmail = normalizeEmail(email)
+            val normalizedPhone = normalizePhone(phone)
+            val updatedRows =
+                Users.update({ Users.id eq id }) {
+                    it[firstname] = normalizedFirstName
+                    it[lastname] = normalizedLastName
+                    it[Users.email] = normalizedEmail
+                    it[Users.phone] = normalizedPhone
+                }
+            userAfterUpdate(id, updatedRows)
+        }
+
+    fun emailBelongsToOtherUser(
+        email: String,
+        currentUserId: Int,
     ): Boolean =
         transaction {
-            Users.update({ Users.id eq id }) {
-                it[phone] = normalizePhone(newPhone)
-            } > 0
+            Users
+                .selectAll()
+                .where { Users.email eq normalizeEmail(email) }
+                .map { it[Users.id] }
+                .any { id -> id != currentUserId }
+        }
+
+    private fun userAfterUpdate(
+        id: Int,
+        updatedRows: Int,
+    ): User? =
+        if (updatedRows == 0) {
+            null
+        } else {
+            Users
+                .selectAll()
+                .where { Users.id eq id }
+                .map { it.toUser() }
+                .singleOrNull()
         }
 }
 
@@ -193,7 +261,14 @@ object UserMaintenance {
         val normalizedFirstName = normalizePersonName(row[Users.firstname])
         val normalizedLastName = normalizePersonName(row[Users.lastname])
         val normalizedEmail = normalizeEmail(row[Users.email])
-        if (storedUserNeedsNormalizing(row, normalizedFirstName, normalizedLastName, normalizedEmail)) {
+        if (
+            storedUserNeedsNormalizing(
+                row,
+                normalizedFirstName,
+                normalizedLastName,
+                normalizedEmail,
+            )
+        ) {
             Users.update({ Users.id eq row[Users.id] }) {
                 it[firstname] = normalizedFirstName
                 it[lastname] = normalizedLastName

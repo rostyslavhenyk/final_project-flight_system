@@ -1,6 +1,3 @@
-/**
- * /book/payment - confirms a Stripe test-mode card setup, then logs the paid booking server-side.
- */
 (function () {
   'use strict';
 

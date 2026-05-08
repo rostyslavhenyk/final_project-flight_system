@@ -183,7 +183,7 @@ class TemplateIntegrityTest {
             assertTrue(output.contains("Ada Lovelace"))
             assertTrue(output.contains("Seat fees subtotal"))
             assertTrue(output.contains("Checked bag"))
-            assertTrue(output.contains("GBP 255.00"))
+            assertTrue(output.contains("GBP 235.00"))
             assertTrue(output.contains("""id="stripe-card-element""""))
         }
     }
@@ -195,8 +195,23 @@ class TemplateIntegrityTest {
         withClue("staff ticket detail renders customer, status form and image links") {
             assertTrue(output.contains("Damaged baggage"))
             assertTrue(output.contains("Ada Lovelace - ada@example.com"))
+            assertTrue(output.contains("GLD-BK-000042"))
             assertTrue(output.contains("""name="status""""))
             assertTrue(output.contains("/staff/tickets/images/7"))
+        }
+    }
+
+    @Test
+    fun `membership template renders customer with loyalty account`() {
+        val output =
+            renderTemplate(
+                "user/membership/index.peb",
+                membershipModel() + baseModel(loggedIn = true),
+            )
+
+        withClue("membership template should render loyalty details without treating objects as booleans") {
+            assertTrue(output.contains("Gold"))
+            assertTrue(output.contains("1250"))
         }
     }
 
@@ -326,19 +341,19 @@ private fun paymentModel(): Map<String, Any?> =
             listOf(
                 mapOf("slot" to 1, "displayName" to "Ada Lovelace", "outboundSeats" to "12A", "returnSeats" to ""),
             ),
-        "feeRows" to listOf(mapOf("journeyLabel" to "Selected journey", "feeGbp" to 30)),
-        "totalSeatFeeGbp" to 30,
-        "seatFeesSubtotalPlain" to "30.00",
+        "feeRows" to listOf(mapOf("journeyLabel" to "Selected journey", "feeGbp" to 10)),
+        "totalSeatFeeGbp" to 10,
+        "seatFeesSubtotalPlain" to "10.00",
         "hasSeatSelection" to true,
         "hasBookingExtras" to true,
         "bookingExtraRows" to listOf(mapOf("label" to "Checked bag", "amountPlain" to "25.00")),
         "totalBookingExtrasFeeGbp" to 25,
         "bookingExtrasSubtotalPlain" to "25.00",
-        "totalStep2ExtrasGbp" to 55,
-        "step2ExtrasSubtotalPlain" to "55.00",
+        "totalStep2ExtrasGbp" to 35,
+        "step2ExtrasSubtotalPlain" to "35.00",
         "paxCount" to 1,
-        "perPassengerCombinedPlain" to "255.00",
-        "grandTotalPlain" to "255.00",
+        "perPassengerCombinedPlain" to "235.00",
+        "grandTotalPlain" to "235.00",
     )
 
 private fun staffTicketModel(): Map<String, Any?> =
@@ -354,6 +369,7 @@ private fun staffTicketModel(): Map<String, Any?> =
                         "message" to "My bag arrived damaged.",
                         "status" to "OPEN",
                         "priority" to "NORMAL",
+                        "bookingReference" to "GLD-BK-000042",
                     ),
                 "user" to
                     mapOf(
@@ -366,4 +382,17 @@ private fun staffTicketModel(): Map<String, Any?> =
                 "updatedAtText" to "7 May 2026",
             ),
         "ticketImages" to listOf(mapOf("id" to 7, "filename" to "bag.png")),
+    )
+
+private fun membershipModel(): Map<String, Any?> =
+    mapOf(
+        "title" to "Membership",
+        "account" to
+            mapOf(
+                "loyaltyUser" to
+                    mapOf(
+                        "tier" to "Gold",
+                        "points" to 1250,
+                    ),
+            ),
     )

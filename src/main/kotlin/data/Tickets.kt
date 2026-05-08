@@ -13,6 +13,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+private const val BOOKING_REFERENCE_LENGTH = 32
+
 object Tickets : Table("tickets") {
     private const val SUBJECT_LENGTH = 160
     private const val MESSAGE_LENGTH = 2000
@@ -27,6 +29,7 @@ object Tickets : Table("tickets") {
     val status = varchar("status", STATUS_LENGTH)
     val priority = varchar("priority", PRIORITY_LENGTH)
     val ticketSource = varchar("source", SOURCE_LENGTH).default("USER")
+    val bookingReference = varchar("bookingReference", BOOKING_REFERENCE_LENGTH).nullable()
     val createdAt = long("createdAt")
     val updatedAt = long("updatedAt")
 
@@ -41,6 +44,7 @@ data class Ticket(
     val status: String,
     val priority: String,
     val source: String,
+    val bookingReference: String?,
     val createdAt: Long,
     val updatedAt: Long,
 )
@@ -103,6 +107,22 @@ object TicketRepository {
                 }.singleOrNull()
         }
 
+    fun findRefundByReference(
+        bookingReference: String,
+        email: String,
+    ): TicketFull? {
+        val reference = bookingReference.trim()
+        val emailAddress = email.trim()
+        if (reference.isBlank() || emailAddress.isBlank()) return null
+
+        return allFullBySource("USER")
+            .filter { it.ticket.subject.startsWith("Refund Request", ignoreCase = true) }
+            .filter { it.ticket.bookingReference.equals(reference, ignoreCase = true) }
+            .filter { it.user.email.equals(emailAddress, ignoreCase = true) }
+            .orderTickets()
+            .firstOrNull()
+    }
+
     fun get(id: Int): Ticket? =
         transaction {
             Tickets
@@ -119,9 +139,11 @@ object TicketRepository {
         status: String = "OPEN",
         priority: String = "NORMAL",
         source: String = "USER",
+        bookingReference: String? = null,
         createdAt: Long = System.currentTimeMillis(),
     ): Ticket =
         transaction {
+            val trimmedBookingReference = bookingReference.cleanedBookingReference()
             val id =
                 Tickets.insert {
                     it[Tickets.userID] = userID
@@ -130,11 +152,23 @@ object TicketRepository {
                     it[Tickets.status] = status
                     it[Tickets.priority] = priority
                     it[Tickets.ticketSource] = source
+                    it[Tickets.bookingReference] = trimmedBookingReference
                     it[Tickets.createdAt] = createdAt
                     it[Tickets.updatedAt] = createdAt
                 } get Tickets.id
 
-            Ticket(id, userID, subject, message, status, priority, source, createdAt, createdAt)
+            Ticket(
+                ticketID = id,
+                userID = userID,
+                subject = subject,
+                message = message,
+                status = status,
+                priority = priority,
+                source = source,
+                bookingReference = trimmedBookingReference,
+                createdAt = createdAt,
+                updatedAt = createdAt,
+            )
         }
 
     fun updateStatus(
@@ -164,6 +198,7 @@ private fun ResultRow.toTicket() =
         status = this[Tickets.status],
         priority = this[Tickets.priority],
         source = this[Tickets.ticketSource],
+        bookingReference = this[Tickets.bookingReference],
         createdAt = this[Tickets.createdAt],
         updatedAt = this[Tickets.updatedAt],
     )
@@ -180,6 +215,9 @@ private fun List<TicketFull>.filterTickets(
                     .contains(query, ignoreCase = true) ||
                 it.ticket.subject.contains(query, ignoreCase = true) ||
                 it.ticket.priority.contains(query, ignoreCase = true) ||
+                it.ticket.bookingReference
+                    .orEmpty()
+                    .contains(query, ignoreCase = true) ||
                 it.user.firstname.contains(query, ignoreCase = true) ||
                 it.user.lastname.contains(query, ignoreCase = true) ||
                 it.user.email.contains(query, ignoreCase = true)
@@ -206,6 +244,12 @@ private fun String.statusOrder(): Int =
         "CLOSED" -> 3
         else -> UNKNOWN_STATUS_ORDER
     }
+
+private fun String?.cleanedBookingReference(): String? =
+    this
+        ?.trim()
+        ?.ifBlank { null }
+        ?.take(BOOKING_REFERENCE_LENGTH)
 
 data class TicketFull(
     val ticket: Ticket,

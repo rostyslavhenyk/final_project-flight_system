@@ -200,8 +200,25 @@
         if (trackForm && trackResult) {
             trackForm.addEventListener('submit', function (event) {
                 event.preventDefault();
-                trackResult.innerHTML =
-                    '<p class="form-success">Your refund is being processed and should arrive within 3-5 business days.</p>';
+
+                var ref = document.getElementById('track-ref').value;
+                var email = document.getElementById('track-email').value;
+                var url = '/help/refund/status?ref=' + encodeURIComponent(ref) +
+                    '&email=' + encodeURIComponent(email);
+
+                fetch(url)
+                    .then(function (response) {
+                        return response.text().then(function (text) {
+                            return { ok: response.ok, text: text };
+                        });
+                    })
+                    .then(function (result) {
+                        var className = result.ok ? 'form-success' : 'form-error';
+                        trackResult.innerHTML = '<p class="' + className + '">' + result.text + '</p>';
+                    })
+                    .catch(function () {
+                        trackResult.innerHTML = '<p class="form-error">Refund tracking is unavailable right now.</p>';
+                    });
             });
         }
 

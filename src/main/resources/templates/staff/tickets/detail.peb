@@ -49,6 +49,12 @@
             <dt>Source</dt>
             <dd>{{ ticketFull.ticket.source }}</dd>
         </div>
+        {% if ticketFull.ticket.bookingReference %}
+        <div>
+            <dt>Booking reference</dt>
+            <dd>{{ ticketFull.ticket.bookingReference }}</dd>
+        </div>
+        {% endif %}
     </dl>
 
     <section class="ticket-message">

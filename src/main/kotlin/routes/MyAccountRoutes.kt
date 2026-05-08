@@ -3,6 +3,8 @@ package routes
 import auth.UserSession
 import data.Purchase
 import data.PurchaseRepository
+import data.User
+import data.UserProfileRepository
 import data.UserRepository
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,10 +19,13 @@ import java.time.LocalDate
 import java.util.Locale
 
 private const val MEMBER_NUMBER_FORMAT = "GA%06d"
+private const val BOOKING_REFERENCE_FORMAT = "GLD-BK-%06d"
+private val accountNamePattern = Regex("^[\\p{L}][\\p{L}\\s'-]*$")
 
 fun Route.myAccountRoutes() {
     get("/my-account") { call.handleMyAccountLoad() }
     post("/my-account/name") { call.handleMyAccountNameUpdate() }
+    post("/my-account/profile") { call.handleMyAccountProfileUpdate() }
     get("/account/fare-summary") { call.handleFareSummaryFragment() }
     get("/account/fare-summary/{purchaseId}") { call.handleSavedFareSummaryFragment() }
 }
@@ -54,6 +59,7 @@ private suspend fun ApplicationCall.handleMyAccountLoad() {
                 "account" to account,
                 "membershipNumber" to membershipNumberFor(account.id),
                 "nameStatus" to request.queryParameters["nameStatus"].orEmpty(),
+                "profileStatus" to request.queryParameters["profileStatus"].orEmpty(),
                 "serverBookings" to accountBookingCards(account.id, past = false),
                 "pastBookings" to accountBookingCards(account.id, past = true),
             ),
@@ -62,6 +68,9 @@ private suspend fun ApplicationCall.handleMyAccountLoad() {
 }
 
 private fun membershipNumberFor(userId: Int): String = String.format(Locale.UK, MEMBER_NUMBER_FORMAT, userId)
+
+private fun bookingReferenceFor(purchaseId: Int): String =
+    String.format(Locale.UK, BOOKING_REFERENCE_FORMAT, purchaseId)
 
 private fun accountBookingCards(
     userId: Int,
@@ -126,6 +135,7 @@ private fun Purchase.toBookingCard(index: Int): Map<String, String> {
 
     return mapOf(
         "label" to if (index == 0) "Latest booking" else "Booking ${index + 1}",
+        "reference" to bookingReferenceFor(purchaseID),
         "route" to route,
         "meta" to meta,
         "href" to "/account/fare-summary/$purchaseID",
@@ -159,7 +169,7 @@ private suspend fun ApplicationCall.handleMyAccountNameUpdate() {
             return@timed
         }
 
-        val updated = UserRepository.updateName(account.id, firstName, lastName)
+        val updated = UserProfileRepository.updateName(account.id, firstName, lastName)
         if (updated == null) {
             respondRedirect("/my-account?nameStatus=error#tab-account-details")
             return@timed
@@ -167,6 +177,71 @@ private suspend fun ApplicationCall.handleMyAccountNameUpdate() {
 
         respondRedirect("/my-account?nameStatus=updated#tab-account-details")
     }
+}
+
+private suspend fun ApplicationCall.handleMyAccountProfileUpdate() {
+    timed("T2_account_profile_update", jsMode()) {
+        val account = currentCustomerAccountOrRespond() ?: return@timed
+        val form = receiveParameters()
+        val firstName = form["firstName"]?.trim().orEmpty()
+        val lastName = form["lastName"]?.trim().orEmpty()
+        val email = form["email"]?.trim().orEmpty()
+        val phone = form["phone"]?.trim().orEmpty()
+        val status =
+            when {
+                firstName.isBlank() || lastName.isBlank() || email.isBlank() -> "missing"
+                !firstName.matches(accountNamePattern) ||
+                    !lastName.matches(accountNamePattern) -> "name"
+                !email.looksLikeEmail() -> "email"
+                UserProfileRepository.emailBelongsToOtherUser(email, account.id) -> "email-taken"
+                else -> null
+            }
+        if (status != null) {
+            respondRedirect("/my-account?profileStatus=$status#tab-account-details")
+            return@timed
+        }
+
+        val updated =
+            UserProfileRepository.updateProfile(account.id, firstName, lastName, email, phone)
+        if (updated == null) {
+            respondRedirect("/my-account?profileStatus=error#tab-account-details")
+            return@timed
+        }
+
+        sessions.set(UserSession(updated.id, updated.firstname))
+        respondRedirect("/my-account?profileStatus=updated#tab-account-details")
+    }
+}
+
+private suspend fun ApplicationCall.currentCustomerAccountOrRespond(): User? {
+    val loggedState = loggedIn()
+    var account: User? = null
+    when {
+        !loggedState.loggedIn || loggedState.session == null -> {
+            respond(HttpStatusCode.NotFound, "Page not found")
+        }
+        else -> {
+            val foundAccount = UserRepository.get(loggedState.session.id)
+            when {
+                foundAccount == null -> {
+                    sessions.clear<UserSession>()
+                    respond(HttpStatusCode.NotFound, "Page not found")
+                }
+                foundAccount.roleId in setOf(1, 2) -> {
+                    respondRedirect("/staff/my-account")
+                }
+                else -> {
+                    account = foundAccount
+                }
+            }
+        }
+    }
+    return account
+}
+
+private fun String.looksLikeEmail(): Boolean {
+    val value = trim()
+    return value.contains("@") && value.substringAfter("@").contains(".") && !value.contains(" ")
 }
 
 private suspend fun ApplicationCall.handleFareSummaryFragment() {
@@ -215,7 +290,11 @@ private suspend fun ApplicationCall.handleSavedFareSummaryFragment() {
         }
 
         val purchase = PurchaseRepository.get(purchaseId)
-        if (purchase == null || purchase.userID != account.id || purchase.bookingQuery.isNullOrBlank()) {
+        if (
+            purchase == null ||
+            purchase.userID != account.id ||
+            purchase.bookingQuery.isNullOrBlank()
+        ) {
             respond(HttpStatusCode.NotFound)
             return@timed
         }

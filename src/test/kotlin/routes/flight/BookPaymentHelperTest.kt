@@ -98,7 +98,7 @@ class BookPaymentHelperTest {
             assertEquals(CHECKED_BAG_PLUS_PRIORITY_FEE, summary.totalBookingExtrasFee)
         }
         withClue("combined extras include seat fees and recognised booking extras") {
-            assertEquals(BigDecimal("93.00"), summary.step2ExtrasAmount)
+            assertEquals(BigDecimal("53.00"), summary.step2ExtrasAmount)
         }
     }
 
@@ -163,9 +163,44 @@ class BookPaymentHelperTest {
             assertEquals("199.00", summary.perPassengerAllInPlain)
         }
     }
+
+    @Test
+    fun `loyalty points follow selected fare earning rates`() {
+        val lightParams =
+            Parameters.build {
+                append("fare", "light")
+                append("price", "200.00")
+                append("adults", "2")
+            }
+        val returnParams =
+            Parameters.build {
+                append("trip", "return")
+                append("obFare", "light")
+                append("outboundPrice", "100.00")
+                append("fare", "flex")
+                append("price", "200.00")
+                append("adults", "1")
+            }
+        val essentialParams =
+            Parameters.build {
+                append("fare", "essential")
+                append("price", "200.00")
+                append("adults", "1")
+            }
+
+        withClue("Light earns 25 percent of the selected fare total") {
+            assertEquals(100, loyaltyPointsForBooking(lightParams))
+        }
+        withClue("Essential earns 60 percent of the selected fare total") {
+            assertEquals(120, loyaltyPointsForBooking(essentialParams))
+        }
+        withClue("Return bookings add the outbound and inbound fare earn rates") {
+            assertEquals(205, loyaltyPointsForBooking(returnParams))
+        }
+    }
 }
 
-private const val TWO_LIGHT_SEGMENTS_FEE = 60
+private const val TWO_LIGHT_SEGMENTS_FEE = 20
 private const val CHECKED_BAG_PLUS_PRIORITY_FEE = 33
 private const val TWO_PASSENGERS = 2
 

@@ -15,7 +15,6 @@ import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-// login and logout routes
 fun Route.logInRoutes() {
     get("/login") { call.handleLogInLoad() }
     post("/login") { call.handleLogInPost() }
@@ -48,7 +47,6 @@ private suspend fun ApplicationCall.handleLogInLoad() {
     }
 }
 
-// checks email and password then logs user in
 private suspend fun ApplicationCall.handleLogInPost() {
     timed("T1_login_submit", jsMode()) {
         val params = receiveParameters()

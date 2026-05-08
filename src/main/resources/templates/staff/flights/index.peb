@@ -6,6 +6,18 @@
         <h1>Manage Flights</h1>
     </header>
 
+    <form class="staff-search-form" method="get" action="/staff/flights" role="search" aria-label="Search flights">
+        <input type="hidden" name="pageSize" value="{{ flightPage.pageSize }}">
+        <label class="staff-search-form__label" for="staff-flight-search">Search flights</label>
+        <div class="staff-search-form__row">
+            <input id="staff-flight-search" name="q" type="search" value="{{ searchQuery }}" placeholder="Flight code, airport, city, status or date">
+            <button type="submit">Search</button>
+            {% if searchQuery %}
+                <a class="staff-search-form__clear" href="/staff/flights?pageSize={{ flightPage.pageSize }}">Clear</a>
+            {% endif %}
+        </div>
+    </form>
+
     <div class="staff-list-toolbar" aria-label="Flight list pagination controls">
         <p class="staff-list-summary">
             Showing {{ startItem }}-{{ endItem }} of {{ flightPage.total }} flights
@@ -13,7 +25,7 @@
         <div class="staff-page-size" aria-label="Flights per page">
             <span>Per page</span>
             {% for option in pageSizeOptions %}
-                <a href="/staff/flights?page=1&pageSize={{ option }}" class="staff-page-size__link{% if option == flightPage.pageSize %} staff-page-size__link--active{% endif %}">{{ option }}</a>
+                <a href="/staff/flights?page=1&pageSize={{ option }}{% if searchQuery %}&q={{ encodedSearchQuery }}{% endif %}" class="staff-page-size__link{% if option == flightPage.pageSize %} staff-page-size__link--active{% endif %}">{{ option }}</a>
             {% endfor %}
         </div>
     </div>
@@ -34,7 +46,7 @@
             <tbody>
             {% for flight in flights %}
                 <tr>
-                    <td><strong>{{ flight.flight.flightID }}</strong></td>
+                    <td><strong>{{ flight.flightCode }}</strong></td>
                     <td>{{ flight.departureAirport.code }} <span>{{ flight.departureAirport.city }}</span></td>
                     <td>{{ flight.arrivalAirport.code }} <span>{{ flight.arrivalAirport.city }}</span></td>
                     <td>{{ flight.flight.departureTime }}</td>

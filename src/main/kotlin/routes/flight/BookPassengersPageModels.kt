@@ -159,14 +159,12 @@ private fun inboundPassengerSearchHref(
     return flightsHref(returnSearchParams)
 }
 
-/** Per-passenger row: global `slot`, screen-reader `heading`, wireframe `badgeTier`. */
 internal fun bookingPassengerRowModels(queryParams: Parameters): List<Map<String, Any>> {
     val adults = queryParams["adults"]?.toIntOrNull()?.coerceIn(1, MAX_ADULT_PASSENGERS) ?: 1
     val children = queryParams["children"]?.toIntOrNull()?.coerceIn(0, MAX_CHILD_PASSENGERS) ?: 0
     return buildPassengerRowModels(adults, children)
 }
 
-/** Per-passenger row: global `slot`, screen-reader `heading`, wireframe `badgeTier`. */
 private fun buildPassengerRowModels(
     adults: Int,
     children: Int,

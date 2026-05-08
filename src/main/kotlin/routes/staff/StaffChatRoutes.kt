@@ -19,7 +19,6 @@ import utils.jsMode
 import utils.timed
 import java.io.StringWriter
 
-// staff chat routes
 fun Route.staffChatRoutes() {
     get("/chat") { call.handleStaffChatLoad() }
     get("/chat/conversations") { call.handleStaffChatConversations() }

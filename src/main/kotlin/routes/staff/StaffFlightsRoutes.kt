@@ -6,6 +6,8 @@ import io.ktor.server.routing.*
 import routes.renderTemplate
 import utils.jsMode
 import utils.timed
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private const val DEFAULT_PAGE = 1
 private const val DEFAULT_PAGE_SIZE = 50
@@ -20,14 +22,16 @@ fun Route.staffFlightsRoutes() {
 private suspend fun ApplicationCall.handleStaffFlights() {
     timed("T4_staff_flights_list", jsMode()) {
         val requestedPage = request.queryParameters["page"]?.toIntOrNull() ?: DEFAULT_PAGE
-        val requestedPageSize = request.queryParameters["pageSize"]?.toIntOrNull() ?: DEFAULT_PAGE_SIZE
+        val requestedPageSize =
+            request.queryParameters["pageSize"]?.toIntOrNull() ?: DEFAULT_PAGE_SIZE
         val pageSize =
             if (requestedPageSize in ALLOWED_PAGE_SIZES) {
                 requestedPageSize
             } else {
                 DEFAULT_PAGE_SIZE
             }
-        val flightPage = FlightRepository.pagedFull(requestedPage, pageSize)
+        val query = request.queryParameters["q"]?.trim().orEmpty()
+        val flightPage = FlightRepository.searchPagedFull(query, requestedPage, pageSize)
 
         renderTemplate(
             "staff/flights/index.peb",
@@ -35,19 +39,27 @@ private suspend fun ApplicationCall.handleStaffFlights() {
                 "title" to "Staff Flights",
                 "flights" to flightPage.flights,
                 "flightPage" to flightPage,
-                "pageNumbers" to staffFlightsPageNumbers(flightPage.page, flightPage.pageCount, flightPage.pageSize),
+                "searchQuery" to query,
+                "encodedSearchQuery" to query.urlEncode(),
+                "pageNumbers" to
+                    staffFlightsPageNumbers(
+                        currentPage = flightPage.page,
+                        pageCount = flightPage.pageCount,
+                        pageSize = flightPage.pageSize,
+                        query = query,
+                    ),
                 "pageSizeOptions" to ALLOWED_PAGE_SIZES.sorted(),
-                "startItem" to if (flightPage.total == 0L) 0 else ((flightPage.page - 1) * flightPage.pageSize + 1),
-                "endItem" to ((flightPage.page - 1) * flightPage.pageSize + flightPage.flights.size),
+                "startItem" to flightPage.startItem(),
+                "endItem" to flightPage.endItem(),
                 "previousPageHref" to
                     if (flightPage.page > 1) {
-                        staffFlightsHref(flightPage.page - 1, flightPage.pageSize)
+                        staffFlightsHref(flightPage.page - 1, flightPage.pageSize, query)
                     } else {
                         null
                     },
                 "nextPageHref" to
                     if (flightPage.page < flightPage.pageCount) {
-                        staffFlightsHref(flightPage.page + 1, flightPage.pageSize)
+                        staffFlightsHref(flightPage.page + 1, flightPage.pageSize, query)
                     } else {
                         null
                     },
@@ -60,6 +72,7 @@ private fun staffFlightsPageNumbers(
     currentPage: Int,
     pageCount: Int,
     pageSize: Int,
+    query: String,
 ): List<Map<String, Any>> {
     if (pageCount <= 1) return emptyList()
 
@@ -74,7 +87,7 @@ private fun staffFlightsPageNumbers(
         mapOf(
             "num" to page,
             "current" to (page == currentPage),
-            "href" to staffFlightsHref(page, pageSize),
+            "href" to staffFlightsHref(page, pageSize, query),
         )
     }
 }
@@ -82,4 +95,21 @@ private fun staffFlightsPageNumbers(
 private fun staffFlightsHref(
     page: Int,
     pageSize: Int,
-): String = "/staff/flights?page=$page&pageSize=$pageSize"
+    query: String,
+): String {
+    val base = "/staff/flights?page=$page&pageSize=$pageSize"
+    if (query.isBlank()) return base
+    val encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8).replace("+", "%20")
+    return "$base&q=$encodedQuery"
+}
+
+private fun data.FlightPage.startItem(): Int =
+    if (total == 0L) {
+        0
+    } else {
+        (page - 1) * pageSize + 1
+    }
+
+private fun data.FlightPage.endItem(): Int = (page - 1) * pageSize + flights.size
+
+private fun String.urlEncode(): String = URLEncoder.encode(this, StandardCharsets.UTF_8).replace("+", "%20")

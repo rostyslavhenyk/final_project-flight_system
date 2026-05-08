@@ -95,6 +95,59 @@ object LoyaltyUserRepository {
             } > 0
         }
 
+    fun addPoints(
+        userID: Int,
+        pointsToAdd: Int,
+    ): LoyaltyUser =
+        transaction {
+            val user =
+                Users
+                    .selectAll()
+                    .where { Users.id eq userID }
+                    .singleOrNull()
+            require(user != null && user[Users.roleId] == 0) {
+                "Loyalty points can only be added to customer accounts"
+            }
+            val existing =
+                LoyaltyUsers
+                    .selectAll()
+                    .where { LoyaltyUsers.userID eq userID }
+                    .map { it.toLoyaltyUser() }
+                    .singleOrNull()
+            if (existing == null) {
+                val now = System.currentTimeMillis()
+                val startingPoints = pointsToAdd.coerceAtLeast(0)
+                val id =
+                    LoyaltyUsers.insert {
+                        it[LoyaltyUsers.userID] = userID
+                        it[points] = startingPoints
+                        it[tier] = "SILVER"
+                        it[joinDate] = now
+                    } get LoyaltyUsers.id
+                LoyaltyUser(id, userID, startingPoints, "SILVER", now)
+            } else {
+                val updatedPoints = (existing.points + pointsToAdd).coerceAtLeast(0)
+                LoyaltyUsers.update({ LoyaltyUsers.userID eq userID }) {
+                    it[points] = updatedPoints
+                }
+                existing.copy(points = updatedPoints)
+            }
+        }
+
+    fun deleteNonCustomerMemberships(): Int =
+        transaction {
+            val nonCustomerIds =
+                LoyaltyUsers
+                    .innerJoin(Users, { LoyaltyUsers.userID }, { Users.id })
+                    .selectAll()
+                    .filter { it[Users.roleId] != 0 }
+                    .map { it[LoyaltyUsers.userID] }
+
+            nonCustomerIds.sumOf { nonCustomerId ->
+                LoyaltyUsers.deleteWhere { LoyaltyUsers.userID eq nonCustomerId }
+            }
+        }
+
     fun delete(userID: Int): Boolean =
         transaction {
             LoyaltyUsers.deleteWhere { LoyaltyUsers.userID eq userID } > 0

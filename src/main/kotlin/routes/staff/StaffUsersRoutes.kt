@@ -13,11 +13,15 @@ fun Route.staffUsersRoutes() {
 
 private suspend fun ApplicationCall.handleStaffUsers() {
     timed("T4_staff_users_list", jsMode()) {
+        val query = request.queryParameters["q"]?.trim().orEmpty()
+        val users = UserRepository.searchFull(query)
         renderTemplate(
             "staff/users/index.peb",
             mapOf(
                 "title" to "Staff Users",
-                "users" to UserRepository.allFull(),
+                "users" to users,
+                "searchQuery" to query,
+                "totalUsers" to users.size,
             ),
         )
     }

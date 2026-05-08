@@ -175,7 +175,7 @@
 
 .ticket-button {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) 150px minmax(130px, 0.7fr) 150px;
+  grid-template-columns: minmax(160px, 1fr) 150px minmax(130px, 0.7fr) minmax(170px, 0.8fr);
   align-items: center;
   gap: 18px;
   width: 100%;
@@ -213,6 +213,14 @@
   font-weight: 600;
 }
 
+.ticket-button-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
 .ticket-button-tags,
 .ticket-detail-tags {
   display: flex;
@@ -245,7 +253,7 @@
 .ticket-button-view {
   color: var(--primary-color);
   font-weight: 700;
-  text-align: right;
+  text-align: left;
 }
 
 .ticket-detail {

@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
 
-private const val LIGHT_JOURNEY_SEAT_FEE_GBP = 30
+private const val LIGHT_JOURNEY_SEAT_FEE_GBP = 10
 private const val CHECKED_BAG_PRICE_GBP = 25
 private const val PRIORITY_BOARDING_PRICE_GBP = 8
 private const val TRAVEL_INSURANCE_PRICE_GBP = 14

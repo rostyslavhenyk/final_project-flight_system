@@ -1,5 +1,6 @@
 import auth.UserSession
 import data.AllTables
+import data.LoyaltyUserRepository
 import data.SeatMaintenance
 import data.UserMaintenance
 import data.flight.FlightScheduleGenerator
@@ -64,6 +65,7 @@ fun configureDatabase() {
         FlightScheduleGenerator.ensureSeedData()
     }
     UserMaintenance.normalizeStoredNames()
+    LoyaltyUserRepository.deleteNonCustomerMemberships()
 }
 
 fun Application.configureFlightScheduleMaintenance() {

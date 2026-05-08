@@ -1,7 +1,3 @@
-/**
- * My account - Manage booking tab.
- * Paid bookings are rendered by the server from the database for the logged-in account.
- */
 (function () {
   'use strict';
 
@@ -58,9 +54,9 @@
     activate(window.location.hash === '#manage-booking' ? 'manage' : 'details');
   }
 
-  function wireNameEditToggle() {
-    const btn = document.getElementById('account-name-edit-toggle');
-    const form = document.getElementById('account-name-edit-form');
+  function wireProfileEditToggle() {
+    const btn = document.getElementById('account-profile-edit-toggle');
+    const form = document.getElementById('account-profile-edit-form');
     if (!btn || !form) return;
 
     btn.addEventListener('click', function () {
@@ -145,7 +141,7 @@
 
   function onReady() {
     wireTabs();
-    wireNameEditToggle();
+    wireProfileEditToggle();
     wireManageCardsAndModal();
   }
 

@@ -23,7 +23,7 @@ internal fun bookPaymentModel(queryParams: Parameters): Map<String, Any?> {
     return paymentModel(queryParams, context, fare, extras, money, dates)
 }
 
-private fun paymentContext(queryParams: Parameters): PaymentContext {
+internal fun paymentContext(queryParams: Parameters): PaymentContext {
     val isReturn = queryParams["trip"].equals("return", ignoreCase = true)
     val inboundRow = findRecordForBooking(queryParams)
     val outboundRow = findOutboundRecordForBooking(queryParams)

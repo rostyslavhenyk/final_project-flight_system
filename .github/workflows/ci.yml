@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  kotlin-checks:
+    name: Kotlin checks
+    runs-on: ubuntu-latest
+    environment: Glide Airways
+
+    env:
+      GLIDE_EMAIL_ADDRESS: ${{ secrets.GLIDE_EMAIL_ADDRESS }}
+      GLIDE_EMAIL_APP_PASSWORD: ${{ secrets.GLIDE_EMAIL_APP_PASSWORD }}
+      GLIDE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.GLIDE_STRIPE_PUBLISHABLE_KEY }}
+      GLIDE_STRIPE_SECRET_KEY: ${{ secrets.GLIDE_STRIPE_SECRET_KEY }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew test
+
+      - name: Run detekt
+        run: ./gradlew detekt
+
+      - name: Run ktlint
+        run: ./gradlew ktlintCheck
