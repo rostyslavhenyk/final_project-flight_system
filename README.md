@@ -26,3 +26,6 @@ GLIDE_EMAIL_APP_PASSWORD = yekdqnxsmwedvlnz
 GLIDE_STRIPE_PUBLISHABLE_KEY = pk_test_51TUNmpEBhmaPcmwS1yJuThZL4siddhg1vnp6CEUUu4ETr4NhTXoT7599H84nkO9RPbWQa0oKiS1m1K5SyZEYBRh0005D2GLTGT
 GLIDE_STRIPE_SECRET_KEY = sk_test_51TUNmpEBhmaPcmwSu3W1VhKi7JKHpu8L9VkVC3bjHG3Ag1X7n0LjGlzfJXjkYLw0AH2RohKqJ9zdOO29qJmrC1Ou00Vgz9Bg3K
 Environment keys for email messages to work and stripe payment.
+
+Running Instructions:
+  
