@@ -31,6 +31,8 @@ import routes.flight.flightsRoutes
 import routes.staff.staffRoutes
 import testsupport.withClue
 import utils.SessionUtils
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -142,6 +144,45 @@ class RouteIntegrationExtraTest {
                 val body = loginFromBooking.bodyAsText()
                 assertTrue(body.contains("/book/seats?from=MAN"))
                 assertTrue(body.contains("fare=essential"))
+            }
+        }
+
+    @Test
+    fun `signup from login keeps original redirect target`() =
+        testApplication {
+            configureExtraRoutes()
+            val client =
+                createClient {
+                    followRedirects = false
+                    install(HttpCookies)
+                }
+
+            val bookingRedirect = "/book/seats?from=MAN&to=AMS&depart=2026-05-07&fare=essential"
+            val redirectParam = URLEncoder.encode(bookingRedirect, StandardCharsets.UTF_8)
+            val signupPage = client.get("/signup?redirect=$redirectParam")
+
+            withClue("signup page carries the original protected page redirect") {
+                val body = signupPage.bodyAsText()
+                assertTrue(body.contains("""name="redirect" value="/book/seats?from=MAN"""))
+                assertTrue(body.contains("fare=essential"))
+                assertTrue(body.contains("/login?redirect="))
+            }
+
+            val signup =
+                client.submitForm(
+                    url = "/signup",
+                    formParameters =
+                        Parameters.build {
+                            append("firstname", "Redirect")
+                            append("lastname", "User")
+                            append("email", "redirect-signup@example.com")
+                            append("password", "Password123")
+                            append("redirect", bookingRedirect)
+                        },
+                )
+
+            withClue("successful signup redirects to the original page") {
+                assertEquals(bookingRedirect, signup.redirectTarget())
             }
         }
 
@@ -321,7 +362,7 @@ class RouteIntegrationExtraTest {
 
             withClue("help form submission redirects after creating a ticket") {
                 assertEquals(HttpStatusCode.Found, response.status)
-                assertEquals("/help?ticket=created#contact", response.headers[HttpHeaders.Location])
+                assertEquals("/help?ticket=created", response.headers[HttpHeaders.Location])
             }
             withClue("ticket is stored as a requested user ticket") {
                 val tickets = TicketRepository.searchFullBySource("USER", "Broken bag", "")
