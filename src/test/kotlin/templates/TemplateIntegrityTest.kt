@@ -83,6 +83,11 @@ class TemplateIntegrityTest {
             assertTrue(passengers.contains("""name="contactPhone""""))
             assertTrue(passengers.contains("""name="membershipNumber""""))
         }
+        withClue("Passenger title combo keeps common title options") {
+            listOf("Mr", "Mrs", "Miss", "Ms", "Mx", "Dr", "Prof").forEach { title ->
+                assertTrue(passengers.contains("""data-value="$title""""))
+            }
+        }
         withClue("Seat page keeps seat data and unavailable-seat endpoints") {
             assertTrue(seats.contains("""id="seat-booking-config""""))
             assertTrue(seats.contains("data-journeys-b64"))
@@ -98,6 +103,22 @@ class TemplateIntegrityTest {
     }
 
     @Test
+    fun `flight results date carousel skips unavailable dates in tab order`() {
+        val results = templateText("user/flights/step-1-search-results/index.peb")
+
+        withClue("Past date chips are marked disabled and removed from tab order") {
+            assertTrue(results.contains("""date-carousel__chip--past" aria-disabled="true" tabindex="-1""""))
+        }
+        withClue("Previous date arrow can render as disabled when no earlier dates are available") {
+            assertTrue(results.contains("weekPrevAvailable"))
+            assertTrue(results.contains("""date-carousel__arrow--disabled" aria-disabled="true" tabindex="-1""""))
+        }
+        withClue("Next date arrow can render as disabled after the available booking window") {
+            assertTrue(results.contains("weekNextAvailable"))
+        }
+    }
+
+    @Test
     fun `help contact form posts to ticket route`() {
         val help = templateText("user/help/index.peb")
         val helpScript = Files.readString(staticPath("/static/js/help.js"))
@@ -109,6 +130,24 @@ class TemplateIntegrityTest {
         withClue("Contact ticket form must not be blocked by placeholder JavaScript") {
             assertTrue(!help.contains("submitContact(event)"))
             assertTrue(!helpScript.contains("function submitContact"))
+        }
+    }
+
+    @Test
+    fun `custom dropdown scripts keep keyboard navigation hooks`() {
+        val homepageScript = Files.readString(staticPath("/static/js/homepage.js"))
+        val statusScript = Files.readString(staticPath("/static/js/flight-status.js"))
+        val passengerScript = Files.readString(staticPath("/static/js/flights-results.js"))
+
+        withClue("Homepage airport, trip and cabin dropdowns should handle keyboard navigation") {
+            assertKeyboardDropdownHooks(homepageScript)
+            assertTrue(homepageScript.contains("initButtonListbox"))
+        }
+        withClue("Flight status airport and flight number suggestions should handle keyboard navigation") {
+            assertKeyboardDropdownHooks(statusScript)
+        }
+        withClue("Passenger title dropdown should keep the same keyboard support") {
+            assertKeyboardDropdownHooks(passengerScript)
         }
     }
 
@@ -224,6 +263,13 @@ private fun assertHtmxTargetExists(
 ) {
     assertTrue(template.contains("""hx-target="#$statusId""""))
     assertTrue(template.contains("""id="$statusId""""))
+}
+
+private fun assertKeyboardDropdownHooks(script: String) {
+    listOf("ArrowDown", "ArrowUp", "Escape", "Enter").forEach { key ->
+        assertTrue(script.contains("'$key'") || script.contains("\"$key\""), "Expected $key keyboard handling")
+    }
+    assertTrue(script.contains("aria-activedescendant") || script.contains(".focus()"))
 }
 
 private fun renderTemplate(

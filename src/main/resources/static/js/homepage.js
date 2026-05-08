@@ -1,6 +1,7 @@
 (function() {
   'use strict';
   const FORCE_SELECT_MS = 800;
+  const BOOKING_DATE_WINDOW_DAYS = 28;
 
   function initAutocomplete(inputId, listId, otherInputId) {
     let input = document.getElementById(inputId);
@@ -8,6 +9,45 @@
     let otherInput = otherInputId ? document.getElementById(otherInputId) : null;
     if (!input || !list) return;
     let options = list.querySelectorAll('[role="option"]');
+    let activeIndex = -1;
+    options.forEach(function(el, index) {
+      if (!el.id) el.id = listId + '-option-' + index;
+    });
+
+    function visibleOptions() {
+      return Array.prototype.filter.call(options, function(el) {
+        return el.style.display !== 'none' && el.getAttribute('aria-disabled') !== 'true';
+      });
+    }
+
+    function setActiveOption(index) {
+      let available = visibleOptions();
+      options.forEach(function(el) {
+        el.classList.remove('highlight');
+        el.removeAttribute('aria-selected');
+      });
+      if (!available.length) {
+        activeIndex = -1;
+        input.removeAttribute('aria-activedescendant');
+        return null;
+      }
+      activeIndex = (index + available.length) % available.length;
+      let active = available[activeIndex];
+      active.classList.add('highlight');
+      active.setAttribute('aria-selected', 'true');
+      input.setAttribute('aria-activedescendant', active.id);
+      return active;
+    }
+
+    function clearActiveOption() {
+      activeIndex = -1;
+      options.forEach(function(el) {
+        el.classList.remove('highlight');
+        el.removeAttribute('aria-selected');
+      });
+      input.removeAttribute('aria-activedescendant');
+    }
+
     function filter() {
       let queryText = (input.value || '').trim().toLowerCase();
       let unavailableValue = (otherInput && otherInput.value || '').trim().toLowerCase();
@@ -38,11 +78,13 @@
       }
       list.classList.add('is-open');
       input.setAttribute('aria-expanded', 'true');
+      clearActiveOption();
     }
 
     function hide() {
       list.classList.remove('is-open');
       input.setAttribute('aria-expanded', 'false');
+      clearActiveOption();
     }
 
     function choose(value) {
@@ -64,6 +106,31 @@
       window.attachForceSelectAll(input, { forceSelectMs: FORCE_SELECT_MS });
     }
     input.addEventListener('input', filter);
+    input.addEventListener('keydown', function(e) {
+      let open = list.classList.contains('is-open');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!open) filter();
+        setActiveOption(activeIndex + 1);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!open) filter();
+        setActiveOption(activeIndex - 1);
+        return;
+      }
+      if (e.key === 'Escape') {
+        hide();
+        return;
+      }
+      if (e.key === 'Enter' && open && activeIndex >= 0) {
+        let active = visibleOptions()[activeIndex];
+        if (!active) return;
+        e.preventDefault();
+        choose(active.getAttribute('data-value'));
+      }
+    });
     input.addEventListener('blur', function() {
       setTimeout(hide, 150);
     });
@@ -80,33 +147,112 @@
   }
   const TRIP_LABELS = { 'one-way': 'One way', 'return': 'Return' };
 
-  function initTripCombobox() {
-    let tripInput = document.getElementById('trip');
-    let trigger = document.getElementById('trip-trigger');
-    let list = document.getElementById('trip-list');
-    if (!tripInput || !trigger || !list) return;
+  function initButtonListbox(trigger, list, optionSelector, chooseOption) {
+    let options = Array.prototype.slice.call(list.querySelectorAll(optionSelector));
+
+    function enabledOptions() {
+      return options.filter(function(option) {
+        return !option.disabled && option.getAttribute('aria-disabled') !== 'true';
+      });
+    }
+
+    function isOpen() {
+      return list.classList.contains('is-open');
+    }
 
     function hide() {
       list.classList.remove('is-open');
       trigger.setAttribute('aria-expanded', 'false');
     }
 
-    function show() {
+    function show(focusOption) {
       list.classList.add('is-open');
       trigger.setAttribute('aria-expanded', 'true');
+      if (focusOption) focusCurrentOption();
     }
+
+    function focusCurrentOption() {
+      let enabled = enabledOptions();
+      if (!enabled.length) return;
+      let selected = enabled.find(function(option) {
+        return option.getAttribute('aria-selected') === 'true';
+      });
+      (selected || enabled[0]).focus();
+    }
+
+    function moveFocus(currentOption, direction) {
+      let enabled = enabledOptions();
+      if (!enabled.length) return;
+      let currentIndex = enabled.indexOf(currentOption);
+      let nextIndex = currentIndex < 0 ? 0 : (currentIndex + direction + enabled.length) % enabled.length;
+      enabled[nextIndex].focus();
+    }
+
+    trigger.addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault();
+      show(true);
+    });
+
+    options.forEach(function(option) {
+      option.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          moveFocus(option, 1);
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          moveFocus(option, -1);
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          hide();
+          trigger.focus();
+          return;
+        }
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          chooseOption(option);
+          trigger.focus();
+        }
+      });
+    });
+
+    return {
+      hide: hide,
+      show: function() { show(false); },
+      toggle: function() {
+        if (isOpen()) hide();
+        else show(false);
+      }
+    };
+  }
+
+  function initTripCombobox() {
+    let tripInput = document.getElementById('trip');
+    let trigger = document.getElementById('trip-trigger');
+    let list = document.getElementById('trip-list');
+    if (!tripInput || !trigger || !list) return;
 
     function setTrip(value) {
       tripInput.value = value;
       trigger.textContent = TRIP_LABELS[value] || value;
-      hide();
+      list.querySelectorAll('.trip-option').forEach(function(btn) {
+        btn.setAttribute('aria-selected', btn.getAttribute('data-value') === value ? 'true' : 'false');
+      });
+      listbox.hide();
       tripInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    let listbox = initButtonListbox(trigger, list, '.trip-option', function(btn) {
+      setTrip(btn.getAttribute('data-value'));
+    });
+
     trigger.addEventListener('click', function(e) {
       e.preventDefault();
-      if (list.classList.contains('is-open')) hide();
-      else show();
+      listbox.toggle();
     });
 
     list.querySelectorAll('.trip-option').forEach(function(btn) {
@@ -117,11 +263,14 @@
     });
 
     document.addEventListener('click', function(e) {
-      if (!trigger.contains(e.target) && !list.contains(e.target)) hide();
+      if (!trigger.contains(e.target) && !list.contains(e.target)) listbox.hide();
     });
 
     let initial = tripInput.value || 'one-way';
     trigger.textContent = TRIP_LABELS[initial] || initial;
+    list.querySelectorAll('.trip-option').forEach(function(btn) {
+      btn.setAttribute('aria-selected', btn.getAttribute('data-value') === initial ? 'true' : 'false');
+    });
   }
 
   const CABIN_CLASS_LABELS = {
@@ -171,22 +320,24 @@
       cabinClassTrigger.setAttribute('aria-expanded', 'false');
     }
 
-    function showCabinClassList() {
-      cabinClassList.classList.add('is-open');
-      cabinClassTrigger.setAttribute('aria-expanded', 'true');
-    }
-
     function setModalCabin(value) {
       cabinModalClassHidden.value = value;
       cabinClassTrigger.textContent = CABIN_CLASS_LABELS[value] || value;
-      hideCabinClassList();
+      cabinClassList.querySelectorAll('.trip-option').forEach(function(btn) {
+        btn.setAttribute('aria-selected', btn.getAttribute('data-value') === value ? 'true' : 'false');
+      });
+      cabinClassListbox.hide();
     }
+
+    let cabinClassListbox = initButtonListbox(cabinClassTrigger, cabinClassList, '.trip-option', function(btn) {
+      if (btn.disabled) return;
+      setModalCabin(btn.getAttribute('data-value'));
+    });
 
     cabinClassTrigger.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
-      if (cabinClassList.classList.contains('is-open')) hideCabinClassList();
-      else showCabinClassList();
+      cabinClassListbox.toggle();
     });
 
     cabinClassList.querySelectorAll('.trip-option').forEach(function(btn) {
@@ -252,7 +403,7 @@
 
     document.addEventListener('click', function(e) {
       if (!cabinClassTrigger.contains(e.target) && !cabinClassList.contains(e.target)) {
-        hideCabinClassList();
+        cabinClassListbox.hide();
       }
     });
 
@@ -345,6 +496,23 @@
     if (!trip || !departTrigger || !returnTrigger || !departInput || !returnInput) return;
     let fpReturn = null;
 
+    function addDays(dateValue, days) {
+      let copy = new Date(dateValue.getTime());
+      copy.setDate(copy.getDate() + days);
+      return copy;
+    }
+
+    function markDisabledDate(dayElem) {
+      if (!dayElem || !dayElem.classList || !dayElem.classList.contains('flatpickr-disabled')) return;
+      dayElem.setAttribute('tabindex', '-1');
+      dayElem.setAttribute('aria-disabled', 'true');
+    }
+
+    function markDisabledDates(selectedDates, dateStr, instance) {
+      if (!instance || !instance.calendarContainer) return;
+      instance.calendarContainer.querySelectorAll('.flatpickr-day.flatpickr-disabled').forEach(markDisabledDate);
+    }
+
     function formatDate(dateValue) {
       return dateValue.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
     }
@@ -366,16 +534,29 @@
       }
     }
 
+    let maxBookingDate = addDays(new Date(), BOOKING_DATE_WINDOW_DAYS - 1);
+
     flatpickrFactory(departTrigger, {
       mode: 'single',
       dateFormat: 'Y-m-d',
       minDate: 'today',
+      maxDate: maxBookingDate,
+      onReady: markDisabledDates,
+      onOpen: markDisabledDates,
+      onMonthChange: markDisabledDates,
+      onYearChange: markDisabledDates,
+      onDayCreate: function(selectedDates, dateStr, instance, dayElem) {
+        markDisabledDate(dayElem);
+      },
       onChange: function(selected) {
         if (selected.length) {
           departInput.value = toLocalIsoDate(selected[0]);
           departInput.dispatchEvent(new Event('change', { bubbles: true }));
           departTrigger.textContent = formatDate(selected[0]);
-          if (fpReturn) fpReturn.set('minDate', selected[0]);
+          if (fpReturn) {
+            fpReturn.set('minDate', selected[0]);
+            fpReturn.set('maxDate', maxBookingDate);
+          }
         }
       }
     });
@@ -384,6 +565,14 @@
       mode: 'single',
       dateFormat: 'Y-m-d',
       minDate: departInput.value || 'today',
+      maxDate: maxBookingDate,
+      onReady: markDisabledDates,
+      onOpen: markDisabledDates,
+      onMonthChange: markDisabledDates,
+      onYearChange: markDisabledDates,
+      onDayCreate: function(selectedDates, dateStr, instance, dayElem) {
+        markDisabledDate(dayElem);
+      },
       onChange: function(selected) {
         if (selected.length) {
           returnInput.value = toLocalIsoDate(selected[0]);
@@ -404,7 +593,10 @@
       } else {
         setReturnEnabled(true);
         let departDate = departInput.value;
-        if (departDate) fpReturn.set('minDate', departDate);
+        if (departDate) {
+          fpReturn.set('minDate', departDate);
+          fpReturn.set('maxDate', maxBookingDate);
+        }
       }
     });
 

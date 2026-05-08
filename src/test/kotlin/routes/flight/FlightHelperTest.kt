@@ -91,6 +91,7 @@ class FlightHelperTest {
                 selected = today,
                 windowStart = today.minusDays(ONE_DAY),
                 base = mapOf("from" to "MAN", "to" to "LHR"),
+                latestAvailableDate = today.plusDays(ONE_DAY),
             )
 
         withClue("the first day is in the past and not clickable") {
@@ -101,6 +102,11 @@ class FlightHelperTest {
             val todayChip = days[1]
             assertTrue(todayChip.getValue("selected") as Boolean)
             assertFalse(todayChip.getValue("href").toString().isBlank())
+        }
+        withClue("dates after the available booking window are not clickable") {
+            val afterWindowChip = days[3]
+            assertTrue(afterWindowChip.getValue("unavailable") as Boolean)
+            assertEquals("", afterWindowChip.getValue("href"))
         }
     }
 

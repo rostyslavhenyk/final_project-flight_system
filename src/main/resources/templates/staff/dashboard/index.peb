@@ -8,16 +8,16 @@
     </header>
 
     <section class="staff-dashboard-grid" aria-label="Dashboard metrics">
-        <article class="staff-dashboard-card staff-dashboard-card--wide">
+        <article class="staff-dashboard-card">
             <div class="staff-dashboard-card__head">
                 <div>
-                    <span class="staff-card__label">Sold flights</span>
-                    <h2>Total sold flights</h2>
+                    <span class="staff-card__label">Seat sales</span>
+                    <h2>Total sold seats</h2>
                 </div>
-                <div class="staff-dashboard-toggle" role="group" aria-label="Sold flights range">
-                    <button type="button" class="staff-dashboard-toggle__btn staff-dashboard-toggle__btn--active" data-sales-range="day">Day</button>
-                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="week">7 days</button>
-                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="fourWeeks">28 days</button>
+                <div class="staff-dashboard-toggle" role="group" aria-label="Sold seats range">
+                    <button type="button" class="staff-dashboard-toggle__btn staff-dashboard-toggle__btn--active" data-sales-range="day" aria-pressed="true">Day</button>
+                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="week" aria-pressed="false">7 days</button>
+                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="fourWeeks" aria-pressed="false">28 days</button>
                 </div>
             </div>
 
@@ -26,7 +26,7 @@
                 <div class="staff-pie-details">
                     <strong>{{ soldFlightsToday }}</strong>
                     <span>sold seats today</span>
-                    <p>{{ soldFlightsRealToday }} real bookings, {{ soldFlightsSimulatedToday }} simulated taken seats, {{ soldFlightsRemainingToday }} available.</p>
+                    <p>{{ soldFlightsRealToday }} real bookings, {{ soldFlightsSimulatedToday }} simulated taken seats, {{ soldFlightsRemainingToday }} available across {{ flightCountToday }} flights.</p>
                 </div>
             </div>
             <div class="staff-pie-panel" data-sales-chart="week" hidden>
@@ -34,7 +34,7 @@
                 <div class="staff-pie-details">
                     <strong>{{ soldFlightsWeek }}</strong>
                     <span>sold seats in 7 days</span>
-                    <p>{{ soldFlightsRealWeek }} real bookings, {{ soldFlightsSimulatedWeek }} simulated taken seats, {{ soldFlightsRemainingWeek }} available.</p>
+                    <p>{{ soldFlightsRealWeek }} real bookings, {{ soldFlightsSimulatedWeek }} simulated taken seats, {{ soldFlightsRemainingWeek }} available across {{ flightCountWeek }} flights.</p>
                 </div>
             </div>
             <div class="staff-pie-panel" data-sales-chart="fourWeeks" hidden>
@@ -42,7 +42,7 @@
                 <div class="staff-pie-details">
                     <strong>{{ soldFlightsFourWeeks }}</strong>
                     <span>sold seats in 28 days</span>
-                    <p>{{ soldFlightsRealFourWeeks }} real bookings, {{ soldFlightsSimulatedFourWeeks }} simulated taken seats, {{ soldFlightsRemainingFourWeeks }} available.</p>
+                    <p>{{ soldFlightsRealFourWeeks }} real bookings, {{ soldFlightsSimulatedFourWeeks }} simulated taken seats, {{ soldFlightsRemainingFourWeeks }} available across {{ flightCountFourWeeks }} flights.</p>
                 </div>
             </div>
         </article>
@@ -74,6 +74,13 @@
                 </div>
             </div>
             <p class="staff-dashboard-note">{{ salesTargetProgressPercent }}% reached.</p>
+        </article>
+
+        <article class="staff-dashboard-card">
+            <span class="staff-card__label">Live chat</span>
+            <h2>Unread messages</h2>
+            <div class="staff-dashboard-count" data-staff-chat-dashboard-count aria-live="polite" aria-atomic="true">{{ unreadChatConversations }}</div>
+            <p class="staff-dashboard-note">Customer conversations waiting for a staff reply.</p>
         </article>
     </section>
 </section>

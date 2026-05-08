@@ -24,6 +24,7 @@
         <form method="get" action="/flight-status" class="status-form">
             <input type="hidden" name="mode" value="route">
             <div class="field--autocomplete status-airport-field">
+                <label class="sr-only" for="status-from">From airport or city</label>
                 <input id="status-from" type="text" name="from" value="{{ fromRaw }}" placeholder="From (IATA or city)" class="status-input" autocomplete="off" aria-autocomplete="list" aria-controls="status-from-list" aria-expanded="false" role="combobox">
                 <div id="status-from-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Origin airport suggestions">
                     {% for airport in airports %}
@@ -33,6 +34,7 @@
                 </div>
             </div>
             <div class="field--autocomplete status-airport-field">
+                <label class="sr-only" for="status-to">To airport or city</label>
                 <input id="status-to" type="text" name="to" value="{{ toRaw }}" placeholder="To (IATA or city)" class="status-input" autocomplete="off" aria-autocomplete="list" aria-controls="status-to-list" aria-expanded="false" role="combobox">
                 <div id="status-to-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Destination airport suggestions">
                     {% for airport in airports %}
@@ -41,7 +43,8 @@
                     <p class="autocomplete-dropdown__empty" hidden role="status" aria-live="polite">We can't find a matching airport.</p>
                 </div>
             </div>
-            <input type="text" name="date" value="{{ date }}" data-min-date="{{ minDate }}" class="status-input status-input--date status-date-picker" autocomplete="off">
+            <label class="sr-only" for="status-route-date">Flight status date</label>
+            <input id="status-route-date" type="text" name="date" value="{{ date }}" data-min-date="{{ minDate }}" data-max-date="{{ maxDate }}" class="status-input status-input--date status-date-picker" autocomplete="off">
             <label class="status-any-date">
                 <input type="checkbox" name="anyDate" value="1" {% if anyDate %}checked{% endif %}>
                 <span>Any date (upcoming 7 days)</span>
@@ -54,11 +57,13 @@
             <div class="field--autocomplete status-airport-field status-flight-number-wrap">
             <div class="status-flight-input-wrap">
                 <span class="status-flight-prefix" aria-hidden="true">GA</span>
+                <label class="sr-only" for="status-flight-digits">Flight number</label>
                 <input id="status-flight-digits" type="text" name="flightNumber" value="{{ flightDigits }}" inputmode="numeric" pattern="[0-9]*" maxlength="6" data-max-flight-digits="6" placeholder="e.g. {{ flightDigitsExample }}" class="status-input status-input--flight status-input--flight-digits" autocomplete="off" aria-autocomplete="list" aria-controls="status-flight-suggest-list" aria-expanded="false" role="combobox" title="Type up to 6 digits; matching GA flights in the next {{ flightStatusSuggestDays }} days appear below.">
             </div>
             <div id="status-flight-suggest-list" class="autocomplete-dropdown status-airport-dropdown" role="listbox" aria-label="Matching flight numbers"></div>
             </div>
-            <input type="text" name="date" value="{{ date }}" data-min-date="{{ minDate }}" class="status-input status-input--date status-date-picker" autocomplete="off">
+            <label class="sr-only" for="status-flight-date">Flight status date</label>
+            <input id="status-flight-date" type="text" name="date" value="{{ date }}" data-min-date="{{ minDate }}" data-max-date="{{ maxDate }}" class="status-input status-input--date status-date-picker" autocomplete="off">
             <label class="status-any-date">
                 <input type="checkbox" name="anyDate" value="1" {% if anyDate %}checked{% endif %}>
                 <span>Any date (upcoming 7 days)</span>

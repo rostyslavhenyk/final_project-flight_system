@@ -75,7 +75,12 @@
                                 <button type="button" id="bp-title-trigger-{{ row.slot }}" class="combo-trigger bp-wf-combo-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="bp-title-list-{{ row.slot }}">Title</button>
                                 <div id="bp-title-list-{{ row.slot }}" class="autocomplete-dropdown trip-dropdown bp-wf-title-menu" role="listbox" aria-label="Title">
                                     <button type="button" role="option" class="trip-option" data-value="Mr">Mr</button>
+                                    <button type="button" role="option" class="trip-option" data-value="Mrs">Mrs</button>
                                     <button type="button" role="option" class="trip-option" data-value="Miss">Miss</button>
+                                    <button type="button" role="option" class="trip-option" data-value="Ms">Ms</button>
+                                    <button type="button" role="option" class="trip-option" data-value="Mx">Mx</button>
+                                    <button type="button" role="option" class="trip-option" data-value="Dr">Dr</button>
+                                    <button type="button" role="option" class="trip-option" data-value="Prof">Prof</button>
                                 </div>
                             </div>
                         </div>

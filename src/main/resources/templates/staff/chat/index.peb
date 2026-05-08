@@ -4,27 +4,30 @@
 
 <section class="staff-shell">
     <div class="staff-hero">
-        <p class="staff-hero__eyebrow">Support</p>
         <h1>Customer Chat</h1>
         <p>Messages sent from the live chat widget on the Help page appear here.</p>
     </div>
 
     {% if conversations is empty %}
-        <div class="staff-empty-state">
+        <div class="staff-empty-state" data-staff-chat-empty>
             <h2>No chat messages yet</h2>
             <p>When a logged-in customer starts a live chat, their conversation will appear here.</p>
         </div>
-    {% else %}
-        <div class="staff-chat-list">
-            {% for convo in conversations %}
-            <article class="chat-convo-card">
+    {% endif %}
+
+    <div class="staff-chat-list" data-staff-chat-list data-open-user-id="{{ openChatUserId|default(0) }}" {% if conversations is empty %}hidden{% endif %}>
+        {% for convo in conversations %}
+            <article class="chat-convo-card" data-user-id="{{ convo.userId }}">
                 <div class="chat-convo-head">
                     <div>
                         <h2>{{ convo.userName }}</h2>
                         <p>{{ convo.userEmail }}</p>
+                        <p class="chat-convo-preview">{{ convo.lastMessage }}</p>
                     </div>
                     <div class="chat-convo-actions">
+                        <span class="chat-unread-pill" aria-live="polite" aria-atomic="true" {% if not convo.unread %}hidden{% endif %}>Unread</span>
                         <span>{{ convo.messageCount }} messages</span>
+                        <button type="button" data-chat-toggle data-user-id="{{ convo.userId }}" aria-expanded="{% if openChatUserId == convo.userId %}true{% else %}false{% endif %}" aria-controls="chat-convo-messages-{{ convo.userId }} chat-reply-form-{{ convo.userId }}">{% if openChatUserId == convo.userId %}Close chat{% else %}Open{% endif %}</button>
                         <form method="post" action="/staff/chat/close">
                             <input type="hidden" name="userId" value="{{ convo.userId }}">
                             <button type="submit">Close</button>
@@ -32,7 +35,7 @@
                     </div>
                 </div>
 
-                <div class="chat-convo-messages" aria-label="Conversation with {{ convo.userName }}">
+                <div id="chat-convo-messages-{{ convo.userId }}" class="chat-convo-messages" aria-label="Conversation with {{ convo.userName }}" {% if openChatUserId != convo.userId %}hidden{% endif %}>
                     {% for msg in convo.messages %}
                     <div class="chat-convo-msg {% if msg.isStaff %}staff{% else %}customer{% endif %}">
                         <span class="chat-convo-name">{{ msg.senderName }}</span>
@@ -41,7 +44,7 @@
                     {% endfor %}
                 </div>
 
-                <form method="post" action="/staff/chat/reply" class="chat-reply-form">
+                <form id="chat-reply-form-{{ convo.userId }}" method="post" action="/staff/chat/reply" class="chat-reply-form" {% if openChatUserId != convo.userId %}hidden{% endif %}>
                     <input type="hidden" name="userId" value="{{ convo.userId }}">
                     <div class="chat-reply-row">
                         <label class="sr-only" for="reply-{{ convo.userId }}">Reply to {{ convo.userName }}</label>
@@ -50,9 +53,10 @@
                     </div>
                 </form>
             </article>
-            {% endfor %}
-        </div>
-    {% endif %}
+        {% endfor %}
+    </div>
 </section>
+
+<script src="/static/js/staff-chat.js" defer></script>
 
 {% endblock %}

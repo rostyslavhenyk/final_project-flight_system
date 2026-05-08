@@ -18,6 +18,7 @@ import utils.timed
 fun Route.chatRoutes() {
     post("/chat/send") { call.handleSendMessage() }
     get("/chat/messages") { call.handleGetMessages() }
+    get("/chat/summary") { call.handleChatSummary() }
 }
 
 @Serializable
@@ -27,6 +28,11 @@ data class ChatMessageResponse(
     val message: String,
     val isStaff: Boolean,
     val timestamp: Long,
+)
+
+@Serializable
+data class ChatSummaryResponse(
+    val unreadMessages: Int,
 )
 
 private suspend fun ApplicationCall.handleSendMessage() {
@@ -67,5 +73,21 @@ private suspend fun ApplicationCall.handleGetMessages() {
             }
 
         respondText(Json.encodeToString(response), ContentType.Application.Json)
+    }
+}
+
+private suspend fun ApplicationCall.handleChatSummary() {
+    timed("T2_chat_summary", jsMode()) {
+        val session = sessions.get<UserSession>()
+
+        if (session == null) {
+            respond(HttpStatusCode.Unauthorized)
+            return@timed
+        }
+
+        respondText(
+            Json.encodeToString(ChatSummaryResponse(ChatRepository.unreadStaffReplyCount(session.id))),
+            ContentType.Application.Json,
+        )
     }
 }
