@@ -37,8 +37,8 @@
                     <td><strong>{{ account.user.firstname }} {{ account.user.lastname }}</strong></td>
                     <td>{{ account.user.email }}</td>
                     <td><span class="staff-status-pill">{% if account.user.roleId == 2 %}Admin{% elseif account.user.roleId == 1 %}Staff{% else %}Customer{% endif %}</span></td>
-                    <td>{% if account.user.roleId == 0 %}{% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}{% else %}N/A{% endif %}</td>
-                    <td>{% if account.user.roleId == 0 %}{% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %}{% else %}N/A{% endif %}</td>
+                    <td>{% if account.user.roleId == 0 %}{% if account.loyaltyUser is not null %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}{% else %}N/A{% endif %}</td>
+                    <td>{% if account.user.roleId == 0 %}{% if account.loyaltyUser is not null %}{{ account.loyaltyUser.points }}{% else %}0{% endif %}{% else %}N/A{% endif %}</td>
                 </tr>
             {% else %}
                 <tr>
