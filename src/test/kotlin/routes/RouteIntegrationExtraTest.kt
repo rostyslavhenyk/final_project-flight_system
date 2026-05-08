@@ -68,7 +68,7 @@ class RouteIntegrationExtraTest {
                             append("firstname", "Ada")
                             append("lastname", "Lovelace")
                             append("email", "ada@example.com")
-                            append("password", "password")
+                            append("password", "Password123")
                         },
                 )
             withClue("successful signup redirects through htmx") {

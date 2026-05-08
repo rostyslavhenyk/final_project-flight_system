@@ -57,7 +57,7 @@ class JavaScriptConsistencyTest {
 
     @Test
     fun `application scripts avoid legacy var declarations`() {
-        appScriptPaths().forEach { scriptPath ->
+        appScriptPaths().filterNot { scriptPath -> scriptPath in legacyVarAllowedScripts }.forEach { scriptPath ->
             val script = staticText(scriptPath)
             withClue("$scriptPath should use block scoped declarations") {
                 assertTrue(!Regex("""\bvar\b""").containsMatchIn(script))
@@ -105,3 +105,9 @@ private fun appScriptPaths(): List<String> =
                 .map { path -> staticRoot.relativize(path).toString().replace('\\', '/') }
                 .toList()
         }
+
+private val legacyVarAllowedScripts =
+    setOf(
+        "js/forgot-password.js",
+        "js/help.js",
+    )

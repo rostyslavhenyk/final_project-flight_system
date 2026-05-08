@@ -1,9 +1,10 @@
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 import utils.VerificationStore
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class VerificationStoreTest {
-
     @Test
     fun `generated code is 6 digits`() {
         val code = VerificationStore.generateCode()

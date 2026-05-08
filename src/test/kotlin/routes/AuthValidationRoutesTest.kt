@@ -48,7 +48,7 @@ class AuthValidationRoutesTest {
                             append("firstname", "")
                             append("lastname", "Lovelace")
                             append("email", "ada@example.com")
-                            append("password", "password")
+                            append("password", "Password123")
                         },
                 )
 
@@ -124,7 +124,7 @@ class AuthValidationRoutesTest {
                             append("firstname", "Ada")
                             append("lastname", "Lovelace")
                             append("email", "ADA@example.com")
-                            append("password", "password")
+                            append("password", "Password123")
                         },
                 )
 

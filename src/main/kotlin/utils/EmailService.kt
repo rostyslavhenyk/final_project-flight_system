@@ -32,7 +32,10 @@ object EmailService {
         )
     }
 
-    fun sendVerificationCode(toEmail: String, code: String): Boolean =
+    fun sendVerificationCode(
+        toEmail: String,
+        code: String,
+    ): Boolean =
         try {
             if (!isConfigured()) {
                 println("Email is not configured.")
@@ -43,7 +46,10 @@ object EmailService {
                 message.setFrom(InternetAddress(senderEmail))
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
                 message.subject = "Your Glide Airways Verification Code"
-                message.setText("Hi,\n\nYour verification code is: $code\n\nThis code expires in 10 minutes.\n\nGlide Airways")
+                message.setText(
+                    "Hi,\n\nYour verification code is: $code\n\n" +
+                        "This code expires in 10 minutes.\n\nGlide Airways",
+                )
                 Transport.send(message)
                 true
             }
@@ -52,7 +58,10 @@ object EmailService {
             false
         }
 
-    fun sendPasswordResetCode(toEmail: String, code: String): Boolean =
+    fun sendPasswordResetCode(
+        toEmail: String,
+        code: String,
+    ): Boolean =
         try {
             if (!isConfigured()) {
                 println("Email is not configured.")
@@ -75,7 +84,11 @@ object EmailService {
             false
         }
 
-    fun sendRefundRequest(customerEmail: String, subject: String, body: String) {
+    fun sendRefundRequest(
+        customerEmail: String,
+        subject: String,
+        body: String,
+    ) {
         try {
             if (!isConfigured()) {
                 println("Email is not configured.")
@@ -93,7 +106,11 @@ object EmailService {
         }
     }
 
-    fun sendRefundConfirmation(toEmail: String, firstname: String, ref: String) {
+    fun sendRefundConfirmation(
+        toEmail: String,
+        firstname: String,
+        ref: String,
+    ) {
         try {
             if (!isConfigured()) {
                 println("Email is not configured.")
@@ -104,7 +121,10 @@ object EmailService {
             message.setFrom(InternetAddress(senderEmail))
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail))
             message.subject = "Glide Airways - Refund Request Received"
-            message.setText("Hi $firstname,\n\nWe have received your refund request for booking $ref.\n\nWe will get back to you within 3-5 business days.\n\nGlide Airways")
+            message.setText(
+                "Hi $firstname,\n\nWe have received your refund request for booking $ref.\n\n" +
+                    "We will get back to you within 3-5 business days.\n\nGlide Airways",
+            )
             Transport.send(message)
         } catch (e: Exception) {
             println("Failed to send refund confirmation: ${e.message}")

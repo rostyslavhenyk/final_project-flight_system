@@ -1,5 +1,5 @@
 
-# Glide Airline - The Reliable Flight System
+# Glide Airways - The Reliable Flight System
 
 ## Generative AI acknowledgement
 

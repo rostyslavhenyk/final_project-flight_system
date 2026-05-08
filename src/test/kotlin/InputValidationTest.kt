@@ -1,8 +1,8 @@
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 
 class InputValidationTest {
-
     // tests for email validation
     @Test
     fun `valid email passes basic check`() {

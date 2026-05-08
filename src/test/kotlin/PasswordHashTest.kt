@@ -1,9 +1,10 @@
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 import org.mindrot.jbcrypt.BCrypt
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class PasswordHashTest {
-
     @Test
     fun `hashed password is not equal to plain text`() {
         val password = "mypassword123"

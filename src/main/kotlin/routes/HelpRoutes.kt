@@ -49,7 +49,7 @@ private suspend fun ApplicationCall.handleRefundRequest() {
     EmailService.sendRefundRequest(
         customerEmail = email,
         subject = "Refund Request - $ref",
-        body = "Name: $firstname $lastname\nEmail: $email\nBooking Ref: $ref\nReason: $reason\nDetails: $details"
+        body = "Name: $firstname $lastname\nEmail: $email\nBooking Ref: $ref\nReason: $reason\nDetails: $details",
     )
 
     EmailService.sendRefundConfirmation(email, firstname, ref)

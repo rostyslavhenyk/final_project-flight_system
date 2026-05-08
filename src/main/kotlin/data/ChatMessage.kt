@@ -43,7 +43,6 @@ data class ChatMessage(
 
 // handles database queries for chat messages
 object ChatRepository {
-
     fun add(
         userId: Int,
         senderName: String,
