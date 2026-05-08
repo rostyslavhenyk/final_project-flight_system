@@ -1,85 +1,29 @@
 {% extends "_layout/base.peb" %}
-    {% block extra_head %}
-<link rel="stylesheet" href="/static/css/users/membership.css">
+{% block styles %}
+    <link rel="stylesheet" href="/static/css/users/membership.css">
 {% endblock %}
+{% block content %}
+<h1 style="text-align: center;">Membership</h1>
+<br>
+<br>
 
-    {% block content %}
-<section class="page-shell" aria-labelledby="membership-heading">
-    <header class="page-header">
-        <p class="page-header__eyebrow">Rewards</p>
-        <h1 id="membership-heading" class="page-header__title">Membership</h1>
-        <p class="page-header__text">
-            {% if loggedIn %}
-            View your loyalty tier, available points, and membership benefits.
-            {% else %}
-            Join our membership scheme for free and unlock exclusive rewards.
-            {% endif %}
-        </p>
-    </header>
-
+<section class="membership-page" aria-labelledby="list-heading">
     {% if loggedIn %}
-    <section class="surface-card membership-section" aria-labelledby="membership-details-heading">
-        <div class="surface-card__body">
-            <h2 id="membership-details-heading">Your membership</h2>
-
-            <dl class="detail-list">
-                <dt>Member level</dt>
-                <dd>
-                    {% if account.loyaltyUser %}
-    {{ account.loyaltyUser.tier }}
-        {% else %}
-                    None
-                    {% endif %}
-                </dd>
-
-                <dt>Available points</dt>
-                <dd>
-                    {% if account.loyaltyUser %}
-    {{ account.loyaltyUser.points }}
-        {% else %}
-                    0
-                    {% endif %}
-                </dd>
-
-                <dt>Using your points</dt>
-                <dd>
-                    Book a flight and select the points option during checkout to reduce the fare price.
-                </dd>
-            </dl>
-        </div>
-    </section>
-
+    <h2 id="list-heading">Welcome to your membership</h2>
+    <!-- Make sure to get points and member rank from database -->
+    <p> Your member level is {% if account.loyaltyUser %}{{ account.loyaltyUser.tier }}{% else %}None{% endif %}</p>
+    <p> You have {% if account.loyaltyUser %}{{ account.loyaltyUser.points }}{% else %}0{% endif %} Points to use </p>
+    <p> To use your points, book a flight and select the option while booking. </p>
     {% else %}
-    <section class="surface-card membership-section" aria-labelledby="join-heading">
-        <div class="surface-card__body">
-            <h2 id="join-heading">Become a member today</h2>
-
-            <p class="membership-intro">
-                Join for free and enjoy benefits designed to make travelling easier and more rewarding.
-            </p>
-
-            <div class="membership-benefits">
-                <article class="membership-benefit">
-                    <h3>Faster booking</h3>
-                    <p>Save your information securely and manage your trips quickly from your account.</p>
-                </article>
-
-                <article class="membership-benefit">
-                    <h3>Earn reward points</h3>
-                    <p>Collect points whenever you travel and use them to reduce future flight prices.</p>
-                </article>
-
-                <article class="membership-benefit">
-                    <h3>Unlock membership tiers</h3>
-                    <p>Progress through loyalty levels to access exclusive member-only benefits.</p>
-                </article>
-            </div>
-
-            <div class="membership-actions">
-                <a href="/login" class="primary-action-btn">Sign up now→</a>
-            </div>
-        </div>
-    </section>
+    <h5 style="text-align: center;"> Join our membership scheme for free, you'll get exclusive rewards only available to members </h5>
+    <h4 style="text-align: center;"> Why join? </h4>
+    <div class="whyjoin">
+        <div>Save your information for faster booking and manage your trips quickly </div>
+        <div>Gain points you can use to decrease the price of flights </div>
+        <div>Gain membership tiers that allow for exclusive benefits </div>
+    </div>
+    <h5> Become a member today </h5>
+    <a href="/login" class="staff-action-link">Sign up now→</a>
     {% endif %}
 </section>
 {% endblock %}

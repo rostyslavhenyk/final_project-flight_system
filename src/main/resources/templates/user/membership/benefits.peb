@@ -1,46 +1,23 @@
 {% extends "_layout/base.peb" %}
-
-        {% block extra_head %}
+{% block styles %}
 <link rel="stylesheet" href="/static/css/users/membership.css">
 {% endblock %}
+{% block content %}
+<h1 style="text-align: center;">Member Benefits</h1>
+<br>
+<br>
 
-    {% block content %}
-<section class="page-shell" aria-labelledby="benefits-heading">
-    <header class="page-header">
-        <p class="page-header__eyebrow">Rewards</p>
-        <h1 id="benefits-heading" class="page-header__title">Member benefits</h1>
-        <p class="page-header__text">
-            Discover the exclusive rewards and travel perks available with each membership tier.
-        </p>
-    </header>
-
-    <section class="surface-card membership-section" aria-labelledby="tiers-heading">
-        <div class="surface-card__body">
-            <h2 id="tiers-heading">Membership status benefits</h2>
-
-            <div class="membership-benefits membership-benefits--tiers">
-                <article class="membership-benefit">
-                    <h3>Silver Tier</h3>
-                    <p>
-                        Earn points every time you travel which can be used to reduce the cost of future flights.
-                    </p>
-                </article>
-
-                <article class="membership-benefit">
-                    <h3>Gold Tier</h3>
-                    <p>
-                        Earn 30% more points on every trip, enjoy priority check-in and boarding, and access free seat selection.
-                    </p>
-                </article>
-
-                <article class="membership-benefit">
-                    <h3>Platinum Tier</h3>
-                    <p>
-                        Earn 60% more points on every journey, receive priority airport services, free seat selection, and lounge access.
-                    </p>
-                </article>
-            </div>
-        </div>
-    </section>
+<section aria-labelledby="list-heading">
+    <h5 id="list-heading">Membership status benefits</h5>
+    <div class="tiers">
+        <div><h3>Silver</h3></div>
+        <div><h3>Gold</h3></div>
+        <div><h3>Platinum</h3></div>
+    </div>
+    <div class="whyjoin">
+        <div><p>Earn points every time you travel which can be spent to make your flights cheaper.</p></div>
+        <div><p>Earn 30% more points every time you travel. Priority check-in and boarding. Free seat selection.</p></div>
+        <div><p>Earn 60% more points every time you travel. Priority check-in and boarding. Free seat selection. Access to the lounge.</p></div>
+    </div>
 </section>
 {% endblock %}

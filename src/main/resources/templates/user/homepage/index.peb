@@ -198,7 +198,7 @@
             <div class="promo-card__body">
                 <h3 class="promo-card__headline">Member benefits</h3>
                 <p class="promo-card__text">Priority services, extra baggage where available, and exclusive partner offers. Glide Membership is built around how you actually fly.</p>
-                <a href="/membership/benefits" class="promo-card__cta">Discover benefits →</a>
+                <a href="/membership" class="promo-card__cta">Discover benefits →</a>
             </div>
         </article>
         <article class="promo-card">
