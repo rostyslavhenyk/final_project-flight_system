@@ -21,12 +21,6 @@ The main AI-assisted areas were:
 - Had to ask to highlight as to why the page was overloading `src/main/resources/templates/staff/chat/index.peb`, and then followed the advice for it to work fine.
 Front-end behaviour and booking/search flows were manually tested in the running application.
 
-GLIDE_EMAIL_ADDRESS = glideairways.support@gmail.com
-GLIDE_EMAIL_APP_PASSWORD = yekdqnxsmwedvlnz
-GLIDE_STRIPE_PUBLISHABLE_KEY = pk_test_51TUNmpEBhmaPcmwS1yJuThZL4siddhg1vnp6CEUUu4ETr4NhTXoT7599H84nkO9RPbWQa0oKiS1m1K5SyZEYBRh0005D2GLTGT
-GLIDE_STRIPE_SECRET_KEY = sk_test_51TUNmpEBhmaPcmwSu3W1VhKi7JKHpu8L9VkVC3bjHG3Ag1X7n0LjGlzfJXjkYLw0AH2RohKqJ9zdOO29qJmrC1Ou00Vgz9Bg3K
-Environment keys for email messages to work and stripe payment.
-
 # WCAG Accessibility Test Record
 
 This table records a site-wide WCAG review of the Glide Airways flight booking system. The checks were carried out against the application templates, CSS and JavaScript, with practical keyboard-only behaviour assessed from the implemented markup and scripts. This is an internal accessibility test record suitable for project documentation; a formal certification would additionally require logged browser and assistive-technology test evidence.
@@ -51,6 +45,10 @@ This table records a site-wide WCAG review of the Glide Airways flight booking s
 | S2 | 2.4.1 Bypass blocks | A | Pass | Skip links are present in both main layouts and point to the main content region. |
 | S3 | 1.1.1 Alt text | A | Pass | Image elements include `alt` text. Decorative images generally use empty alt text or are marked hidden. |
 
-Running Instructions:
-
+before running do this in powershell: Windows PowerShell:
+$env:GLIDE_EMAIL_ADDRESS="glideairways.support@gmail.com"
+$env:GLIDE_EMAIL_APP_PASSWORD="yekdqnxsmwedvlnz"
+$env:GLIDE_STRIPE_PUBLISHABLE_KEY="pk_test_51TUNmpEBhmaPcmwS1yJuThZL4siddhg1vnp6CEUUu4ETr4NhTXoT7599H84nkO9RPbWQa0oKiS1m1K5SyZEYBRh0005D2GLTGT"
+$env:GLIDE_STRIPE_SECRET_KEY="sk_test_51TUNmpEBhmaPcmwSu3W1VhKi7JKHpu8L9VkVC3bjHG3Ag1X7n0LjGlzfJXjkYLw0AH2RohKqJ9zdOO29qJmrC1Ou00Vgz9Bg3K"
+Environment keys for email messages to work and stripe payment.
   
