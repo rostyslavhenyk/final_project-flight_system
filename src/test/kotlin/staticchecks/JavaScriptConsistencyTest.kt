@@ -19,6 +19,26 @@ class JavaScriptConsistencyTest {
             assertTrue(script.contains("release"))
             assertTrue(script.contains("'/book/seats/' + action"))
         }
+        withClue("seat JS validates selected seats before redirecting to payment") {
+            assertTrue(script.contains("validateSelectedSeats()"))
+            assertTrue(script.contains("Promise.all([loadUnavailableSeats(), validateSelectedSeats()])"))
+            assertTrue(script.contains("proceedToPayment();"))
+        }
+    }
+
+    @Test
+    fun `passenger javascript validates and normalizes passenger names`() {
+        val script = staticText("js/flights-results.js")
+
+        withClue("passenger names reject numbers and symbols instead of silently stripping them") {
+            assertTrue(script.contains("nameIsValid"))
+            assertTrue(script.contains("First name can only include letters"))
+            assertTrue(script.contains("Surname can only include letters"))
+        }
+        withClue("passenger names are normalized before continuing to seats") {
+            assertTrue(script.contains("normalizeNameValue"))
+            assertTrue(script.contains(".bp-wf-input--pax-name"))
+        }
     }
 
     @Test

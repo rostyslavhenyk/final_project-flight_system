@@ -94,7 +94,7 @@ private suspend fun ApplicationCall.handleCreateHelpTicket() {
 
         saveTicketImages(ticket.ticketID, formUpload.images)
 
-        respondRedirect("/help?ticket=created#contact")
+        respondRedirect("/help?ticket=created")
     }
 }
 

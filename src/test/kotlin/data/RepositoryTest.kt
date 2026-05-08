@@ -25,6 +25,20 @@ class RepositoryTest {
     }
 
     @Test
+    fun `all table registry keeps booking payment and chat tables once`() {
+        val tableNames = AllTables.all().map { it.tableName }
+
+        withClue("schema setup should not register the same table twice") {
+            assertEquals(tableNames.toSet().size, tableNames.size)
+        }
+        withClue("paid bookings and live chat tables must be part of startup schema setup") {
+            listOf("bookings", "purchases", "payments", "chat_messages", "chat_conversation_states").forEach {
+                assertTrue(it in tableNames)
+            }
+        }
+    }
+
+    @Test
     fun `chat messages are stored per user and ordered by timestamp`() {
         val firstUser = testUser("Ada", "Lovelace", "ada@example.com")
         val secondUser = testUser("Grace", "Hopper", "grace@example.com")

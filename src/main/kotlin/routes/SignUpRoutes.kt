@@ -11,8 +11,11 @@ import utils.timed
 import data.UserRepository
 import auth.UserSession
 import org.mindrot.jbcrypt.BCrypt
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 private const val MIN_SIGNUP_PASSWORD_LENGTH = 10
+private val personNamePattern = Regex("^[\\p{L}][\\p{L}\\s'-]*$")
 
 // signup routes
 fun Route.signUpRoutes() {
@@ -28,12 +31,20 @@ fun createSignUpStatus(message: String): String =
 
 private suspend fun ApplicationCall.handleSignUpLoad() {
     timed("T1_signup_load", jsMode()) {
+        val redirectUrl = signUpRedirectTarget(request.queryParameters)
         if (sessions.get<UserSession>() != null) {
-            respondRedirect("/")
+            respondRedirect(redirectUrl)
             return@timed
         }
 
-        renderTemplate("user/sign-up/index.peb", mapOf("title" to "Sign Up"))
+        renderTemplate(
+            "user/sign-up/index.peb",
+            mapOf(
+                "title" to "Sign Up",
+                "redirect" to redirectUrl,
+                "redirectParam" to URLEncoder.encode(redirectUrl, StandardCharsets.UTF_8),
+            ),
+        )
     }
 }
 
@@ -47,40 +58,31 @@ private suspend fun ApplicationCall.handleSignUpPost() {
         val email = params["email"]?.trim()
         val phone = params["phone"]?.trim().orEmpty()
         val password = params["password"]
+        val redirectUrl = signUpRedirectTarget(params)
 
         if (firstname.isNullOrBlank()) {
-            respondText(
-                createSignUpStatus("Please fill in a first name"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respondSignUpStatus("Please fill in a first name")
             return@timed
         }
 
         if (lastname.isNullOrBlank()) {
-            respondText(
-                createSignUpStatus("Please fill in a last name"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respondSignUpStatus("Please fill in a last name")
             return@timed
         }
 
         if (email.isNullOrBlank()) {
-            respondText(
-                createSignUpStatus("Please fill in an email"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respondSignUpStatus("Please fill in an email")
             return@timed
         }
 
         if (password.isNullOrBlank()) {
-            respondText(
-                createSignUpStatus("Please fill in a password"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respondSignUpStatus("Please fill in a password")
+            return@timed
+        }
+
+        val nameFormatMessage = invalidNameMessage(firstname, lastname)
+        if (nameFormatMessage != null) {
+            respondSignUpStatus(nameFormatMessage)
             return@timed
         }
 
@@ -91,20 +93,28 @@ private suspend fun ApplicationCall.handleSignUpPost() {
         val existingUser = UserRepository.getByEmail(email)
 
         if (existingUser != null) {
-            respondText(
-                createSignUpStatus("User already exists with that email"),
-                ContentType.Text.Html,
-                status = HttpStatusCode.OK,
-            )
+            respondSignUpStatus("User already exists with that email")
             return@timed
         }
 
         val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
         val createdUser = UserRepository.add(firstname, lastname, 0, email, hashedPassword, phone)
         sessions.set(UserSession(createdUser.id, createdUser.firstname))
-        response.headers.append("HX-Redirect", "/")
-        respond(HttpStatusCode.OK)
+        if (request.headers["HX-Request"] == "true") {
+            response.headers.append("HX-Redirect", redirectUrl)
+            respond(HttpStatusCode.OK)
+        } else {
+            respondRedirect(redirectUrl)
+        }
     }
+}
+
+private suspend fun ApplicationCall.respondSignUpStatus(message: String) {
+    respondText(
+        createSignUpStatus(message),
+        ContentType.Text.Html,
+        status = HttpStatusCode.OK,
+    )
 }
 
 private suspend fun ApplicationCall.respondPasswordRequirementFailure(password: String): Boolean {
@@ -114,10 +124,33 @@ private suspend fun ApplicationCall.respondPasswordRequirementFailure(password: 
             !password.any { it.isUpperCase() } -> "Password must contain at least one capital letter"
             else -> return false
         }
-    respondText(
-        createSignUpStatus(message),
-        ContentType.Text.Html,
-        status = HttpStatusCode.OK,
-    )
+    respondSignUpStatus(message)
     return true
+}
+
+private fun invalidNameMessage(
+    firstname: String,
+    lastname: String,
+): String? =
+    when {
+        !firstname.trim().matches(personNamePattern) ->
+            "First name can only include letters, spaces, hyphens and apostrophes"
+        !lastname.trim().matches(personNamePattern) ->
+            "Last name can only include letters, spaces, hyphens and apostrophes"
+        else -> null
+    }
+
+private fun signUpRedirectTarget(params: Parameters): String {
+    val redirect = params["redirect"]?.trim().orEmpty()
+    val unsafeRedirect =
+        redirect.isBlank() ||
+            !redirect.startsWith("/") ||
+            redirect.startsWith("//") ||
+            redirect.contains('\r') ||
+            redirect.contains('\n') ||
+            redirect == "/signup" ||
+            redirect.startsWith("/signup?") ||
+            redirect == "/login" ||
+            redirect.startsWith("/login?")
+    return if (unsafeRedirect) "/" else redirect
 }

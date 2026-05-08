@@ -101,7 +101,7 @@ function resetPassword() {
     })
     .then(function(response) {
         return response.text().then(function(text) {
-            if (response.ok && text === '') {
+            if (response.ok) {
                 window.location.href = '/login'
             } else {
                 updateVerifyStatus(text)

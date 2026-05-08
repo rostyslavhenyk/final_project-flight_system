@@ -16,8 +16,8 @@
                 </div>
                 <div class="staff-dashboard-toggle" role="group" aria-label="Sold seats range">
                     <button type="button" class="staff-dashboard-toggle__btn staff-dashboard-toggle__btn--active" data-sales-range="day" aria-pressed="true">Day</button>
-                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="week" aria-pressed="false">7 days</button>
-                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="fourWeeks" aria-pressed="false">28 days</button>
+                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="week" aria-pressed="false">Week</button>
+                    <button type="button" class="staff-dashboard-toggle__btn" data-sales-range="fourWeeks" aria-pressed="false">4 weeks</button>
                 </div>
             </div>
 
@@ -33,7 +33,7 @@
                 <div class="staff-pie staff-pie--sales" style="--pie-main: {{ soldFlightsPercentWeek }}%;" aria-label="{{ soldFlightsPercentWeek }} percent sold"></div>
                 <div class="staff-pie-details">
                     <strong>{{ soldFlightsWeek }}</strong>
-                    <span>sold seats in 7 days</span>
+                    <span>sold seats this week</span>
                     <p>{{ soldFlightsRealWeek }} real bookings, {{ soldFlightsSimulatedWeek }} simulated taken seats, {{ soldFlightsRemainingWeek }} available across {{ flightCountWeek }} flights.</p>
                 </div>
             </div>
@@ -41,7 +41,7 @@
                 <div class="staff-pie staff-pie--sales" style="--pie-main: {{ soldFlightsPercentFourWeeks }}%;" aria-label="{{ soldFlightsPercentFourWeeks }} percent sold"></div>
                 <div class="staff-pie-details">
                     <strong>{{ soldFlightsFourWeeks }}</strong>
-                    <span>sold seats in 28 days</span>
+                    <span>sold seats in 4 calendar weeks</span>
                     <p>{{ soldFlightsRealFourWeeks }} real bookings, {{ soldFlightsSimulatedFourWeeks }} simulated taken seats, {{ soldFlightsRemainingFourWeeks }} available across {{ flightCountFourWeeks }} flights.</p>
                 </div>
             </div>
@@ -61,6 +61,18 @@
                 </div>
             </div>
             <p class="staff-dashboard-note">{{ activeTicketTotal }} open or in progress in total.</p>
+        </article>
+
+        <article class="staff-dashboard-card">
+            <span class="staff-card__label">Live Chat</span>
+            <h2>Open conversations</h2>
+            <div class="staff-ticket-widget">
+                <div>
+                    <strong>{{ openChatCount }}</strong>
+                    <span>Open chats</span>
+                </div>
+            </div>
+            <a href="/staff/chat" class="btn-staff-link">View messages</a>
         </article>
 
         <article class="staff-dashboard-card">

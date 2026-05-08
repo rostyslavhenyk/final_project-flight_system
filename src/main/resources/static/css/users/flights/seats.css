@@ -1170,12 +1170,13 @@ td.seat-booking__fee-free,
 }
 
 .seat-booking__pay-cta.review-wf-continue-wrap {
+  align-items: center;
+  flex-direction: column;
   margin-top: 0;
   padding-top: 0.25rem;
 }
 
 .seat-booking__pay-cta #pay-confirm-error {
-  flex-basis: 100%;
   margin: 0.7rem auto 0 !important;
   text-align: center;
 }

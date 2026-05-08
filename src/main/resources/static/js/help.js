@@ -255,12 +255,36 @@
         }
     }
 
+    function wireContactForm() {
+        var form = document.getElementById("contact-form");
+        var result = document.getElementById("contactResult");
+        if (!form || !result) return;
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+            var data = new FormData(form);
+            fetch("/help/tickets", {
+                method: "POST",
+                body: data
+            }).then(function(response) {
+                if (response.ok || response.redirected) {
+                    result.innerHTML = '<p class="form-success">Message sent. Your support ticket has been created.</p>';
+                    form.reset();
+                } else {
+                    result.innerHTML = '<p style="color:#d32f2f;">Something went wrong. Please try again.</p>';
+                }
+            }).catch(function() {
+                result.innerHTML = '<p style="color:#d32f2f;">Something went wrong. Please try again.</p>';
+            });
+        });
+    }
+
     function init() {
         wireFaqAccordion();
         wireFaqSearch();
         wireRefundTabs();
         wireRefundPlaceholders();
         wireChat();
+        wireContactForm();
     }
 
     if (document.readyState === 'loading') {
