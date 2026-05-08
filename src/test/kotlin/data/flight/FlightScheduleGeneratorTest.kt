@@ -18,6 +18,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class FlightScheduleGeneratorTest {
@@ -114,6 +115,46 @@ class FlightScheduleGeneratorTest {
         }
         withClue("past flights with bookings are preserved for booking history") {
             assertNotNull(FlightRepository.get(expiredBooked.flightID))
+        }
+    }
+
+    @Test
+    fun `ensureSeedData removes duplicate unbooked flights but keeps booked duplicate`() {
+        transaction { FlightScheduleGenerator.ensureSeedData() }
+        val routeId = FlightRepository.all().first().routeID
+        val departureTime =
+            LocalDate
+                .now()
+                .plusDays(1)
+                .atTime(9, 0)
+                .toString()
+        val arrivalTime =
+            LocalDate
+                .now()
+                .plusDays(1)
+                .atTime(10, 0)
+                .toString()
+        val bookedDuplicate = FlightRepository.add(routeId, departureTime, arrivalTime, 50.0, "scheduled")
+        val unbookedDuplicate = FlightRepository.add(routeId, departureTime, arrivalTime, 50.0, "scheduled")
+        val user =
+            UserRepository.add(
+                firstname = "Booked",
+                lastname = "Duplicate",
+                roleId = CUSTOMER_ROLE_ID,
+                email = "booked-duplicate@abc.com",
+                password = "password",
+            )
+        val seat = SeatRepository.createConfirmed(user.id, bookedDuplicate.flightID, 1, "A")
+        assertNotNull(seat)
+        BookingRepository.create(bookedDuplicate.flightID, user.id, seat.id, status = "PAID")
+
+        transaction { FlightScheduleGenerator.ensureSeedData() }
+
+        withClue("booked duplicate is preserved for the customer booking") {
+            assertNotNull(FlightRepository.get(bookedDuplicate.flightID))
+        }
+        withClue("unbooked duplicate is removed from the generated schedule") {
+            assertNull(FlightRepository.get(unbookedDuplicate.flightID))
         }
     }
 }

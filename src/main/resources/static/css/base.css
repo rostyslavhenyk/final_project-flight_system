@@ -569,6 +569,23 @@ button {
     transition: color 0.2s ease;
 }
 
+.nav-chat-link {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.nav-unread-badge {
+    min-width: 1.25rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: var(--primary-color);
+    color: var(--page-white);
+    font-size: 0.75rem;
+    line-height: 1.2;
+    text-align: center;
+}
+
 .nav-inline-form {
     margin: 0;
 }
@@ -644,6 +661,7 @@ button {
     color: var(--page-white);
     padding: 24px 20px 10px;
     margin: 40px 0 0;
+    text-align: center;
 }
 
 .footer-inner {
@@ -666,20 +684,20 @@ button {
 }
 
 .footer-top {
-    justify-content: space-between;
+    justify-content: center;
     gap: 0.5rem 1.25rem;
     width: 100%;
 }
 
 .footer-links {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.55rem;
     width: 100%;
 }
 
 .social-icons {
-    justify-content: flex-start;
+    justify-content: center;
     gap: 12px;
 }
 

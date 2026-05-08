@@ -1,5 +1,5 @@
 
-# Glide Airline - The Reliable Flight System
+# Glide Airways - The Reliable Flight System
 
 ## Generative AI acknowledgement
 
@@ -18,4 +18,5 @@ The main AI-assisted areas were:
 - `src/main/kotlin/routes/flight/BookSeatsPageModels.kt` - consulted AI to solve why offers are disappearing and added fallback preventions for JSON storage.
 - Asked AI to scan for potential fallbacks of step 3 seats and extras, and it suggested when there are 9 passengers the names will overwhelm the URL, making data hard to find. It suggested a solution of combining all the names into 1 parameter instead of 9, and expressed it in base64url format to prevent data breaking of the names
 - Asked AI to explain what kind of stuff should be covered by tests.
+- Had to ask to highlight as to why the page was overloading `src/main/resources/templates/staff/chat/index.peb`, and then followed the advice for it to work fine.
 Front-end behaviour and booking/search flows were manually tested in the running application.

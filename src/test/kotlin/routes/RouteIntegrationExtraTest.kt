@@ -68,7 +68,7 @@ class RouteIntegrationExtraTest {
                             append("firstname", "Ada")
                             append("lastname", "Lovelace")
                             append("email", "ada@example.com")
-                            append("password", "password")
+                            append("password", "Password123")
                         },
                 )
             withClue("successful signup redirects through htmx") {
@@ -175,6 +175,11 @@ class RouteIntegrationExtraTest {
                 assertEquals(HttpStatusCode.OK, response.status)
                 assertTrue(response.bodyAsText().contains("Create Staff"))
             }
+            withClue("staff admin can open dashboard") {
+                val response = admin.get("/staff")
+                assertEquals(HttpStatusCode.OK, response.status)
+                assertTrue(response.bodyAsText().contains("Staff Dashboard"))
+            }
         }
 
     @Test
@@ -234,6 +239,16 @@ class RouteIntegrationExtraTest {
                 val body = staffClient.get("/staff/chat").bodyAsText()
                 assertTrue(body.contains(customer.email))
                 assertTrue(body.contains("Can you help?"))
+                assertTrue(body.contains("data-staff-chat-list"))
+                assertTrue(body.contains("data-chat-toggle"))
+                assertTrue(body.contains("/static/js/staff-chat.js"))
+            }
+            withClue("staff chat polling endpoint returns unread customer conversation") {
+                val conversations = staffClient.get("/staff/chat/conversations").bodyAsText()
+                val summary = staffClient.get("/staff/chat/summary").bodyAsText()
+                assertTrue(conversations.contains("Can you help?"))
+                assertTrue(conversations.contains("\"unread\":true"))
+                assertTrue(summary.contains("\"unreadConversations\":1"))
             }
 
             val closeResponse =
@@ -257,6 +272,23 @@ class RouteIntegrationExtraTest {
                 val body = staffClient.get("/staff/chat").bodyAsText()
                 assertFalse(ChatRepository.isClosed(customer.id))
                 assertTrue(body.contains("I still need help"))
+            }
+
+            val replyResponse =
+                staffClient.submitForm(
+                    "/staff/chat/reply",
+                    Parameters.build {
+                        append("userId", customer.id.toString())
+                        append("message", "Staff reply")
+                    },
+                )
+
+            withClue("staff reply redirects back to the same open conversation") {
+                assertEquals("/staff/chat?openUserId=${customer.id}", replyResponse.headers[HttpHeaders.Location])
+            }
+            withClue("customer summary shows unread staff replies") {
+                val summary = customerClient.get("/chat/summary").bodyAsText()
+                assertTrue(summary.contains("\"unreadMessages\":1"))
             }
         }
 

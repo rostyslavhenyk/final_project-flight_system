@@ -9,6 +9,7 @@ import java.util.Locale
 private const val SEARCH_RESULTS_PAGE_SIZE = 10
 private const val DATE_CAROUSEL_STEP_DAYS = 7
 private const val DATE_CAROUSEL_DEFAULT_BACK_DAYS = 3
+private const val BOOKING_DATE_WINDOW_DAYS = 28
 private const val MAX_STOP_FILTER = 2
 
 private data class SearchFlightInputs(
@@ -79,6 +80,8 @@ private fun searchFlightInputs(queryParams: Parameters): SearchFlightInputs {
 private data class SearchCarousel(
     val days: List<Map<String, Any?>>,
     val weekPrevHref: String,
+    val weekPrevAvailable: Boolean,
+    val weekNextAvailable: Boolean,
     val weekNextHref: String,
 )
 
@@ -93,16 +96,20 @@ private fun searchCarousel(
             runCatching { LocalDate.parse(it) }.getOrNull()
         }
     val defaultStart = selectedDate.minusDays(DATE_CAROUSEL_DEFAULT_BACK_DAYS.toLong())
+    val latestAvailableDate = today.plusDays((BOOKING_DATE_WINDOW_DAYS - 1).toLong())
     val carouselStart =
         (requestedDateStart ?: defaultStart).coerceAtLeast(today)
+    val prevCarouselStart = carouselStart.minusDays(DATE_CAROUSEL_STEP_DAYS.toLong())
     val nextCarouselStart = carouselStart.plusDays(DATE_CAROUSEL_STEP_DAYS.toLong())
     return SearchCarousel(
-        days = buildCarouselDays(selectedDate, carouselStart, baseParams),
+        days = buildCarouselDays(selectedDate, carouselStart, baseParams, latestAvailableDate),
         weekPrevHref =
             carouselHref(
                 baseParams,
-                carouselStart.minusDays(DATE_CAROUSEL_STEP_DAYS.toLong()).coerceAtLeast(today),
+                prevCarouselStart.coerceAtLeast(today),
             ),
+        weekPrevAvailable = carouselStart.isAfter(today),
+        weekNextAvailable = !nextCarouselStart.isAfter(latestAvailableDate),
         weekNextHref = carouselHref(baseParams, nextCarouselStart),
     )
 }
@@ -299,6 +306,8 @@ private fun searchFlightsNavigationModel(
     mapOf(
         "carouselDays" to carousel.days,
         "weekPrevHref" to carousel.weekPrevHref,
+        "weekPrevAvailable" to carousel.weekPrevAvailable,
+        "weekNextAvailable" to carousel.weekNextAvailable,
         "weekNextHref" to carousel.weekNextHref,
         "sortRecommendedCurrent" to (input.sortOption == FlightSortOption.Recommended),
         "sortDepartureCurrent" to (input.sortOption == FlightSortOption.DepartureTime),

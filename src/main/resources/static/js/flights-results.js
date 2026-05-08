@@ -300,23 +300,65 @@
         trigger.textContent = v || 'Title';
       }
 
-      trigger.addEventListener('click', function (e) {
-        e.preventDefault();
+      function openList() {
+        closeAll();
+        list.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        let firstOption = list.querySelector('.trip-option');
+        if (firstOption) firstOption.focus();
+      }
+
+      function toggleList() {
         let opening = !list.classList.contains('is-open');
         closeAll();
         if (opening) {
-          list.classList.add('is-open');
-          trigger.setAttribute('aria-expanded', 'true');
+          openList();
         }
+      }
+
+      function chooseTitle(btn) {
+        hidden.value = btn.getAttribute('data-value') || '';
+        syncLabel();
+        closeAll();
+        hidden.dispatchEvent(new Event('input', { bubbles: true }));
+        trigger.focus();
+      }
+
+      trigger.addEventListener('click', function (e) {
+        e.preventDefault();
+        toggleList();
+      });
+
+      trigger.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'ArrowDown') return;
+        e.preventDefault();
+        openList();
       });
 
       list.querySelectorAll('.trip-option').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
           e.preventDefault();
-          hidden.value = btn.getAttribute('data-value') || '';
-          syncLabel();
-          closeAll();
-          hidden.dispatchEvent(new Event('input', { bubbles: true }));
+          chooseTitle(btn);
+        });
+
+        btn.addEventListener('keydown', function (e) {
+          let options = Array.from(list.querySelectorAll('.trip-option'));
+          let currentIndex = options.indexOf(btn);
+
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            chooseTitle(btn);
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            closeAll();
+            trigger.focus();
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            options[(currentIndex + 1) % options.length].focus();
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            options[(currentIndex - 1 + options.length) % options.length].focus();
+          }
         });
       });
 

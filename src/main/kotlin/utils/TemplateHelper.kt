@@ -3,6 +3,7 @@ package utils
 import io.ktor.server.application.*
 import io.ktor.server.sessions.*
 import auth.UserSession
+import data.ChatRepository
 import data.UserRepository
 
 fun ApplicationCall.baseModel(extra: Map<String, Any?> = emptyMap()): Map<String, Any?> {
@@ -25,5 +26,17 @@ fun ApplicationCall.baseModel(extra: Map<String, Any?> = emptyMap()): Map<String
             "user" to user,
             "isStaff" to (user?.roleId in setOf(1, 2)),
             "isStaffAdmin" to (user?.roleId == 2),
+            "unreadStaffChatConversations" to
+                if (user?.roleId in setOf(1, 2)) {
+                    ChatRepository.staffUnreadConversationCount()
+                } else {
+                    0
+                },
+            "unreadChatMessages" to
+                if (user != null && user.roleId !in setOf(1, 2)) {
+                    ChatRepository.unreadStaffReplyCount(user.id)
+                } else {
+                    0
+                },
         )
 }

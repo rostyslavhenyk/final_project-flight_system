@@ -21,7 +21,6 @@ object ChatMessages : Table("chat_messages") {
     val message = varchar("message", MESSAGE_LENGTH)
     val isStaff = bool("isStaff").default(false)
     val timestamp = long("timestamp")
-
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -126,6 +125,22 @@ object ChatRepository {
                 .where { (ChatConversationStates.userId eq userId) and (ChatConversationStates.isClosed eq true) }
                 .any()
         }
+
+    fun staffUnreadConversationCount(): Int =
+        getAllOpen()
+            .groupBy { it.userId }
+            .count { (_, messages) -> messages.maxByOrNull { it.timestamp }?.isStaff == false }
+
+    fun unreadStaffReplyCount(userId: Int): Int {
+        val messages = getByUser(userId)
+        val latestCustomerMessageAt =
+            messages
+                .filterNot { it.isStaff }
+                .maxOfOrNull { it.timestamp }
+                ?: 0L
+
+        return messages.count { it.isStaff && it.timestamp > latestCustomerMessageAt }
+    }
 
     private fun reopen(userId: Int) {
         ChatConversationStates.deleteWhere { ChatConversationStates.userId eq userId }

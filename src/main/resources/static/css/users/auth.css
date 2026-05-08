@@ -52,8 +52,8 @@
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding: 40px 80px 40px 40px;
+    justify-content: center;
+    padding: 40px 20px;
     position: relative;
     overflow: hidden;
     background-color: #e0f2ef;
@@ -170,16 +170,16 @@
 .login-card {
     background: white;
     border-radius: 12px;
-    padding: 40px 36px;
+    padding: 28px 36px;
     width: 100%;
-    max-width: 400px;
+    max-width: min(560px, 90vw);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     position: relative;
     z-index: 1;
 }
 
 .signup-card {
-    max-width: 440px;
+    max-width: min(600px, 85vw);
 }
 
 .login-logo {
@@ -343,4 +343,20 @@
         grid-template-columns: 1fr;
         gap: 0;
     }
+}
+
+.signup-card {
+    padding: 20px 36px;
+}
+
+.signup-card .login-field {
+    margin-bottom: 8px;
+}
+
+.signup-card .login-btn {
+    margin-top: 8px;
+}
+
+.form-hint {
+    font-size: 0.85rem;
 }

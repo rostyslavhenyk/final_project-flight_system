@@ -28,7 +28,14 @@
         <nav>
             <ul class="main-links">
                 <li><a href="/membership">Membership</a></li>
-                <li><a href="/help">Help</a></li>
+                <li>
+                    <a href="/help" class="nav-chat-link">
+                        Help
+                        <span class="nav-unread-badge" data-user-chat-unread {% if unreadChatMessages == 0 %}hidden{% endif %}>
+                            {{ unreadChatMessages }}
+                        </span>
+                    </a>
+                </li>
             </ul>
             <ul class="auth-links">
                 {% if loggedIn %}
@@ -72,5 +79,8 @@
             </div>
         </div>
     </footer>
+    {% if loggedIn %}
+    <script src="/static/js/chat-notifications.js" defer></script>
+    {% endif %}
 </body>
 </html>

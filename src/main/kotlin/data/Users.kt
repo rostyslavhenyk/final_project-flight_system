@@ -15,7 +15,7 @@ object Users : Table("users") {
     private const val NAME_LENGTH = 128
     private const val EMAIL_LENGTH = 256
     private const val PASSWORD_LENGTH = 128
-    private const val PHONE_LENGTH = 20
+    private const val PHONE_LENGTH = 50
 
     val id = integer("id").autoIncrement()
     val firstname = varchar("firstName", NAME_LENGTH)
