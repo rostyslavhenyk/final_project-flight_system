@@ -82,6 +82,25 @@ private suspend fun ApplicationCall.handleSignUpPost() {
             return@timed
         }
 
+        // password requirements check
+        if (password.length < 10) {
+            respondText(
+                createSignUpStatus("Password must be at least 10 characters"),
+                ContentType.Text.Html,
+                status = HttpStatusCode.OK,
+            )
+            return@timed
+        }
+
+        if (!password.any { it.isUpperCase() }) {
+            respondText(
+                createSignUpStatus("Password must contain at least one capital letter"),
+                ContentType.Text.Html,
+                status = HttpStatusCode.OK,
+            )
+            return@timed
+        }
+
         val existingUser = UserRepository.getByEmail(email)
 
         if (existingUser != null) {

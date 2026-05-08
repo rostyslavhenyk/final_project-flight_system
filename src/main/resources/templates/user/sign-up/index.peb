@@ -53,6 +53,7 @@
             <div class="login-field">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" placeholder="Create a password" autocomplete="new-password" required aria-required="true">
+                <small class="form-hint">At least 10 characters and 1 capital letter</small>
             </div>
 
             <button type="submit" class="login-btn">Sign Up</button>

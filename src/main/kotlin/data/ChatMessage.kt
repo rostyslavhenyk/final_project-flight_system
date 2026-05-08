@@ -21,7 +21,6 @@ object ChatMessages : Table("chat_messages") {
     val message = varchar("message", MESSAGE_LENGTH)
     val isStaff = bool("isStaff").default(false)
     val timestamp = long("timestamp")
-
     override val primaryKey = PrimaryKey(id)
 }
 
@@ -44,6 +43,7 @@ data class ChatMessage(
 
 // handles database queries for chat messages
 object ChatRepository {
+
     fun add(
         userId: Int,
         senderName: String,
