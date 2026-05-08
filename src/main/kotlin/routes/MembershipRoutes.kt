@@ -15,6 +15,7 @@ private suspend fun ApplicationCall.handleMembershipList() {
         renderTemplate("user/membership/index.peb", mapOf("title" to "Membership"))
     }
 }
+
 private suspend fun ApplicationCall.handleMembershipBenefitsList() {
     timed("T0_membership_benefits_list", jsMode()) {
         renderTemplate("user/membership/benefits.peb", mapOf("title" to "Membership"))
