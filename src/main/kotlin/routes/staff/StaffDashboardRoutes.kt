@@ -5,6 +5,7 @@ import data.ChatRepository
 import data.FlightRepository
 import data.PurchaseRepository
 import data.TicketRepository
+import data.ChatRepository
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 import routes.renderTemplate
@@ -78,6 +79,7 @@ private fun staffDashboardModel(): Map<String, Any?> {
         "salesTargetProgressPercent" to target.progressPercent,
         "salesTargetChartPercent" to target.chartPercent,
         "salesTargetOverflowPercent" to target.overflowPercent,
+        "openChatCount" to ChatRepository.getAllOpen().groupBy { it.userId }.size,
     )
 }
 

@@ -64,6 +64,18 @@
         </article>
 
         <article class="staff-dashboard-card">
+            <span class="staff-card__label">Live Chat</span>
+            <h2>Open conversations</h2>
+            <div class="staff-ticket-widget">
+                <div>
+                    <strong>{{ openChatCount }}</strong>
+                    <span>Open chats</span>
+                </div>
+            </div>
+            <a href="/staff/chat" class="btn-staff-link">View messages</a>
+        </article>
+
+        <article class="staff-dashboard-card">
             <span class="staff-card__label">Sales target</span>
             <h2>28 day target</h2>
             <div class="staff-pie-panel staff-pie-panel--compact">
