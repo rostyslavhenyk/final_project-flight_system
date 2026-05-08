@@ -543,52 +543,12 @@
   box-shadow: none !important;
 }
 
-.booking-stepper__label--done-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 400;
-}
-
-.booking-stepper__label--done-link:hover {
-  color: var(--primary-color-hover);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 2px;
-}
-
 .review-wf-continue-wrap.bp-wf-cta-wrap {
   display: flex;
   justify-content: center;
   margin: 0;
   padding-block: 0;
   -webkit-tap-highlight-color: transparent;
-}
-
-.review-wf-continue {
-  display: inline-block;
-  min-width: 15rem;
-  padding: 0.85rem 2.25rem;
-  border: 2px solid var(--primary-color);
-  border-radius: 8px;
-  background: var(--page-white);
-  color: var(--primary-color) !important;
-  font-weight: 700;
-  font-size: 1.05rem;
-  text-align: center;
-  text-decoration: none;
-  box-shadow: 0 1px 2px rgba(45, 79, 47, 0.12);
-  -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.review-wf-continue:hover {
-  background: var(--primary-soft-color);
-  color: var(--primary-color-hover) !important;
-  border-color: var(--primary-color);
-  text-decoration: none;
 }
 
 .bp-wf {

@@ -2,12 +2,12 @@ package routes.staff
 
 import data.BookingRepository
 import data.ChatRepository
-import data.FlightRepository
 import data.PurchaseRepository
 import data.TicketRepository
-import data.ChatRepository
+import data.flight.FlightScheduleTemplateRepository
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.transactions.transaction
 import routes.renderTemplate
 import utils.jsMode
 import utils.timed
@@ -19,14 +19,9 @@ import kotlin.math.roundToInt
 
 private const val SALES_TARGET_28_DAYS_GBP = 20_000
 private const val PERCENT_MAX = 100
-private const val WEEK_DAYS = 7
 private const val FOUR_WEEKS = 4
 private const val SEATS_PER_FLIGHT = 180
 private const val SIMULATED_TAKEN_SEAT_PERCENT = 10
-private const val TARGET_WINDOW_DAYS = 28L
-private const val HOURS_PER_DAY = 24L
-private const val MINUTES_PER_HOUR = 60L
-private const val SECONDS_PER_MINUTE = 60L
 private const val ISO_DATE_LENGTH = 10
 
 private val dashboardZone: ZoneId = ZoneId.systemDefault()
@@ -43,11 +38,12 @@ private suspend fun ApplicationCall.handleStaffDashboard() {
 
 private fun staffDashboardModel(): Map<String, Any?> {
     val today = LocalDate.now(dashboardZone)
+    val ranges = dashboardDateRanges(today)
     val bookings = BookingRepository.allFull()
     val soldBookings = bookings.filter { it.booking.status.countsAsSoldBooking() }
-    val sales = staffDashboardSales(soldBookings, today)
+    val sales = staffDashboardSales(soldBookings, ranges)
     val tickets = staffDashboardTicketCounts()
-    val target = staffDashboardTarget()
+    val target = staffDashboardTarget(ranges.fourWeeks)
 
     return mapOf(
         "title" to "Staff Dashboard",
@@ -85,11 +81,11 @@ private fun staffDashboardModel(): Map<String, Any?> {
 
 private fun staffDashboardSales(
     soldBookings: List<data.BookingFull>,
-    today: LocalDate,
+    ranges: DashboardDateRanges,
 ): StaffDashboardSales {
-    val todaySales = soldFlightSales(soldBookings, today, today)
-    val weekSales = soldFlightSales(soldBookings, today, today.plusDays((WEEK_DAYS - 1).toLong()))
-    val fourWeekSales = soldFlightSales(soldBookings, today, today.plusWeeks(FOUR_WEEKS.toLong()).minusDays(1))
+    val todaySales = soldFlightSales(soldBookings, ranges.today.start, ranges.today.end)
+    val weekSales = soldFlightSales(soldBookings, ranges.week.start, ranges.week.end)
+    val fourWeekSales = soldFlightSales(soldBookings, ranges.fourWeeks.start, ranges.fourWeeks.end)
     return StaffDashboardSales(todaySales, weekSales, fourWeekSales)
 }
 
@@ -101,15 +97,14 @@ private fun staffDashboardTicketCounts(): StaffTicketCounts {
     return StaffTicketCounts(user = userTicketCount, staff = staffTicketCount)
 }
 
-private fun staffDashboardTarget(): StaffSalesTarget {
-    val now = Instant.now()
+private fun staffDashboardTarget(range: DashboardDateRange): StaffSalesTarget {
     val sales28Days =
         PurchaseRepository
             .all()
             .filter { purchase ->
-                Instant.ofEpochMilli(purchase.createdAt).isAfter(
-                    now.minusSeconds(TARGET_WINDOW_DAYS * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE),
-                )
+                purchase.createdAt
+                    .epochDate()
+                    .isBetweenDates(range.start, range.end)
             }.sumOf { purchase -> purchase.amount }
     val targetProgressPercent =
         ((sales28Days / SALES_TARGET_28_DAYS_GBP) * PERCENT_MAX)
@@ -124,6 +119,16 @@ private fun staffDashboardTarget(): StaffSalesTarget {
             0
         }
     return StaffSalesTarget(sales28Days, targetProgressPercent, targetChartPercent, targetOverflowPercent)
+}
+
+private fun dashboardDateRanges(today: LocalDate): DashboardDateRanges {
+    val weekStart = today.minusDays((today.dayOfWeek.value - 1).toLong())
+    val fourWeekStart = weekStart.minusWeeks((FOUR_WEEKS - 1).toLong())
+    return DashboardDateRanges(
+        today = DashboardDateRange(today, today),
+        week = DashboardDateRange(weekStart, today),
+        fourWeeks = DashboardDateRange(fourWeekStart, today),
+    )
 }
 
 private fun String.isActiveTicketStatus(): Boolean =
@@ -167,7 +172,7 @@ private fun soldFlightSales(
                     .isBetweenDates(startDate, endDate)
             }.map { it.flight.flightID }
             .toSet()
-    val rangeFlightCount = maxOf(FlightRepository.countBetweenDates(startDate, endDate).toInt(), bookedFlightIds.size)
+    val rangeFlightCount = maxOf(scheduledFlightCountBetweenDates(startDate, endDate), bookedFlightIds.size)
     val simulatedSoldSeats = ((rangeFlightCount * SEATS_PER_FLIGHT * SIMULATED_TAKEN_SEAT_PERCENT) / PERCENT_MAX)
     val totalCapacity = rangeFlightCount * SEATS_PER_FLIGHT
     val soldSeats = realSoldSeats + simulatedSoldSeats
@@ -180,6 +185,27 @@ private fun soldFlightSales(
         remainingSeats = remainingSeats,
         soldPercent = percentOf(soldSeats, totalCapacity),
     )
+}
+
+private fun scheduledFlightCountBetweenDates(
+    startDate: LocalDate,
+    endDate: LocalDate,
+): Int {
+    val templates = transaction { FlightScheduleTemplateRepository.all() }
+    if (templates.isEmpty()) return 0
+
+    return generateSequence(startDate) { date ->
+        date.plusDays(1).takeIf { !it.isAfter(endDate) }
+    }.sumOf { date ->
+        val dayOfWeek = date.dayOfWeek.value
+        templates.count { template ->
+            template.status.equals("scheduled", ignoreCase = true) &&
+                template.daysOfWeek
+                    .split(",")
+                    .mapNotNull { it.trim().toIntOrNull() }
+                    .contains(dayOfWeek)
+        }
+    }
 }
 
 private fun percentOf(
@@ -207,6 +233,17 @@ private data class StaffDashboardSales(
     val today: SoldFlightSales,
     val week: SoldFlightSales,
     val fourWeeks: SoldFlightSales,
+)
+
+private data class DashboardDateRange(
+    val start: LocalDate,
+    val end: LocalDate,
+)
+
+private data class DashboardDateRanges(
+    val today: DashboardDateRange,
+    val week: DashboardDateRange,
+    val fourWeeks: DashboardDateRange,
 )
 
 private data class StaffTicketCounts(

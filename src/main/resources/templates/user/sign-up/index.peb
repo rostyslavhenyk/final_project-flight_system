@@ -22,11 +22,13 @@
 
         <form class="signup-form"
             method="post"
-            action="/signup"
-            hx-post="/signup"
+            action="/signup?redirect={{ redirectParam }}"
+            hx-post="/signup?redirect={{ redirectParam }}"
             hx-target="#sign-up-status"
             hx-swap="innerHTML"
             novalidate>
+
+            <input type="hidden" name="redirect" value="{{ redirect }}">
 
             <div class="signup-name-row">
                 <div class="login-field">
@@ -61,7 +63,7 @@
         </form>
 
         <p class="login-signup-link">
-            Already have an account? <a href="/login">Sign in</a>
+            Already have an account? <a href="/login?redirect={{ redirectParam }}">Sign in</a>
         </p>
 
     </div>

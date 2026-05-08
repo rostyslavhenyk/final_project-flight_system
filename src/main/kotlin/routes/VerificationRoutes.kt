@@ -15,6 +15,8 @@ import utils.VerificationStore
 import data.UserRepository
 import org.mindrot.jbcrypt.BCrypt
 
+private const val MIN_RESET_PASSWORD_LENGTH = 10
+
 // verification and password reset routes
 fun Route.verificationRoutes() {
     get("/forgot-password") { call.handleForgotPasswordLoad() }
@@ -163,6 +165,10 @@ private suspend fun ApplicationCall.handlePasswordReset() {
             return@timed
         }
 
+        if (respondResetPasswordRequirementFailure(newPassword)) {
+            return@timed
+        }
+
         val user =
             if (key.contains("@")) {
                 UserRepository.getByEmail(key)
@@ -185,6 +191,17 @@ private suspend fun ApplicationCall.handlePasswordReset() {
         response.headers.append("HX-Redirect", "/login")
         respondText("Code verified", ContentType.Text.Plain, status = HttpStatusCode.OK)
     }
+}
+
+private suspend fun ApplicationCall.respondResetPasswordRequirementFailure(password: String): Boolean {
+    val message =
+        when {
+            password.length < MIN_RESET_PASSWORD_LENGTH -> "Password must be at least 10 characters"
+            !password.any { it.isUpperCase() } -> "Password must contain at least one capital letter"
+            else -> return false
+        }
+    respondVerifyStatus(message)
+    return true
 }
 
 private suspend fun ApplicationCall.handleSendEmailCode() {

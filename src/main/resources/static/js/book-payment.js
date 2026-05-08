@@ -72,6 +72,7 @@
   function showPaymentError(message) {
     const btn = document.getElementById('pay-now-button');
     if (!btn || !btn.parentNode) return;
+    const target = btn.closest('.seat-booking__pay-cta') || btn.parentNode;
     const existing = document.getElementById('pay-confirm-error');
     if (existing) {
       existing.hidden = false;
@@ -83,7 +84,7 @@
     msg.className = 'flights-hero__hint';
     msg.setAttribute('role', 'alert');
     msg.textContent = message || 'Card setup or booking confirmation failed. Please check the card and seats.';
-    btn.insertAdjacentElement('afterend', msg);
+    target.appendChild(msg);
   }
 
   function initStripeCard() {

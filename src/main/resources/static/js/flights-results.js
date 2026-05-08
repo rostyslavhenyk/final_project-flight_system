@@ -371,36 +371,51 @@
     if (!form) return;
     let seatResetStorageKey = 'glideSeatResetOnNextLoad';
 
-    let nameStripRe = /[^\p{L}\s'-]/gu;
-    let nameFallbackRe = /[^A-Za-z\u00C0-\u024F\s'-]/g;
+    let nameValidRe = /^[\p{L}][\p{L}\s'-]*$/u;
+    let nameFallbackValidRe = /^[A-Za-z\u00C0-\u024F][A-Za-z\u00C0-\u024F\s'-]*$/;
 
-    function sanitizeNameValue(raw) {
-      let s = String(raw || '');
+    function nameIsValid(raw) {
+      let s = String(raw || '').trim();
+      if (!s) return false;
       try {
-        return s.replace(nameStripRe, '');
+        return nameValidRe.test(s);
       } catch (e) {
-        return s.replace(nameFallbackRe, '');
+        return nameFallbackValidRe.test(s);
       }
     }
 
+    function capitalizeNameToken(token) {
+      if (token === '-' || token === "'") return token;
+      return token.charAt(0).toLocaleUpperCase('en-GB') + token.slice(1);
+    }
+
+    function normalizeNamePart(part) {
+      let lowered = part.toLocaleLowerCase('en-GB');
+      return lowered
+        .split(/([-'])/)
+        .map(capitalizeNameToken)
+        .join('');
+    }
+
+    function normalizeNameValue(raw) {
+      return String(raw || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .split(' ')
+        .filter(function (part) {
+          return part.length > 0;
+        })
+        .map(normalizeNamePart)
+        .join(' ');
+    }
+
     function attachNameField(el) {
-      function apply() {
-        let next = sanitizeNameValue(el.value);
-        if (el.value !== next) el.value = next;
+      function applyFormatting() {
+        if (nameIsValid(el.value)) {
+          el.value = normalizeNameValue(el.value);
+        }
       }
-      el.addEventListener('input', apply);
-      el.addEventListener('blur', apply);
-      el.addEventListener('paste', function (e) {
-        let text = (e.clipboardData || window.clipboardData || {}).getData('text') || '';
-        if (!text) return;
-        e.preventDefault();
-        let merged =
-          el.value.slice(0, el.selectionStart || 0) +
-          text +
-          el.value.slice(el.selectionEnd || 0);
-        el.value = sanitizeNameValue(merged);
-      });
-      apply();
+      el.addEventListener('blur', applyFormatting);
     }
 
     form.querySelectorAll('.bp-wf-input--pax-name').forEach(attachNameField);
@@ -521,11 +536,27 @@
         });
         checks.push({
           test: function () {
+            return given && nameIsValid(given.value);
+          },
+          errEl: errGiven,
+          focusEl: given,
+          msg: 'First name can only include letters, spaces, hyphens and apostrophes',
+        });
+        checks.push({
+          test: function () {
             return family && (family.value || '').trim();
           },
           errEl: errFamily,
           focusEl: family,
           msg: 'Surname cannot be blank',
+        });
+        checks.push({
+          test: function () {
+            return family && nameIsValid(family.value);
+          },
+          errEl: errFamily,
+          focusEl: family,
+          msg: 'Surname can only include letters, spaces, hyphens and apostrophes',
         });
       });
 
@@ -569,6 +600,9 @@
           return { ok: false, focusEl: c.focusEl };
         }
       }
+      form.querySelectorAll('.bp-wf-input--pax-name').forEach(function (input) {
+        input.value = normalizeNameValue(input.value);
+      });
       return { ok: true, focusEl: null };
     }
 

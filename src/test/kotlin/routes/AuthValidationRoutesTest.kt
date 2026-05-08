@@ -135,6 +135,58 @@ class AuthValidationRoutesTest {
         }
 
     @Test
+    fun `signup rejects numbers and random symbols in names but accepts casing normalization`() =
+        testApplication {
+            configureAuthValidationRoutes()
+
+            withClue("numbers are rejected in first name") {
+                val response =
+                    client.submitForm(
+                        url = "/signup",
+                        formParameters =
+                            Parameters.build {
+                                append("firstname", "J0hn")
+                                append("lastname", "Smith")
+                                append("email", "john@example.com")
+                                append("password", "Password123")
+                            },
+                    )
+                assertTrue(response.bodyAsText().contains("First name can only include letters"))
+            }
+
+            withClue("random symbols are rejected in last name") {
+                val response =
+                    client.submitForm(
+                        url = "/signup",
+                        formParameters =
+                            Parameters.build {
+                                append("firstname", "John")
+                                append("lastname", "Sm!th")
+                                append("email", "smith@example.com")
+                                append("password", "Password123")
+                            },
+                    )
+                assertTrue(response.bodyAsText().contains("Last name can only include letters"))
+            }
+
+            withClue("all caps and mixed casing are accepted and normalized by the repository") {
+                client.submitForm(
+                    url = "/signup",
+                    formParameters =
+                        Parameters.build {
+                            append("firstname", "jOhN")
+                            append("lastname", "O'CONNOR-SMITH")
+                            append("email", "normal-name@example.com")
+                            append("password", "Password123")
+                        },
+                )
+                val user = UserRepository.getByEmail("normal-name@example.com")
+                assertEquals("John", user?.firstname)
+                assertEquals("O'Connor-Smith", user?.lastname)
+            }
+        }
+
+    @Test
     fun `login missing or blank mandatory credentials returns generic failure`() =
         testApplication {
             configureAuthValidationRoutes()
@@ -194,6 +246,32 @@ class AuthValidationRoutesTest {
                         formParameters = Parameters.build { append("email", "ada@example.com") },
                     )
                 assertTrue(response.bodyAsText().contains("Please enter a new password"))
+            }
+            withClue("password reset applies the same minimum strength rule as signup") {
+                val response =
+                    client.submitForm(
+                        url = "/forgot-password/reset",
+                        formParameters =
+                            Parameters.build {
+                                append("email", "ada@example.com")
+                                append("newPassword", "short")
+                                append("confirmPassword", "short")
+                            },
+                    )
+                assertTrue(response.bodyAsText().contains("Password must be at least 10 characters"))
+            }
+            withClue("password reset requires a capital letter") {
+                val response =
+                    client.submitForm(
+                        url = "/forgot-password/reset",
+                        formParameters =
+                            Parameters.build {
+                                append("email", "ada@example.com")
+                                append("newPassword", "longpassword")
+                                append("confirmPassword", "longpassword")
+                            },
+                    )
+                assertTrue(response.bodyAsText().contains("Password must contain at least one capital letter"))
             }
         }
 
