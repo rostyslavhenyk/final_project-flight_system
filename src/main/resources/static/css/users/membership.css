@@ -1,0 +1,39 @@
+/*Membership page CSS */
+
+.whyjoin {
+    display: flex;
+    height: 300px;
+    align-items: stretch;
+    justify-content: space-evenly;
+}
+.whyjoin div {
+    margin: 10px;
+    padding: 20px;
+    font-size: 20px;
+    flex-basis: 250px;
+    border: 1.5px solid var(--primary-color);
+    border-radius: 20px;
+    background: var(--page-white);
+}
+.tiers{
+    display: flex;
+    height: 300px;
+    align-items: stretch;
+    justify-content: space-evenly;
+}
+.tiers div {
+    margin: 10px;
+    padding: 20px;
+    font-size: 20px;
+    flex-basis: 250px;
+}
+.membership-page {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    margin: 0 auto 3.5rem;
+    padding-block: 0;
+    padding-inline: var(--page-inline-left) var(--page-inline-right);
+    overflow-x: clip;
+    font-size: 0.97rem;
+}
